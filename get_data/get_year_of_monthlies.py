@@ -41,9 +41,9 @@ def unpack_local(variable, year):
     tar.close()
     # Update the extracted file times
     #  To stop SCRATCH deleting them as too old
-    nfiles = os.listdir(local_dir)
+    nfiles = os.listdir("%s/%04d" % (local_dir, year))
     for nfile in nfiles:
-        os.utime("%s/%s" % (local_dir, nfile))
+        os.utime("%s/%04d/%s" % (local_dir, year, nfile))
     os.remove(local_file)
 
 
