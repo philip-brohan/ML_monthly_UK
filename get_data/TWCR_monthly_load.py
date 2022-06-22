@@ -77,3 +77,22 @@ def load_climatology(variable, month):
     if not os.path.isfile(fname):
         raise Exception("No climatology file %s" % fname)
     return iris.load_cube(fname)
+
+
+def load_sd_climatology(variable, month):
+    fname = "%s/20CR/version_3/monthly/sd_climatology/%s_%02d.nc" % (
+        os.getenv("SCRATCH"),
+        variable,
+        month,
+    )
+    if not os.path.isfile(fname):
+        raise Exception("No sd climatology file %s" % fname)
+    return iris.load_cube(fname)
+
+
+def get_range(variable, month):
+    clim = load_climatology(variable, month)
+    sdc = load_sd_climatology(variable, month)
+    dmax = np.percentile(clim.data + (sdc.data * 2), 95)
+    dmin = np.percentile(clim.data - (sdc.data * 2), 5)
+    return (dmin, dmax)

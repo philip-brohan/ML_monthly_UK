@@ -8,6 +8,7 @@ import cmocean
 
 sys.path.append("%s/../get_data" % os.path.dirname(__file__))
 from TWCR_monthly_load import load_monthly_member
+from TWCR_monthly_load import get_range
 
 sys.path.append("%s/." % os.path.dirname(__file__))
 
@@ -47,5 +48,8 @@ else:
     raise Exception("Unsupported variable " + args.variable)
 
 var = load_monthly_member(args.variable, args.year, args.month, 1)
+(dmin, dmax) = get_range(args.variable, args.month)
+if args.variable == "PRATE":
+    dmin = 0
 
-plotField(var, opDir=args.opdir, fName=args.opfile, cMap=cMap)
+plotField(var, opDir=args.opdir, fName=args.opfile, cMap=cMap, vMin=dmin, vMax=dmax)
