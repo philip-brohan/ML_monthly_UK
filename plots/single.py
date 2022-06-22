@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# plot a sigle 20CRv3 monthly field for the UK region
+# plot a single 20CRv3 monthly field for the UK region
 
 import os
 import sys
