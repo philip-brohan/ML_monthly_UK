@@ -66,3 +66,14 @@ def load_monthly_ensemble(variable, year, month):
     hslice.coord("latitude").coord_system = coord_s
     hslice.coord("longitude").coord_system = coord_s
     return hslice
+
+
+def load_climatology(variable, month):
+    fname = "%s/20CR/version_3/monthly/climatology/%s_%02d.nc" % (
+        os.getenv("SCRATCH"),
+        variable,
+        month,
+    )
+    if not os.path.isfile(fname):
+        raise Exception("No climatology file %s" % fname)
+    return iris.load_cube(fname)
