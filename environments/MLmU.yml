@@ -3,11 +3,21 @@ channels:
   - defaults
   - conda-forge
 dependencies:
+# Basics
   - python=3.9
   - iris=3.2
-  - metoffice-afterburner=1.3
   - cmocean=2.0
+  - parallel
+# ML model building and diagnostics
+# If you don't have a GPU, tensorflow-eigen might be faster
+  - tensorflow-gpu=2.4
+  - tensorflow-probability=0.15
 # Optional, code formatter
   - black
 # Optional - documentation generator
   - sphinx=4.5
+# Some packages are only available via pip
+  - pip
+  - pip:
+  # For bilinear interpolation
+    - tensorflow-addons==0.17
