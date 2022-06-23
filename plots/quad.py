@@ -12,6 +12,11 @@ import iris
 import iris.analysis
 import cmocean
 
+import warnings
+
+warnings.filterwarnings("ignore", message=".*invalid units.*")
+warnings.filterwarnings("ignore", message=".*will ignore the.*")
+
 sys.path.append("%s/../get_data" % os.path.dirname(__file__))
 from TWCR_monthly_load import load_monthly_member
 from TWCR_monthly_load import get_range
@@ -69,8 +74,10 @@ lMask = get_land_mask(plot_cube(resolution=0.1))
 
 # Top left - PRMSL
 var = load_monthly_member("PRMSL", args.year, args.month, 1)
-var = var.regrid(plotCube, iris.analysis.Linear())
-(dmin, dmax) = get_range("PRMSL", args.month)
+var = var.regrid(plotCube, iris.analysis.Linear()) / 100
+(dmin, dmax) = get_range("PRMSL", args.month, var)
+dmin /= 100
+dmax /= 100
 ax_prmsl = fig.add_axes([0.025 / 2, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
@@ -90,8 +97,10 @@ cb = fig.colorbar(
 
 # Bottom left - SST
 var = load_monthly_member("SST", args.year, args.month, 1)
-var = var.regrid(plotCube, iris.analysis.Linear())
-(dmin, dmax) = get_range("TMPS", args.month)
+var = var.regrid(plotCube, iris.analysis.Linear()) - 273.15
+(dmin, dmax) = get_range("TMPS", args.month, var)
+dmin -= 273.15
+dmax -= 273.15
 ax_prmsl = fig.add_axes([0.025 / 2, 0.125 / 2, 0.95 / 2, 0.85 / 2])
 ax_prmsl.set_axis_off()
 SST_img = plotFieldAxes(
@@ -112,8 +121,10 @@ cb = fig.colorbar(
 # Top right - PRATE
 var = load_monthly_member("PRATE", args.year, args.month, 1)
 var = var.regrid(plotCube, iris.analysis.Linear())
-(dmin, dmax) = get_range("PRATE", args.month)
+var.data *= 1000  # Ugly, but makes colorbar legible
+(dmin, dmax) = get_range("PRATE", args.month, var)
 dmin = 0
+dmax *= 1000
 ax_prate = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
@@ -132,8 +143,10 @@ cb = fig.colorbar(
 )
 # Bottom left - T2m
 var = load_monthly_member("TMP2m", args.year, args.month, 1)
-var = var.regrid(plotCube, iris.analysis.Linear())
-(dmin, dmax) = get_range("TMP2m", args.month)
+var = var.regrid(plotCube, iris.analysis.Linear()) - 273.15
+(dmin, dmax) = get_range("TMP2m", args.month, var)
+dmin -= 273.15
+dmax -= 273.15
 ax_tmp2m = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2, 0.95 / 2, 0.85 / 2])
 ax_tmp2m.set_axis_off()
 TMP2m_img = plotFieldAxes(

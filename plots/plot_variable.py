@@ -86,12 +86,23 @@ def plotFieldAxes(
         vMin = np.min(field.data)
     if lMask is None:
         lMask = get_land_mask(plot_cube(resolution=0.1))
+
     lons = plotCube.coord("longitude").points
     lats = plotCube.coord("latitude").points
     ax_map.set_ylim(min(lats), max(lats))
     ax_map.set_xlim(min(lons), max(lons))
     ax_map.set_axis_off()
     ax_map.set_aspect("equal", adjustable="box", anchor="C")
+    ax_map.add_patch(
+        Rectangle(
+            (min(lons), min(lats)),
+            max(lons) - min(lons),
+            max(lats) - min(lats),
+            facecolor=(0.9, 0.9, 0.9, 1),
+            fill=True,
+            zorder=1,
+        )
+    )
     # Plot the field
     T_img = ax_map.pcolorfast(
         lons, lats, field.data, cmap=cMap, vmin=vMin, vmax=vMax, alpha=1.0, zorder=10,

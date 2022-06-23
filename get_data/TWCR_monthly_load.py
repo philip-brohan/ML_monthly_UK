@@ -5,6 +5,7 @@ import iris
 import iris.util
 import iris.cube
 import iris.time
+import iris.analysis
 import iris.coord_systems
 import iris.fileformats
 import datetime
@@ -90,9 +91,12 @@ def load_sd_climatology(variable, month):
     return iris.load_cube(fname)
 
 
-def get_range(variable, month):
+def get_range(variable, month, cube=None):
     clim = load_climatology(variable, month)
     sdc = load_sd_climatology(variable, month)
+    if cube is not None:
+        clim = clim.regrid(cube, iris.analysis.Nearest())
+        sdc = sdc.regrid(cube, iris.analysis.Nearest())
     dmax = np.percentile(clim.data + (sdc.data * 2), 95)
     dmin = np.percentile(clim.data - (sdc.data * 2), 5)
     return (dmin, dmax)
