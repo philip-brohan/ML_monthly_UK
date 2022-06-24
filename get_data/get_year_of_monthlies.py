@@ -43,7 +43,7 @@ def unpack_local(variable, year):
     #  To stop SCRATCH deleting them as too old
     nfiles = os.listdir("%s/%04d" % (local_dir, year))
     for nfile in nfiles:
-        os.utime("%s/%04d/%s" % (local_dir, year, nfile))
+        os.utime("%s/%04d/%s" % (local_dir, year, nfile), None)
     os.remove(local_file)
 
 
