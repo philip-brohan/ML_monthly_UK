@@ -12,6 +12,7 @@ import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
+from matplotlib.lines import Line2D
 
 import cmocean
 
@@ -176,3 +177,32 @@ def plotField(
 
     # Output as png
     fig.savefig("%s/%s" % (opDir, fName))
+
+
+def plotScatterAxes(ax, var_in, var_out, vMax=None, vMin=None, xlabel='', ylabel=''):
+    if vMax is None:
+        vMax = max(np.max(var_in.data),np.max(var_out.data))
+    if vMin is None:
+        vMin = min(np.min(var_in.data),np.min(var_out.data))
+    ax.set_xlim(vMin, vMax)
+    ax.set_ylim(vMin, vMax)
+    ax.hexbin(
+        x=var_in.data.flatten(),
+        y=var_out.data.flatten(),
+        cmap=cmocean.cm.ice_r,
+        bins="log",
+        gridsize=50,
+        mincnt=1,
+    )
+    ax.add_line(
+        Line2D(
+            xdata=(vMin, vMax),
+            ydata=(vMin, vMax),
+            linestyle="solid",
+            linewidth=0.5,
+            color=(0.5, 0.5, 0.5, 1),
+            zorder=100,
+        )
+    )
+    ax.set(ylabel=ylabel, xlabel=xlabel)
+    ax.grid(color="black", alpha=0.2, linestyle="-", linewidth=0.5)

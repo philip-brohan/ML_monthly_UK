@@ -33,7 +33,7 @@ nTrainingImages = 1491  # Max is 1491
 nTestImages = 165  # Max is 165
 
 # How many epochs to train for
-nEpochs = 100
+nEpochs = 1000
 # Length of an epoch - if None, same as nTrainingImages
 nImagesInEpoch = None
 
@@ -45,7 +45,7 @@ bufferSize = 1000  # Untested
 batchSize = 32  # Arbitrary
 
 # Set up the training data
-trainingData = getDataset(purpose="training", nImages=nTrainingImages).repeat(2)
+trainingData = getDataset(purpose="training", nImages=nTrainingImages).repeat(5)
 trainingData = trainingData.shuffle(bufferSize).batch(batchSize)
 
 # Subset of the training data for metrics
@@ -61,7 +61,7 @@ with strategy.scope():
     optimizer = tf.keras.optimizers.Adam(1e-4)
     # If we are doing a restart, load the weights
     if args.epoch > 0:
-        weights_dir = ("%s/Proxy_20CR/models/DCVAE_single_PUV/" + "Epoch_%04d") % (
+        weights_dir = ("%s//ML_monthly_UK/models/DCVAE_4_fields/" + "Epoch_%04d") % (
             os.getenv("SCRATCH"),
             args.epoch,
         )
@@ -98,33 +98,33 @@ for epoch in range(nEpochs):
 
     train_rmse_PRMSL = tf.keras.metrics.Mean()
     train_rmse_SST = tf.keras.metrics.Mean()
-    train_rmse_T2m = tf.keras.metrics.Mean()
+    train_rmse_T2M = tf.keras.metrics.Mean()
     train_rmse_PRATE = tf.keras.metrics.Mean()
     train_logpz = tf.keras.metrics.Mean()
     train_logqz_x = tf.keras.metrics.Mean()
     for test_x in validationData:
-        (rmse_PRMSL, rmse_SST, rmse_T2m, rmse_PRATE, logpz, logqz_x) = compute_loss(
+        (rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x) = compute_loss(
             autoencoder, test_x
         )
         train_rmse_PRMSL(rmse_PRMSL)
         train_rmse_SST(rmse_SST)
-        train_rmse_T2m(rmse_T2m)
+        train_rmse_T2M(rmse_T2M)
         train_rmse_PRATE(rmse_PRATE)
         train_logpz(logpz)
         train_logqz_x(logqz_x)
     test_rmse_PRMSL = tf.keras.metrics.Mean()
     test_rmse_SST = tf.keras.metrics.Mean()
-    test_rmse_T2m = tf.keras.metrics.Mean()
-    train_rmse_PRATE = tf.keras.metrics.Mean()
+    test_rmse_T2M = tf.keras.metrics.Mean()
+    test_rmse_PRATE = tf.keras.metrics.Mean()
     test_logpz = tf.keras.metrics.Mean()
     test_logqz_x = tf.keras.metrics.Mean()
     for test_x in testData:
-        (rmse_PRMSL, rmse_SST, rmse_T2m, rmse_PRATE, logpz, logqz_x) = compute_loss(
+        (rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x) = compute_loss(
             autoencoder, test_x
         )
         test_rmse_PRMSL(rmse_PRMSL)
         test_rmse_SST(rmse_SST)
-        test_rmse_T2m(rmse_T2m)
+        test_rmse_T2M(rmse_T2M)
         test_rmse_PRATE(rmse_PRATE)
         test_logpz(logpz)
         test_logqz_x(logqz_x)
@@ -133,7 +133,7 @@ for epoch in range(nEpochs):
         "RMSE PRMSL: {}, {}".format(train_rmse_PRMSL.result(), test_rmse_PRMSL.result())
     )
     print("RMSE SST  : {}, {}".format(train_rmse_SST.result(), test_rmse_SST.result()))
-    print("RMSE T2m  : {}, {}".format(train_rmse_T2m.result(), test_rmse_T2m.result()))
+    print("RMSE T2m  : {}, {}".format(train_rmse_T2M.result(), test_rmse_T2M.result()))
     print(
         "RMSE PRATE: {}, {}".format(train_rmse_PRATE.result(), test_rmse_PRATE.result())
     )

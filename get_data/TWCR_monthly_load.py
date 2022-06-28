@@ -117,3 +117,11 @@ def normalise(cube, variable):
     cb.data -= nPar[variable][0]
     cb.data /= nPar[variable][1] - nPar[variable][0]
     return cb
+
+def unnormalise(cube, variable):
+    cb = cube.copy()
+    if not variable in nPar:
+        raise Exception("Unsupported variable " + variable)
+    cb.data *= nPar[variable][1] - nPar[variable][0]
+    cb.data += nPar[variable][0]
+    return cb

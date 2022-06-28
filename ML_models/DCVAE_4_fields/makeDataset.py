@@ -37,7 +37,7 @@ def getDataset(purpose, nImages=None):
 
     # Convert the Dataset from file names to file contents
     tr_data = tr_data.map(
-        load_MSLP_tensor, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        load_tensor, num_parallel_calls=tf.data.experimental.AUTOTUNE
     )
     # Optimisation
     tr_data = tr_data.cache()

@@ -9,7 +9,7 @@ import sys
 
 # Hyperparameters
 # Ratio of RMSE to KLD in error
-RMSE_scale = 1000
+RMSE_scale = 10000
 # Relative importances of each variable in error
 PRMSL_scale = 1.0
 SST_scale = 1.0
@@ -20,7 +20,7 @@ PRATE_scale = 1.0
 class DCVAE(tf.keras.Model):
     def __init__(self):
         super(DCVAE, self).__init__()
-        self.latent_dim = 10
+        self.latent_dim = 20
         self.encoder = tf.keras.Sequential(
             [
                 tf.keras.layers.InputLayer(input_shape=(32, 32, 4)),
@@ -140,13 +140,13 @@ def compute_loss(model, x):
         * RMSE_scale
         * SST_scale
     )
-    rmse_T2m = (
+    rmse_T2M = (
         tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(encoded[:, :, :, 2], x[:, :, :, 2]),
             axis=[1],
         )
         * RMSE_scale
-        * T2m_scale
+        * T2M_scale
     )
     rmse_PRATE = (
         tf.reduce_mean(
@@ -161,7 +161,7 @@ def compute_loss(model, x):
     # print(logpz)
     # sys.exit(0)
     logqz_x = log_normal_pdf(latent, mean, logvar)
-    return (rmse_RMSE, rmse_SST, rmse_T2m, rmse_PRATE, logpz, logqz_x)
+    return (rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x)
 
 
 @tf.function  # Optimiser ~25% speedup on VDI (CPU-only)
@@ -172,9 +172,9 @@ def train_step(model, x, optimizer):
     update the model's parameters.
     """
     with tf.GradientTape() as tape:
-        (rmse_p, rmse_u, rmse_v, logpz, logqz_x) = compute_loss(model, x)
+        (rmse_PRMSL, rmse_SST, rmse_T2M,  rmse_PRATE,logpz, logqz_x) = compute_loss(model, x)
         metric = tf.reduce_mean(
-            rmse_PRMSL + rmse_SST + rmse_T2m + rmse_PRATE - logpz + logqz_x
+            rmse_PRMSL + rmse_SST + rmse_T2M + rmse_PRATE - logpz + logqz_x
         )
     gradients = tape.gradient(metric, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
