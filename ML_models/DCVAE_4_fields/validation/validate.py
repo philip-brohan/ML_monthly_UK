@@ -223,8 +223,8 @@ var = pc
 var.data = np.squeeze(ict[:, :, 2].numpy())
 var = unnormalise(var, "TMP2m") - 273.15
 (dmin, dmax) = get_range("TMP2m", args.month, var)
-dmin -= 273.15
-dmax -= 273.15
+dmin -= 273.15 + 2
+dmax -= 273.15 - 2
 ax_t2m = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
 ax_t2m.set_axis_off()
 T2m_img = plotFieldAxes(
@@ -281,8 +281,8 @@ var.data = np.squeeze(ict[:, :, 1].numpy())
 var = unnormalise(var, "TMPS") - 273.15
 (dmin, dmax) = get_range("TMPS", args.month, var)
 var.data = np.ma.masked_where(lm.data > 0.5, var.data, copy=True)
-dmin -= 273.15
-dmax -= 273.15
+dmin -= 273.15 + 2
+dmax -= 273.15 - 2
 ax_sst = fig.add_axes([0.025 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
 ax_sst.set_axis_off()
 SST_img = plotFieldAxes(
@@ -294,7 +294,7 @@ SST_img = plotFieldAxes(
     cMap=cmocean.cm.balance,
     plotCube=pc,
 )
-ax_sst_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.25, 0.75 / 3, 0.05 / 4])
+ax_sst_cb = fig.add_axes([0.125 / 3, 0.05 / 4, 0.75 / 3, 0.05 / 4])
 ax_sst_cb.set_axis_off()
 cb = fig.colorbar(
     SST_img, ax=ax_sst_cb, location="bottom", orientation="horizontal", fraction=1.0
