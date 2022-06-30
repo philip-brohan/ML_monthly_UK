@@ -1,35 +1,45 @@
 #!/usr/bin/env python
 
-# Plot a validation figure for the autoencoder.
+# Find a point in latent space that maximises the fit to some given input fields,
+#  and plot the fitted state.
 
-# For each variable:
-#  1) Input field
-#  2) Autoencoder output
-#  3) scatter plot
-#
 
 import os
 import sys
 import numpy as np
 import tensorflow as tf
-import iris
-import iris.fileformats
-import iris.analysis
-import cmocean
+import tensorflow_probability as tfp
 
 import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
+import cmocean
 
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=100)
-parser.add_argument("--year", help="Test year", type=int, required=False, default=1969)
-parser.add_argument("--month", help="Test month", type=int, required=False, default=3)
 parser.add_argument(
-    "--member", help="Test ensemble member", type=int, required=False, default=1
+    "--year", help="Year to fit to", type=int, required=False, default=1969
+)
+parser.add_argument(
+    "--month", help="Month to fit to", type=int, required=False, default=3
+)
+parser.add_argument(
+    "--member", help="Member to fit to", type=int, required=False, default=1
+)
+parser.add_argument(
+    "--PRMSL", help="Fit to PRMSL?", dest="PRMSL", default=False, action="store_true"
+)
+parser.add_argument(
+    "--SST", help="Fit to SST?", dest="SST", default=False, action="store_true"
+)
+parser.add_argument(
+    "--TMP2m", help="Fit to TMP2m?", dest="TMP2m", default=False, action="store_true"
+)
+parser.add_argument(
+    "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
 args = parser.parse_args()
 
@@ -50,9 +60,9 @@ from plot_variable import get_land_mask
 
 # Load and standardise data
 pc = plot_cube()
-qd = load_quad(args.year,args.month,args.member)
-ict = quad_to_tensor(qd,pc)
-sst_mask = ict.numpy()[:,:,1]==0.0
+qd = load_quad(args.year, args.month, args.member)
+ict = quad_to_tensor(qd, pc)
+sst_mask = ict.numpy()[:, :, 1] == 0.0
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
@@ -67,10 +77,52 @@ load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
 
-# Get autoencoded tensors
-encoded = autoencoder.call(tf.reshape(ict, [1, 32, 32, 4]))
+# We are using the model in inference mode - (does this have any effect?)
+autoencoder.decoder.trainable = False
+for layer in autoencoder.decoder.layers:
+    layer.trainable = False
+autoencoder.decoder.compile()
 
-# Make the plot
+latent = tf.Variable(tf.random.normal(shape=(1, autoencoder.latent_dim)))
+target = tf.constant(tf.reshape(ict, [1, 32, 32, 4]))
+
+
+def decodeFit():
+    result = 0.0
+    decoded = autoencoder.decode(latent)
+    if args.PRMSL:
+        result = result + tf.reduce_mean(
+            tf.keras.metrics.mean_squared_error(decoded[:, :, :, 0], target[:, :, :, 0])
+        )
+    if args.SST:
+        result = result + tf.reduce_mean(
+            tf.keras.metrics.mean_squared_error(
+                tf.boolean_mask(decoded[:, :, :, 1], np.invert(sst_mask), axis=1),
+                tf.boolean_mask(target[:, :, :, 1], np.invert(sst_mask), axis=1),
+            )
+        )
+    if args.TMP2m:
+        result = result + tf.reduce_mean(
+            tf.keras.metrics.mean_squared_error(decoded[:, :, :, 2], target[:, :, :, 2])
+        )
+    if args.PRATE:
+        result = result + tf.reduce_mean(
+            tf.keras.metrics.mean_squared_error(decoded[:, :, :, 3], target[:, :, :, 3])
+        )
+    return result
+
+
+if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
+    loss = tfp.math.minimize(
+        decodeFit,
+        trainable_variables=[latent],
+        num_steps=1000,
+        optimizer=tf.optimizers.Adam(learning_rate=0.05),
+    )
+
+encoded = autoencoder.decode(latent)
+
+# Make the plot - same as for validation script
 fig = Figure(
     figsize=(15, 22),
     dpi=100,
@@ -95,7 +147,6 @@ axb.add_patch(
 )
 
 lMask = get_land_mask(plot_cube(resolution=0.1))
-
 
 # Top left - PRMSL original
 var = pc
@@ -326,4 +377,4 @@ ax_sst_s = fig.add_axes(
 plotScatterAxes(ax_sst_s, varx, vary, vMin=dmin, vMax=dmax)
 
 
-fig.savefig("comparison.png")
+fig.savefig("fit.png")

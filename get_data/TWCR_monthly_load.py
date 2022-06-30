@@ -15,6 +15,12 @@ import numpy as np
 coord_s = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
 
 
+def load_quad(year, month, member):
+    res = []
+    for var in ('PRMSL','TMPS','TMP2m','PRATE'):
+        res.append(load_monthly_member(var,year,month,member))
+    return res
+
 def load_monthly_member(variable, year, month, member):
     if variable == "SST":
         ts = load_monthly_member("TMPS", year, month, member)
@@ -100,28 +106,3 @@ def get_range(variable, month, cube=None):
     dmax = np.percentile(clim.data + (sdc.data * 2), 95)
     dmin = np.percentile(clim.data - (sdc.data * 2), 5)
     return (dmin, dmax)
-
-
-nPar = {
-    "PRMSL": (97700, 103300),
-    "PRATE": (0, 0.00019),
-    "TMP2m": (255, 303),
-    "TMPS": (253, 305),
-}
-
-
-def normalise(cube, variable):
-    cb = cube.copy()
-    if not variable in nPar:
-        raise Exception("Unsupported variable " + variable)
-    cb.data -= nPar[variable][0]
-    cb.data /= nPar[variable][1] - nPar[variable][0]
-    return cb
-
-def unnormalise(cube, variable):
-    cb = cube.copy()
-    if not variable in nPar:
-        raise Exception("Unsupported variable " + variable)
-    cb.data *= nPar[variable][1] - nPar[variable][0]
-    cb.data += nPar[variable][0]
-    return cb

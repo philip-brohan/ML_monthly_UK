@@ -11,7 +11,7 @@ dependencies:
 # ML model building and diagnostics
 # If you don't have a GPU, tensorflow-eigen might be faster
   - tensorflow-gpu=2.4
-  - tensorflow-probability=0.15
+  - tensorflow-probability=0.12
 # Optional, code formatter
   - black
 # Optional - documentation generator
