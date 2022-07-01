@@ -149,6 +149,12 @@ axb.add_patch(
 lMask = get_land_mask(plot_cube(resolution=0.1))
 
 # Top left - PRMSL original
+if args.PRMSL:
+    ax_back = fig.add_axes([0.00 ,  0.75, 1.0 , 0.25])
+    ax_back.set_axis_off()
+    ax_back.add_patch(
+        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+    )
 var = pc
 var.data = np.squeeze(ict[:, :, 0].numpy())
 var = unnormalise(var, "PRMSL") / 100
@@ -204,6 +210,12 @@ plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax)
 
 
 # 2nd left - PRATE original
+if args.PRATE:
+    ax_back = fig.add_axes([0.00 ,  0.5, 1.0 , 0.25])
+    ax_back.set_axis_off()
+    ax_back.add_patch(
+        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+    )
 var = pc
 var.data = np.squeeze(ict[:, :, 3].numpy())
 var = unnormalise(var, "PRATE") * 1000
@@ -259,6 +271,12 @@ plotScatterAxes(ax_prate_s, varx, vary, vMin=0.001, vMax=dmax)
 
 
 # 3rd left - T2m original
+if args.TMP2m:
+    ax_back = fig.add_axes([0.00 ,  0.25, 1.0 , 0.25])
+    ax_back.set_axis_off()
+    ax_back.add_patch(
+        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+    )
 var = pc
 var.data = np.squeeze(ict[:, :, 2].numpy())
 var = unnormalise(var, "TMP2m") - 273.15
@@ -316,6 +334,12 @@ plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax)
 
 
 # Bottom left - SST original
+if args.SST:
+    ax_back = fig.add_axes([0.00 ,  0.00, 1.0 , 0.25])
+    ax_back.set_axis_off()
+    ax_back.add_patch(
+        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+    )
 var = pc
 var.data = np.squeeze(ict[:, :, 1].numpy())
 var = unnormalise(var, "TMPS") - 273.15
