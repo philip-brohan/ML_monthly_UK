@@ -11,6 +11,12 @@ import iris
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+# Going to do external parallelism - run this on one core
+tf.config.threading.set_inter_op_parallelism_threads(1)
+import dask
+
+dask.config.set(scheduler="single-threaded")
+
 import argparse
 
 parser = argparse.ArgumentParser()

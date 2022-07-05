@@ -9,6 +9,7 @@ import iris.analysis
 import iris.coord_systems
 
 import matplotlib
+
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
@@ -179,18 +180,20 @@ def plotField(
     fig.savefig("%s/%s" % (opDir, fName))
 
 
-def plotScatterAxes(ax, var_in, var_out, vMax=None, vMin=None, xlabel='', ylabel=''):
+def plotScatterAxes(
+    ax, var_in, var_out, vMax=None, vMin=None, xlabel="", ylabel="", bins="log"
+):
     if vMax is None:
-        vMax = max(np.max(var_in.data),np.max(var_out.data))
+        vMax = max(np.max(var_in.data), np.max(var_out.data))
     if vMin is None:
-        vMin = min(np.min(var_in.data),np.min(var_out.data))
+        vMin = min(np.min(var_in.data), np.min(var_out.data))
     ax.set_xlim(vMin, vMax)
     ax.set_ylim(vMin, vMax)
     ax.hexbin(
         x=var_in.data.flatten(),
         y=var_out.data.flatten(),
-        cmap=cmocean.cm.ice_r,
-        bins="log",
+        cmap=cmocean.tools.crop_by_percent(cmocean.cm.ice_r, 25, which="min"),
+        bins=bins,
         gridsize=50,
         mincnt=1,
     )

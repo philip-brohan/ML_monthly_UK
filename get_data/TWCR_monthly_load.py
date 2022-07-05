@@ -17,9 +17,10 @@ coord_s = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
 
 def load_quad(year, month, member):
     res = []
-    for var in ('PRMSL','TMPS','TMP2m','PRATE'):
-        res.append(load_monthly_member(var,year,month,member))
+    for var in ("PRMSL", "TMPS", "TMP2m", "PRATE"):
+        res.append(load_monthly_member(var, year, month, member))
     return res
+
 
 def load_monthly_member(variable, year, month, member):
     if variable == "SST":

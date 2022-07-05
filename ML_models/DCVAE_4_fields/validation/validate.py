@@ -50,9 +50,9 @@ from plot_variable import get_land_mask
 
 # Load and standardise data
 pc = plot_cube()
-qd = load_quad(args.year,args.month,args.member)
-ict = quad_to_tensor(qd,pc)
-sst_mask = ict.numpy()[:,:,1]==0.0
+qd = load_quad(args.year, args.month, args.member)
+ict = quad_to_tensor(qd, pc)
+sst_mask = ict.numpy()[:, :, 1] == 0.0
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
