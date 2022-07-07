@@ -86,6 +86,7 @@ def load_fitted(year, month, member, epoch):
     if not os.path.exists(fn):
         raise Exception("Missing data file %s" % fn)
     fitted = iris.load(fn)
+    fitted.sort(key=lambda cube: cube.var_name)
     return fitted
 
 
@@ -105,9 +106,9 @@ res = {
 seconds_in_month = 86400 * monthrange(args.year, args.month)[1]
 for member in range(1, 81):
     res["T2m"]["20CR"].append(np.mean(v3[member - 1][2].data) - 273.15)
-    res["T2m"]["Fit"].append(np.mean(ft[member - 1][2].data) - 273.15)
+    res["T2m"]["Fit"].append(np.mean(ft[member - 1][3].data) - 273.15)
     res["PRATE"]["20CR"].append(np.mean(v3[member - 1][3].data) * seconds_in_month)
-    res["PRATE"]["Fit"].append(np.mean(ft[member - 1][1].data) * seconds_in_month)
+    res["PRATE"]["Fit"].append(np.mean(ft[member - 1][0].data) * seconds_in_month)
 
 opfile = "%s/ML_monthly_UK/UK_averages/%04d/%04d/%02d.pkl" % (
     os.getenv("SCRATCH"),

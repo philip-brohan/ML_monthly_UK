@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-# Make 160 yeears of UK averages from all sources
+# Make 160 years of UK averages from all sources
 
 import os
 
 epoch = 990
+
 
 def is_done(year, month):
     fn = "%s/ML_monthly_UK/UK_averages/%04d/%04d/%02d.pkl" % (
@@ -18,12 +19,11 @@ def is_done(year, month):
     return False
 
 
-for year in range(1884, 2015):
+for year in range(1884, 1900):
     for month in range(1, 13):
-            if is_done(year, month):
-                continue
-            cmd = (
-                "./make_averages_for_month.py --year=%04d "
-                + "--month=%d --epoch=%d"
-            ) % (year, month, epoch,)
-            print(cmd)
+        if is_done(year, month):
+            continue
+        cmd = (
+            "./make_averages_for_month.py --year=%04d " + "--month=%d --epoch=%d"
+        ) % (year, month, epoch,)
+        print(cmd)
