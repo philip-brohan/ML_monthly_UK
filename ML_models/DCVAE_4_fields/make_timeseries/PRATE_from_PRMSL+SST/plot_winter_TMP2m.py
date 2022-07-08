@@ -59,7 +59,7 @@ for key in dta:
 
 # Plot the resulting array as a set of line graphs
 fig = Figure(
-    figsize=(10, 5),
+    figsize=(10, 3),
     dpi=300,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -77,14 +77,25 @@ axb.add_patch(
 )
 
 ax = fig.add_axes(
-    [0.085, 0.07, 0.905, 0.9],
+    [0.065, 0.11, 0.925, 0.86],
     xlim=(args.startyear - 0.5, args.endyear + 0.5),
-    ylim=(0, 10),
+    ylim=(0, 7),
 )
 ax.set_ylabel("Winter T2m")
 
 # HadUK-grid
-ax.add_line(Line2D(dt, hukg, linewidth=1.0, color=(0, 0, 0, 1), alpha=1.0, zorder=100))
+dta = np.array(dt)
+hga = np.array(hukg)
+ax.add_line(
+    Line2D(
+        dta[hga > -100],
+        hga[hga > -100],
+        linewidth=1.0,
+        color=(0, 0, 0, 1),
+        alpha=1.0,
+        zorder=100,
+    )
+)
 
 # 20CRv3
 for m in range(80):

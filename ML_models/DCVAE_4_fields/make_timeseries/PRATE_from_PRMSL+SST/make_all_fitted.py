@@ -20,7 +20,7 @@ def is_done(year, month, member):
     return False
 
 
-for year in range(1884, 2015):
+for year in range(1850, 2015):
     for month in range(1, 13):
         for member in range(1, 81):
             if is_done(year, month, member):

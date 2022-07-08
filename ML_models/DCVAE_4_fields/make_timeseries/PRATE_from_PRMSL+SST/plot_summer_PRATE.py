@@ -57,7 +57,7 @@ for key in dta:
 
 # Plot the resulting array as a set of line graphs
 fig = Figure(
-    figsize=(10, 5),
+    figsize=(10, 3),
     dpi=300,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -75,9 +75,9 @@ axb.add_patch(
 )
 
 ax = fig.add_axes(
-    [0.085, 0.07, 0.905, 0.9],
+    [0.075, 0.11, 0.915, 0.86],
     xlim=(args.startyear - 0.5, args.endyear + 0.5),
-    ylim=(0, 450),
+    ylim=(100, 500),
 )
 ax.set_ylabel("Summer Precipitation")
 

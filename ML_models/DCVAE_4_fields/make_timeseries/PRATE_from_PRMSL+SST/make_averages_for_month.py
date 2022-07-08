@@ -47,20 +47,28 @@ sst_mask = lm.data < 0.5
 
 # Load the HadUK-grid data
 # and reduce to joint v3-land:HadUKg coverage on the 1 degree grid
-t2m_huk = iris.load_cube(
-    "%s/haduk-grid/monthly_meantemp/%04d/%02d.nc"
-    % (os.getenv("SCRATCH"), args.year, args.month)
-)
-t2m_huk = t2m_huk.regrid(pch, iris.analysis.Nearest())
-t2m_huk = t2m_huk.regrid(pc, iris.analysis.AreaWeighted())
-t2m_huk.data.mask[sst_mask] = True  # Apply 20CR land mask
-prate_huk = iris.load_cube(
-    "%s/haduk-grid/monthly_rainfall/%04d/%02d.nc"
-    % (os.getenv("SCRATCH"), args.year, args.month)
-)
-prate_huk = prate_huk.regrid(pch, iris.analysis.Nearest())
-prate_huk = prate_huk.regrid(pc, iris.analysis.AreaWeighted())
-prate_huk.data.mask[sst_mask] = True  # Apply 20CR land mask
+t2m_huk = None
+try:
+    t2m_huk = iris.load_cube(
+        "%s/haduk-grid/monthly_meantemp/%04d/%02d.nc"
+        % (os.getenv("SCRATCH"), args.year, args.month)
+    )
+    t2m_huk = t2m_huk.regrid(pch, iris.analysis.Nearest())
+    t2m_huk = t2m_huk.regrid(pc, iris.analysis.AreaWeighted())
+    t2m_huk.data.mask[sst_mask] = True  # Apply 20CR land mask
+except:
+    print("No HadUK-grid T2m data for %04d-%02d" % (args.year, args.month))
+prate_huk = None
+try:
+    prate_huk = iris.load_cube(
+        "%s/haduk-grid/monthly_rainfall/%04d/%02d.nc"
+        % (os.getenv("SCRATCH"), args.year, args.month)
+    )
+    prate_huk = prate_huk.regrid(pch, iris.analysis.Nearest())
+    prate_huk = prate_huk.regrid(pc, iris.analysis.AreaWeighted())
+    prate_huk.data.mask[sst_mask] = True  # Apply 20CR land mask
+except:
+    print("No HadUK-grid PRATE data for %04d-%02d" % (args.year, args.month))
 
 # Load the 20CRv3 data
 # and reduce to joint v3-land:HadUKg coverage on the 1 degree grid
@@ -69,7 +77,7 @@ for member in range(1, 81):
     qd = load_quad(args.year, args.month, member)
     for i in range(4):
         qd[i] = qd[i].regrid(pc, iris.analysis.Linear())
-        qd[i].data = qd[i].data + t2m_huk.data * 0.0  # Apply HadUK data mask
+        qd[i].data = qd[i].data + prate_huk.data * 0.0  # Apply HadUK data mask
         qd[i].data.mask[sst_mask] = True  # Apply 20CR land mask
     v3.append(qd)
 
@@ -94,15 +102,20 @@ ft = []
 for member in range(1, 81):
     qd = load_fitted(args.year, args.month, member, args.epoch)
     for i in range(4):
-        qd[i].data = qd[i].data + t2m_huk.data * 0.0  # Apply HadUK data mask
+        qd[i].data = qd[i].data + prate_huk.data * 0.0  # Apply HadUK data mask
         qd[i].data.mask[sst_mask] = True  # Apply 20CR land mask
     ft.append(qd)
 
 # Package-up the averages
 res = {
-    "T2m": {"HUKG": np.mean(t2m_huk.data), "20CR": [], "Fit": [],},
-    "PRATE": {"HUKG": np.mean(prate_huk.data), "20CR": [], "Fit": [],},
+    "T2m": {"HUKG": -999, "20CR": [], "Fit": [],},
+    "PRATE": {"HUKG": -999, "20CR": [], "Fit": [],},
 }
+if t2m_huk is not None:
+    res["T2m"]["HUKG"] = np.mean(t2m_huk.data)
+if prate_huk is not None:
+    res["PRATE"]["HUKG"] = np.mean(prate_huk.data)
+
 seconds_in_month = 86400 * monthrange(args.year, args.month)[1]
 for member in range(1, 81):
     res["T2m"]["20CR"].append(np.mean(v3[member - 1][2].data) - 273.15)

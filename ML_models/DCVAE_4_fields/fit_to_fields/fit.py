@@ -19,7 +19,7 @@ import cmocean
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=100)
+parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=990)
 parser.add_argument(
     "--year", help="Year to fit to", type=int, required=False, default=1969
 )
