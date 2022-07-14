@@ -41,14 +41,10 @@ x_coord.guess_bounds()
 dummy_data = np.zeros((len(y_values), len(x_values)))
 sCube = iris.cube.Cube(dummy_data, dim_coords_and_dims=[(y_coord, 0), (x_coord, 1)])
 
-# Also want two land masks:
-#  one for SST, take from 20CRv3
-lm_20CR = iris.load_cube("%s/20CR/version_3/fixed/land.nc" % os.getenv("SCRATCH"))
-lm_20CR = iris.util.squeeze(lm_20CR)
+# 20CR data don't contain a coordinate system - need one to add
 cs_20CR = iris.coord_systems.RotatedGeogCS(90, 180, 0)
-lm_20CR.coord("latitude").coord_system = cs_20CR
-lm_20CR.coord("longitude").coord_system = cs_20CR
-# And one for plotting - high res
+
+# Also want a land mask:
 lm_plot = iris.load_cube(
     "%s/fixed_fields/land_mask/opfc_global_2019.nc" % os.getenv("DATADIR")
 )
@@ -87,8 +83,8 @@ def load_cList(year, month, member=1):
     sst = iris.load_cube(fname, ftt)
     sst.coord("latitude").coord_system = cs_20CR
     sst.coord("longitude").coord_system = cs_20CR
-    sst = sst.regrid(lm_20CR, iris.analysis.Linear())
-    sst.data = np.ma.masked_where(lm_20CR.data > 0.5, sst.data, copy=False)
+    lm_20CR = lm_plot.regrid(sst, iris.analysis.Linear())
+    sst.data = np.ma.masked_where(lm_20CR.data > 0.0, sst.data, copy=False)
     sst = sst.regrid(sCube, iris.analysis.Linear())
     res.append(sst)
     # T2m
