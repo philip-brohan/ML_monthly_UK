@@ -12,7 +12,6 @@ from matplotlib.patches import Rectangle
 import iris
 import iris.analysis
 import cmocean
-from calendar import monthrange
 
 import warnings
 
@@ -130,7 +129,6 @@ cb = fig.colorbar(
 
 # Top right - PRATE
 var = qd[3].copy()
-var /= 86400 * monthrange(args.year, args.month)[1]
 var.data *= 1000  # Ugly, but makes colorbar legible
 dmin = 0
 dmax = max(np.max(var.data), 0.05)
@@ -152,6 +150,7 @@ cb = fig.colorbar(
 )
 # Bottom left - T2m
 var = qd[2]
+var.data -= 273.15
 dmin = np.min(var.data)
 dmax = np.max(var.data)
 if (dmax - dmin) < 10:

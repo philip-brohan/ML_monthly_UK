@@ -8,6 +8,7 @@ import iris.analysis
 import iris.coord_systems
 import iris.fileformats
 import numpy as np
+from calendar import monthrange
 
 # Define a standard-cube to work with
 # Identical to that used in HadUK-Grid, except that the grid is trimmed to 896x1440
@@ -84,6 +85,7 @@ def load_cList(year, month, member=1):
     sst.coord("latitude").coord_system = cs_20CR
     sst.coord("longitude").coord_system = cs_20CR
     lm_20CR = lm_plot.regrid(sst, iris.analysis.Linear())
+    sst.data[lm_20CR.data>0]=0
     sst.data = np.ma.masked_where(lm_20CR.data > 0.0, sst.data, copy=False)
     sst = sst.regrid(sCube, iris.analysis.Linear())
     res.append(sst)
@@ -93,11 +95,14 @@ def load_cList(year, month, member=1):
         % (os.getenv("SCRATCH"), year, month)
     )
     t2m = t2m.regrid(sCube, iris.analysis.Nearest())
+    t2m += 273.15
     res.append(t2m)
     prate = iris.load_cube(
         "%s/haduk-grid/monthly_rainfall/%04d/%02d.nc"
         % (os.getenv("SCRATCH"), year, month)
     )
     prate = prate.regrid(sCube, iris.analysis.Nearest())
+    prate /= (86400 * monthrange(year, month)[1])
+
     res.append(prate)
     return res
