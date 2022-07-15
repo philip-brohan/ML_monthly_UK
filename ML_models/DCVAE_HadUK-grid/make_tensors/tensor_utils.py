@@ -11,8 +11,11 @@ import numpy as np
 def cList_to_tensor(cL):
     d1 = normalise(cL[0], "PRMSL")
     d2 = normalise(cL[1], "TMPS")
+    d2.data[np.where(d2.data.mask == True)] = 0
     d3 = normalise(cL[2], "TMP2m")
+    d3.data[np.where(d3.data.mask == True)] = 0
     d4 = normalise(cL[3], "PRATE")
+    d4.data[np.where(d4.data.mask == True)] = 0
     ic = np.stack((d1.data, d2.data, d3.data, d4.data), axis=2)
     ict = tf.convert_to_tensor(ic.data, np.float32)
     return ict
