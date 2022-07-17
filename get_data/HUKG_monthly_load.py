@@ -97,6 +97,7 @@ def load_cList(year, month, member=1):
     t2m = t2m.regrid(sCube, iris.analysis.Nearest())
     t2m += 273.15
     res.append(t2m)
+    # PRATE
     prate = iris.load_cube(
         "%s/haduk-grid/monthly_rainfall/%04d/%02d.nc"
         % (os.getenv("SCRATCH"), year, month)
