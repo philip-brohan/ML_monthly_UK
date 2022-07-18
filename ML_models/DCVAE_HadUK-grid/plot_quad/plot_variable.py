@@ -28,9 +28,8 @@ def plotFieldAxes(
     plotCube=None,
 ):
 
-    if plotCube is None:
-        plotCube = plot_cube()
-    field = field.regrid(plotCube, iris.analysis.Linear())
+    if plotCube is not None:
+        field = field.regrid(plotCube, iris.analysis.Linear())
     if vMax is None:
         vMax = np.max(field.data)
     if vMin is None:
@@ -38,8 +37,8 @@ def plotFieldAxes(
     if lMask is None:
         lMask = get_land_mask(plot_cube(resolution=0.1))
 
-    lons = plotCube.coord("projection_x_coordinate").points
-    lats = plotCube.coord("projection_y_coordinate").points
+    lons = field.coord("projection_x_coordinate").points
+    lats = field.coord("projection_y_coordinate").points
     ax_map.set_ylim(min(lats), max(lats))
     ax_map.set_xlim(min(lons), max(lons))
     ax_map.set_axis_off()

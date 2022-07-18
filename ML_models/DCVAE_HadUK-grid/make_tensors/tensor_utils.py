@@ -8,20 +8,20 @@ import tensorflow as tf
 import numpy as np
 
 
-def cList_to_tensor(cL):
+def cList_to_tensor(cL, sst_mask, hukg_mask):
     d1 = normalise(cL[0], "PRMSL")
     d2 = normalise(cL[1], "TMPS")
-    d2.data[np.where(d2.data.mask == True)] = 0
+    d2.data[np.where(sst_mask == True)] = 0
     d3 = normalise(cL[2], "TMP2m")
-    d3.data[np.where(d3.data.mask == True)] = 0
+    d3.data[np.where(hukg_mask == True)] = 0
     d4 = normalise(cL[3], "PRATE")
-    d4.data[np.where(d4.data.mask == True)] = 0
+    d4.data[np.where(hukg_mask == True)] = 0
     ic = np.stack((d1.data, d2.data, d3.data, d4.data), axis=2)
     ict = tf.convert_to_tensor(ic.data, np.float32)
     return ict
 
 
-def tensor_to_cList(tensor, plotCube):
+def tensor_to_cList(tensor, sst_mask, hukg_mask):
     d1 = plotCube.copy()
     d1.data = np.squeeze(tensor[:, :, 0].numpy())
     d1 = unnormalise(d1, "PRMSL")
@@ -29,16 +29,17 @@ def tensor_to_cList(tensor, plotCube):
     d2 = plotCube.copy()
     d2.data = np.squeeze(tensor[:, :, 1].numpy())
     d2 = unnormalise(d2, "TMPS")
-    sst_mask = tensor.numpy()[:, :, 1] == 0.0
-    d2.data = np.ma.masked_where(sst_mask, d2.data, copy=True)
+    d2.data = np.ma.masked_where(sst_mask, d2.data, copy=False)
     d2.var_name = "SST"
     d3 = plotCube.copy()
     d3.data = np.squeeze(tensor[:, :, 2].numpy())
     d3 = unnormalise(d3, "TMP2m")
+    d3.data = np.ma.masked_where(hukg_mask, d3.data, copy=False)
     d3.var_name = "TMP2m"
     d4 = plotCube.copy()
     d4.data = np.squeeze(tensor[:, :, 3].numpy())
     d4 = unnormalise(d4, "PRATE")
+    d4.data = np.ma.masked_where(hukg_mask, d4.data, copy=False)
     d4.var_name = "PRATE"
     return [d1, d2, d3, d4]
 

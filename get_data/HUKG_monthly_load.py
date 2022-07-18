@@ -51,6 +51,34 @@ lm_plot = iris.load_cube(
 )
 lm_plot = lm_plot.regrid(sCube, iris.analysis.Linear())
 
+# And a land-mask on the 20CR SST grid
+fname = "%s/20CR/version_3/monthly/members/%04d/%s.%04d.mnmean_mem%03d.nc" % (
+    os.getenv("SCRATCH"),
+    2014,
+    "TMPS",
+    2014,
+    1,
+)
+if not os.path.isfile(fname):
+    raise Exception("No data file %s" % fname)
+ftt = iris.Constraint(time=lambda cell: cell.point.month == 1)
+sst = iris.load_cube(fname, ftt)
+sst.coord("latitude").coord_system = cs_20CR
+sst.coord("longitude").coord_system = cs_20CR
+lm_20CR = lm_plot.regrid(sst, iris.analysis.Linear())
+lm_20CR.data[lm_20CR.data > 0] = 1
+lm_20CR.data = np.ma.masked_where(lm_20CR.data > 0.0, lm_20CR.data, copy=False)
+lm_20CR = lm_20CR.regrid(sCube, iris.analysis.Nearest())
+lm_20CR.data[lm_20CR.data > 0] = 1
+lm_20CR.data = np.ma.masked_where(lm_20CR.data > 0.0, lm_20CR.data, copy=False)
+
+# And a HadUK-Grid data mask
+t2m = iris.load_cube(
+    "%s/haduk-grid/monthly_meantemp/%04d/%02d.nc" % (os.getenv("SCRATCH"), 2014, 1)
+)
+dm_hukg = t2m.regrid(sCube, iris.analysis.Nearest())
+dm_hukg.data.data[np.where(dm_hukg.data.mask == True)] = 0
+dm_hukg.data.data[np.where(dm_hukg.data.mask == False)] = 1
 
 def load_cList(year, month, member=1):
     res = []
@@ -70,6 +98,7 @@ def load_cList(year, month, member=1):
     prmsl.coord("longitude").coord_system = cs_20CR
     prmsl = prmsl.regrid(sCube, iris.analysis.Linear())
     res.append(prmsl)
+
     # SST
     fname = "%s/20CR/version_3/monthly/members/%04d/%s.%04d.mnmean_mem%03d.nc" % (
         os.getenv("SCRATCH"),
@@ -84,10 +113,9 @@ def load_cList(year, month, member=1):
     sst = iris.load_cube(fname, ftt)
     sst.coord("latitude").coord_system = cs_20CR
     sst.coord("longitude").coord_system = cs_20CR
-    lm_20CR = lm_plot.regrid(sst, iris.analysis.Linear())
-    sst.data[lm_20CR.data>0]=0
-    sst.data = np.ma.masked_where(lm_20CR.data > 0.0, sst.data, copy=False)
     sst = sst.regrid(sCube, iris.analysis.Linear())
+    sst.data[lm_20CR.data > 0] = 0
+    sst.data = np.ma.masked_where(lm_20CR.data > 0.0, sst.data, copy=False)
     res.append(sst)
     # T2m
     t2m = iris.load_cube(
@@ -103,7 +131,7 @@ def load_cList(year, month, member=1):
         % (os.getenv("SCRATCH"), year, month)
     )
     prate = prate.regrid(sCube, iris.analysis.Nearest())
-    prate /= (86400 * monthrange(year, month)[1])
+    prate /= 86400 * monthrange(year, month)[1]
 
     res.append(prate)
     return res

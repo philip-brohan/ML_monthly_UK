@@ -5,6 +5,8 @@
 # Convert into a TensorFlow tensor.
 # Serialise and store on $SCRATCH.
 
+import os
+import sys
 import tensorflow as tf
 import numpy as np
 import iris
@@ -17,11 +19,14 @@ import dask
 
 dask.config.set(scheduler="single-threaded")
 
-import os
-import sys
+import warnings
+
+warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
 
 sys.path.append("%s/../../../get_data/" % os.path.dirname(__file__))
 from HUKG_monthly_load import load_cList
+from HUKG_monthly_load import lm_20CR
+from HUKG_monthly_load import dm_hukg
 
 sys.path.append("%s/." % os.path.dirname(__file__))
 from tensor_utils import cList_to_tensor
@@ -52,7 +57,7 @@ if not os.path.isdir(os.path.dirname(args.opfile)):
 
 # Load and standardise data
 qd = load_cList(args.year, args.month, args.member)
-ict = cList_to_tensor(qd)
+ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
 
 # Write to file
 sict = tf.io.serialize_tensor(ict)

@@ -22,6 +22,11 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
+import warnings
+
+warnings.filterwarnings("ignore", message=".*partition.*")
+warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
+
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -37,6 +42,8 @@ sys.path.append("%s/../../../get_data" % os.path.dirname(__file__))
 from HUKG_monthly_load import load_cList
 from HUKG_monthly_load import sCube
 from HUKG_monthly_load import lm_plot
+from HUKG_monthly_load import lm_20CR
+from HUKG_monthly_load import dm_hukg
 from TWCR_monthly_load import get_range
 
 sys.path.append("%s/../make_tensors" % os.path.dirname(__file__))
@@ -51,8 +58,6 @@ from plot_variable import plotScatterAxes
 # Load and standardise data
 qd = load_cList(args.year, args.month, args.member)
 ict = cList_to_tensor(qd)
-sst_mask = ict.numpy()[:, :, 1] == 0.0
-hukg_mask = ict.numpy()[:, :, 2] == 0.0
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
@@ -159,7 +164,7 @@ plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 # 2nd left - PRATE original
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 3].numpy())
-var.data = np.ma.masked_where(hukg_mask, var.data, copy=False)
+var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "PRATE") * 1000
 (dmin, dmax) = get_range("PRATE", args.month, var)
 dmin = 0
@@ -183,7 +188,7 @@ cb = fig.colorbar(
 
 # 2nd centre - PRATE encoded
 var.data = np.squeeze(encoded[0, :, :, 3].numpy())
-var.data = np.ma.masked_where(hukg_mask, var.data, copy=False)
+var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "PRATE") * 1000
 ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate_e.set_axis_off()
@@ -209,11 +214,11 @@ cb = fig.colorbar(
 # 2nd right - PRATE scatter
 varx = sCube.copy()
 varx.data = np.squeeze(ict[:, :, 3].numpy())
-varx.data = np.ma.masked_where(hukg_mask, varx.data, copy=False)
+varx.data = np.ma.masked_where(dm_hukg.data == 0, varx.data, copy=False)
 varx = unnormalise(varx, "PRATE") * 1000
 vary = sCube.copy()
 vary.data = np.squeeze(encoded[0, :, :, 3].numpy())
-vary.data = np.ma.masked_where(hukg_mask, vary.data, copy=False)
+vary.data = np.ma.masked_where(dm_hukg.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "PRATE") * 1000
 ax_prate_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.5, 0.95 / 3 - 0.06, 0.85 / 4]
@@ -224,7 +229,7 @@ plotScatterAxes(ax_prate_s, varx, vary, vMin=0.001, vMax=dmax, bins=None)
 # 3rd left - T2m original
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 2].numpy())
-var.data = np.ma.masked_where(hukg_mask, var.data, copy=False)
+var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "TMP2m") - 273.15
 (dmin, dmax) = get_range("TMP2m", args.month, var)
 dmin -= 273.15 + 2
@@ -249,7 +254,7 @@ cb = fig.colorbar(
 # 3rd centre - T2m encoded
 var = sCube.copy()
 var.data = np.squeeze(encoded[0, :, :, 2].numpy())
-var.data = np.ma.masked_where(hukg_mask, var.data, copy=False)
+var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "TMP2m") - 273.15
 ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
 ax_t2m_e.set_axis_off()
@@ -271,11 +276,11 @@ cb = fig.colorbar(
 # 3rd right - T2m scatter
 varx = sCube.copy()
 varx.data = np.squeeze(ict[:, :, 2].numpy())
-varx.data = np.ma.masked_where(hukg_mask, varx.data, copy=False)
+varx.data = np.ma.masked_where(dm_hukg.data == 0, varx.data, copy=False)
 varx = unnormalise(varx, "TMP2m") - 273.15
 vary = sCube.copy()
 vary.data = np.squeeze(encoded[0, :, :, 2].numpy())
-vary.data = np.ma.masked_where(hukg_mask, vary.data, copy=False)
+vary.data = np.ma.masked_where(dm_hukg.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMP2m") - 273.15
 ax_t2m_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.25, 0.95 / 3 - 0.06, 0.85 / 4]
@@ -285,9 +290,9 @@ plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 # Bottom left - SST original
 var.data = np.squeeze(ict[:, :, 1].numpy())
+var.data = np.ma.masked_where(lm_20CR.data > 0, var.data, copy=False)
 var = unnormalise(var, "TMPS") - 273.15
 (dmin, dmax) = get_range("TMPS", args.month, var)
-var.data = np.ma.masked_where(sst_mask, var.data, copy=True)
 dmin -= 273.15 + 2
 dmax -= 273.15 - 2
 ax_sst = fig.add_axes([0.025 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
@@ -308,10 +313,9 @@ cb = fig.colorbar(
 )
 
 # 2nd centre - SST encoded
-var.data *= 0
-var.data += encoded.numpy()[0, :, :, 1]
+var.data = encoded.numpy()[0, :, :, 1]
+var.data = np.ma.masked_where(lm_20CR.data > 0, var.data, copy=False)
 var = unnormalise(var, "TMPS") - 273.15
-var.data = np.ma.masked_where(sst_mask, var.data, copy=True)
 ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
 ax_sst_e.set_axis_off()
 SST_e_img = plotFieldAxes(
@@ -331,11 +335,11 @@ cb = fig.colorbar(
 
 # 2nd right - SST scatter
 varx.data = np.squeeze(ict[:, :, 1].numpy())
+varx.data = np.ma.masked_where(lm_20CR.data > 0, varx.data, copy=False)
 varx = unnormalise(varx, "TMPS") - 273.15
-varx.data = np.ma.masked_where(sst_mask, varx.data, copy=False)
 vary.data = np.squeeze(encoded[0, :, :, 1].numpy())
+vary.data = np.ma.masked_where(lm_20CR.data > 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMPS") - 273.15
-vary.data = np.ma.masked_where(sst_mask, vary.data, copy=False)
 ax_sst_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4, 0.95 / 3 - 0.06, 0.85 / 4]
 )
