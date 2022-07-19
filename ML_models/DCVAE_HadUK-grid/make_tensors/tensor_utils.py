@@ -22,7 +22,7 @@ def cList_to_tensor(cL, sst_mask, hukg_mask):
     return ict
 
 
-def tensor_to_cList(tensor, sst_mask, hukg_mask):
+def tensor_to_cList(tensor, plotCube, sst_mask, hukg_mask):
     d1 = plotCube.copy()
     d1.data = np.squeeze(tensor[:, :, 0].numpy())
     d1 = unnormalise(d1, "PRMSL")
