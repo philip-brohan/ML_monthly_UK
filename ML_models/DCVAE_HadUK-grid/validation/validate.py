@@ -57,7 +57,7 @@ from plot_variable import plotScatterAxes
 
 # Load and standardise data
 qd = load_cList(args.year, args.month, args.member)
-ict = cList_to_tensor(qd)
+ict = cList_to_tensor(qd,lm_20CR.data.mask,dm_hukg.data.mask)
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))

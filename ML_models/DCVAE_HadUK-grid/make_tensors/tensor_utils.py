@@ -14,6 +14,7 @@ def cList_to_tensor(cL, sst_mask, hukg_mask):
     d2.data[np.where(sst_mask == True)] = 0
     d3 = normalise(cL[2], "TMP2m")
     d3.data[np.where(hukg_mask == True)] = 0
+    d3.data[d3.data>5] =0  # Kludge - mask varies
     d4 = normalise(cL[3], "PRATE")
     d4.data[np.where(hukg_mask == True)] = 0
     ic = np.stack((d1.data, d2.data, d3.data, d4.data), axis=2)
