@@ -185,11 +185,11 @@ def compute_loss(model, x):
         * PRATE_scale
     )
     # print(rmse)
-    logpz = log_normal_pdf(latent, 0.0, 0.0)
+    logpz = log_normal_pdf(latent, 0.0, 0.0) * -1
     # print(logpz)
     # sys.exit(0)
     logqz_x = log_normal_pdf(latent, mean, logvar)
-    return (rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x)
+    return tf.stack([rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x])
 
 
 @tf.function  # Optimiser ~25% speedup on VDI (CPU-only)
@@ -200,11 +200,7 @@ def train_step(model, x, optimizer):
     update the model's parameters.
     """
     with tf.GradientTape() as tape:
-        (rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x) = compute_loss(
-            model, x
-        )
-        metric = tf.reduce_mean(
-            rmse_PRMSL + rmse_SST + rmse_T2M + rmse_PRATE - logpz + logqz_x
-        )
+        vstack = compute_loss(model, x)
+        metric = tf.reduce_mean(tf.math.reduce_sum(vstack, axis=0))
     gradients = tape.gradient(metric, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
