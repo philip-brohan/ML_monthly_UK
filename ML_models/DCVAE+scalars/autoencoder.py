@@ -106,7 +106,7 @@ with strategy.scope():
 
     # Instantiate the model
     autoencoder = DCVAE()
-    optimizer = tf.keras.optimizers.Adam(1e-4)
+    optimizer = tf.keras.optimizers.Adam(1e-3)
     # If we are doing a restart, load the weights
     if args.epoch > 0:
         weights_dir = ("%s/ML_monthly_UK/DCVAE+scalars/models/Epoch_%04d") % (

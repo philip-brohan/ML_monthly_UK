@@ -17,9 +17,9 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Distribute across all GPUs
-strategy = tf.distribute.MirroredStrategy()
+# strategy = tf.distribute.MirroredStrategy()
 # strategy = tf.distribute.experimental.CentralStorageStrategy()
-# strategy = tf.distribute.get_strategy()
+strategy = tf.distribute.get_strategy()
 
 # Load the data source and model specification
 sys.path.append("%s/." % os.path.dirname(__file__))
