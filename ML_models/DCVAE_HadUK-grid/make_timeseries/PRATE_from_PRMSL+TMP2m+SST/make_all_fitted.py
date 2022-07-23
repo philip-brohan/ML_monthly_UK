@@ -4,7 +4,7 @@
 
 import os
 
-epoch = 990
+epoch = 770
 
 
 def is_done(year, month, member):
