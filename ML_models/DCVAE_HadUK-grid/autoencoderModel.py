@@ -20,33 +20,33 @@ PRATE_scale = 1.0
 class DCVAE(tf.keras.Model):
     def __init__(self):
         super(DCVAE, self).__init__()
-        self.latent_dim = 100
+        self.latent_dim = 20
         self.encoder = tf.keras.Sequential(
             [
                 tf.keras.layers.InputLayer(input_shape=(1440, 896, 4)),
                 tf.keras.layers.Conv2D(
-                    filters=5 * 4 * 2,
+                    filters=5 * 4 ,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2D(
-                    filters=5 * 2 * 2,
+                    filters=5 * 2,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2D(
-                    filters=10 * 2,
+                    filters=10 ,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2D(
-                    filters=20 * 2,
+                    filters=20 ,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
@@ -71,28 +71,28 @@ class DCVAE(tf.keras.Model):
                 tf.keras.layers.Dense(units=45 * 28 * 40, activation=tf.nn.relu),
                 tf.keras.layers.Reshape(target_shape=(45, 28, 40)),
                 tf.keras.layers.Conv2DTranspose(
-                    filters=20 * 2,
+                    filters=20 ,
                     kernel_size=3,
                     strides=2,
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
-                    filters=10 * 2,
+                    filters=10 ,
                     kernel_size=3,
                     strides=2,
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
-                    filters=5 * 2 * 2,
+                    filters=5 * 2 ,
                     kernel_size=3,
                     strides=2,
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
-                    filters=5 * 4 * 2,
+                    filters=5 * 4 ,
                     kernel_size=3,
                     strides=2,
                     padding="same",

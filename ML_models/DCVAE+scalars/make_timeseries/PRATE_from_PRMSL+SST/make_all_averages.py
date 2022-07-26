@@ -9,7 +9,7 @@ epoch = 770
 
 def is_done(year, month):
     fn = (
-        "%s/ML_monthly_UK/DCVAE+sclars/UK_averages/PRMSL_SST/"
+        "%s/ML_monthly_UK/DCVAE+scalars/UK_averages/PRMSL_SST/"
         + "%04d/%04d/%02d.pkl"
     ) % (os.getenv("SCRATCH"), epoch, year, month,)
     if os.path.exists(fn):
