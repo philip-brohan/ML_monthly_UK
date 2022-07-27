@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# Plot a time-series of UK-region annual precipitation from
-# HadUK-grid, 20CRv3 and the ML reanalysis fit.
+# Plot a time-series from HadUK-grid, 20CRv3 and the ML reanalysis fit.
 
 import os
+import sys
 import numpy as np
 import datetime
 import pickle
@@ -14,22 +14,45 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from matplotlib.lines import Line2D
 
+sys.path.append("%s/../.." % os.path.dirname(__file__))
+from localise import LSCRATCH
+
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=990)
-parser.add_argument("--startyear", type=int, required=False, default=1969)
-parser.add_argument("--endyear", type=int, required=False, default=1975)
+parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=100)
+parser.add_argument("--startyear", type=int, required=False, default=1884)
+parser.add_argument("--endyear", type=int, required=False, default=2014)
+parser.add_argument(
+    "--PRMSL", help="Fit to PRMSL?", dest="PRMSL", default=False, action="store_true"
+)
+parser.add_argument(
+    "--SST", help="Fit to SST?", dest="SST", default=False, action="store_true"
+)
+parser.add_argument(
+    "--TMP2m", help="Fit to TMP2m?", dest="TMP2m", default=False, action="store_true"
+)
+parser.add_argument(
+    "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
+)
 args = parser.parse_args()
+
+cName = "constraints"
+for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
+    if vars(args)[constraint]:
+        cName += "_%s" % constraint
 
 # Load the data
 dta = {}
 for year in range(args.startyear, args.endyear + 1):
     for month in range(1, 13):
-        mfn = (
-            "%s/ML_monthly_UK//DCVAE_HadUK-grid/UK_averages/PRMSL/"
-            + "%04d/%04d/%02d.pkl"
-        ) % (os.getenv("SCRATCH"), args.epoch, year, month,)
+        mfn = ("%s/UK_averages/%s/%04d/%04d/%02d.pkl") % (
+            LSCRATCH,
+            cName,
+            args.epoch,
+            year,
+            month,
+        )
         if not os.path.exists(mfn):
             raise Exception("Missing data file %s" % mfn)
         with open(mfn, "rb") as infile:
@@ -90,4 +113,4 @@ for m in range(7):
     )
 
 
-fig.savefig("PRATE_annual.png")
+fig.savefig("annual.png")

@@ -25,7 +25,7 @@ class DCVAE(tf.keras.Model):
             [
                 tf.keras.layers.InputLayer(input_shape=(1440, 896, 4)),
                 tf.keras.layers.Conv2D(
-                    filters=5 * 4 ,
+                    filters=5 * 4,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
@@ -39,14 +39,14 @@ class DCVAE(tf.keras.Model):
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2D(
-                    filters=10 ,
+                    filters=10,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2D(
-                    filters=20 ,
+                    filters=20,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
@@ -71,28 +71,28 @@ class DCVAE(tf.keras.Model):
                 tf.keras.layers.Dense(units=45 * 28 * 40, activation=tf.nn.relu),
                 tf.keras.layers.Reshape(target_shape=(45, 28, 40)),
                 tf.keras.layers.Conv2DTranspose(
-                    filters=20 ,
+                    filters=20,
                     kernel_size=3,
                     strides=2,
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
-                    filters=10 ,
+                    filters=10,
                     kernel_size=3,
                     strides=2,
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
-                    filters=5 * 2 ,
+                    filters=5 * 2,
                     kernel_size=3,
                     strides=2,
                     padding="same",
                     activation="relu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
-                    filters=5 * 4 ,
+                    filters=5 * 4,
                     kernel_size=3,
                     strides=2,
                     padding="same",

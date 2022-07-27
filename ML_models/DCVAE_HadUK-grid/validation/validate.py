@@ -22,6 +22,9 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
+sys.path.append("%s/.." % os.path.dirname(__file__))
+from localise import LSCRATCH
+
 import warnings
 
 warnings.filterwarnings("ignore", message=".*partition.*")
@@ -57,17 +60,14 @@ from plot_variable import plotScatterAxes
 
 # Load and standardise data
 qd = load_cList(args.year, args.month, args.member)
-ict = cList_to_tensor(qd,lm_20CR.data.mask,dm_hukg.data.mask)
+ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
 from autoencoderModel import DCVAE
 
 autoencoder = DCVAE()
-weights_dir = ("%s//ML_monthly_UK/DCVAE_HadUK-grid/models/Epoch_%04d") % (
-    os.getenv("SCRATCH"),
-    args.epoch,
-)
+weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()

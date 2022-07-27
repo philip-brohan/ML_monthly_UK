@@ -3,16 +3,14 @@
 # Make 50 years of monthly-data tensors
 
 import os
+import sys
+
+sys.path.append("%s/.." % os.path.dirname(__file__))
+from localise import TSOURCE
 
 
 def is_done(year, month, member, purpose):
-    fn = "%s/ML_monthly_UK/DCVAE_HadUK-grid/datasets/%s/%04d-%02d_%02d.tfd" % (
-        os.getenv("SCRATCH"),
-        purpose,
-        year,
-        month,
-        member,
-    )
+    fn = "%s/datasets/%s/%04d-%02d_%02d.tfd" % (TSOURCE, purpose, year, month, member,)
     if os.path.exists(fn):
         return True
     return False
@@ -20,7 +18,7 @@ def is_done(year, month, member, purpose):
 
 member = 1
 count = 0
-for year in range(1969, 2015):
+for year in range(1884, 2015):
     for month in range(1, 13):
         for memcnt in range(3):
             member += 7

@@ -1,8 +1,12 @@
 # Make tf.data.Datasets from HadUK-Grid monthly UK fields
 
 import os
+import sys
 import tensorflow as tf
 import numpy as np
+
+sys.path.append("%s/." % os.path.dirname(__file__))
+from localise import TSOURCE
 
 # Load a pre-standardised 4-variable tensor from a file
 def load_tensor(file_name):
@@ -16,10 +20,7 @@ def load_tensor(file_name):
 def getDataset(purpose, nImages=None):
 
     # Get a list of filenames containing tensors
-    inFiles = os.listdir(
-        "%s/ML_monthly_UK/DCVAE_HadUK-grid/datasets/%s"
-        % (os.getenv("SCRATCH"), purpose)
-    )
+    inFiles = os.listdir("%s/datasets/%s" % (TSOURCE, purpose))
 
     if nImages is not None:
         if len(inFiles) >= nImages:
@@ -30,11 +31,7 @@ def getDataset(purpose, nImages=None):
             )
 
     # Create TensorFlow Dataset object from the file namelist
-    inFiles = [
-        "%s/ML_monthly_UK/DCVAE_HadUK-grid/datasets/%s/%s"
-        % (os.getenv("SCRATCH"), purpose, x)
-        for x in inFiles
-    ]
+    inFiles = ["%s/datasets/%s/%s" % (TSOURCE, purpose, x) for x in inFiles]
     tr_data = tf.data.Dataset.from_tensor_slices(tf.constant(inFiles))
 
     # Convert the Dataset from file names to file contents

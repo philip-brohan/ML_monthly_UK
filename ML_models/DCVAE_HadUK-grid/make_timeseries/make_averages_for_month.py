@@ -15,6 +15,9 @@ import warnings
 
 warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
 
+sys.path.append("%s/../.." % os.path.dirname(__file__))
+from localise import LSCRATCH
+
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -25,9 +28,26 @@ parser.add_argument(
 parser.add_argument(
     "--month", help="Month to fit to", type=int, required=False, default=3
 )
+parser.add_argument(
+    "--PRMSL", help="Fit to PRMSL?", dest="PRMSL", default=False, action="store_true"
+)
+parser.add_argument(
+    "--SST", help="Fit to SST?", dest="SST", default=False, action="store_true"
+)
+parser.add_argument(
+    "--TMP2m", help="Fit to TMP2m?", dest="TMP2m", default=False, action="store_true"
+)
+parser.add_argument(
+    "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
+)
 args = parser.parse_args()
 
-sys.path.append("%s/../../../../get_data" % os.path.dirname(__file__))
+cName = "constraints"
+for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
+    if vars(args)[constraint]:
+        cName += "_%s" % constraint
+
+sys.path.append("%s/../../../get_data" % os.path.dirname(__file__))
 from HUKG_monthly_load import load_cList
 from HUKG_monthly_load import sCube
 from HUKG_monthly_load import lm_20CR
@@ -43,10 +63,14 @@ for member in [1, 12, 24, 36, 48, 60, 72]:
 # Load the fitted data
 # and reduce to joint v3-land:HadUKg coverage on the 1 degree grid
 def load_fitted(year, month, member, epoch):
-    fn = (
-        "%s/ML_monthly_UK/DCVAE_HadUK-grid/fitted/constraints_PRMSL_SST/"
-        + "%04d/%04d/%02d/%02d.nc"
-    ) % (os.getenv("SCRATCH"), epoch, year, month, member,)
+    fn = ("%s/fitted/%s/%04d/%04d/%02d/%02d.nc") % (
+        LSCRATCH,
+        cName,
+        epoch,
+        year,
+        month,
+        member,
+    )
     if not os.path.exists(fn):
         raise Exception("Missing data file %s" % fn)
     fitted = iris.load(fn)
@@ -72,9 +96,13 @@ for mi in range(len(ft)):
     res["PRATE"]["Orig"].append(np.mean(orig[mi][3].data) * seconds_in_month)
     res["PRATE"]["Fit"].append(np.mean(ft[mi][0].data) * seconds_in_month)
 
-opfile = (
-    "%s/ML_monthly_UK/DCVAE_HadUK-grid/UK_averages/PRMSL_SST/" + "%04d/%04d/%02d.pkl"
-) % (os.getenv("SCRATCH"), args.epoch, args.year, args.month,)
+opfile = ("%s/UK_averages/%s/%04d/%04d/%02d.pkl") % (
+    LSCRATCH,
+    cName,
+    args.epoch,
+    args.year,
+    args.month,
+)
 
 if not os.path.isdir(os.path.dirname(opfile)):
     os.makedirs(os.path.dirname(opfile))

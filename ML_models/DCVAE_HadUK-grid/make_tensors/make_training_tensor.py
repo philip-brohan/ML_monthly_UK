@@ -23,6 +23,9 @@ import warnings
 
 warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
 
+sys.path.append("%s/." % os.path.dirname(__file__))
+from localise import TSOURCE
+
 sys.path.append("%s/../../../get_data/" % os.path.dirname(__file__))
 from HUKG_monthly_load import load_cList
 from HUKG_monthly_load import lm_20CR
@@ -48,9 +51,13 @@ if args.opfile is None:
     purpose = "training"
     if args.test:
         purpose = "test"
-    args.opfile = (
-        "%s/ML_monthly_UK/DCVAE_HadUK-grid/datasets/%s/%04d-%02d_%02d.tfd"
-    ) % (os.getenv("SCRATCH"), purpose, args.year, args.month, args.member,)
+    args.opfile = ("%s/datasets/%s/%04d-%02d_%02d.tfd") % (
+        TSOURCE,
+        purpose,
+        args.year,
+        args.month,
+        args.member,
+    )
 
 if not os.path.isdir(os.path.dirname(args.opfile)):
     os.makedirs(os.path.dirname(args.opfile))

@@ -16,6 +16,9 @@ import iris.util
 import iris.coord_systems
 import cmocean
 
+sys.path.append("%s/.." % os.path.dirname(__file__))
+from localise import LSCRATCH
+
 import warnings
 
 warnings.filterwarnings("ignore", message=".*invalid units.*")
@@ -44,10 +47,7 @@ sys.path.append("%s/.." % os.path.dirname(__file__))
 from autoencoderModel import DCVAE
 
 autoencoder = DCVAE()
-weights_dir = ("%s//ML_monthly_UK/DCVAE_HadUK-grid/models/Epoch_%04d") % (
-    os.getenv("SCRATCH"),
-    args.epoch,
-)
+weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()

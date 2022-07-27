@@ -49,12 +49,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-opfile = "%s/ML_monthly_UK/DCVAE_HadUK-grid/fitted/constraints" % os.getenv("SCRATCH")
-for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
-    if vars(args)[constraint]:
-        opfile += "_%s" % constraint
-opfile += "/%04d/%04d/%02d/%02d.nc" % (args.epoch, args.year, args.month, args.member)
-
 sys.path.append("%s/../../../get_data" % os.path.dirname(__file__))
 from HUKG_monthly_load import load_cList
 from HUKG_monthly_load import sCube
@@ -73,16 +67,19 @@ from tensor_utils import unnormalise
 qd = load_cList(args.year, args.month, args.member)
 ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
 
-
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
+from localise import LSCRATCH
 from autoencoderModel import DCVAE
 
+opfile = "%s/fitted/constraints" % LSCRATCH
+for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
+    if vars(args)[constraint]:
+        opfile += "_%s" % constraint
+opfile += "/%04d/%04d/%02d/%02d.nc" % (args.epoch, args.year, args.month, args.member)
+
 autoencoder = DCVAE()
-weights_dir = ("%s//ML_monthly_UK/DCVAE_HadUK-grid/models/Epoch_%04d") % (
-    os.getenv("SCRATCH"),
-    args.epoch,
-)
+weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
