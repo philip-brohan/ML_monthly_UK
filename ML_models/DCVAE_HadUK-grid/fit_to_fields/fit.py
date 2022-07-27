@@ -163,8 +163,9 @@ font = {
 }
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
+axb.set_axis_off()
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle((0, 0), 1, 1, facecolor=(1.0, 1.0, 1.0, 1), fill=True, zorder=1,)
 )
 
 
@@ -220,7 +221,7 @@ vary = unnormalise(vary, "PRMSL") / 100
 ax_prmsl_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.75, 0.95 / 3 - 0.06, 0.85 / 4]
 )
-plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax)
+plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 
 # 2nd left - PRATE original
@@ -279,7 +280,7 @@ vary = unnormalise(vary, "PRATE") * 1000
 ax_prate_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.5, 0.95 / 3 - 0.06, 0.85 / 4]
 )
-plotScatterAxes(ax_prate_s, varx, vary, vMin=0.001, vMax=dmax)
+plotScatterAxes(ax_prate_s, varx, vary, vMin=0.001, vMax=dmax, bins=None)
 
 
 # 3rd left - T2m original
@@ -334,7 +335,7 @@ vary = unnormalise(vary, "TMP2m") - 273.15
 ax_t2m_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.25, 0.95 / 3 - 0.06, 0.85 / 4]
 )
-plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax)
+plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 
 # Bottom left - SST original
@@ -389,7 +390,7 @@ vary = unnormalise(vary, "TMPS") - 273.15
 ax_sst_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4, 0.95 / 3 - 0.06, 0.85 / 4]
 )
-plotScatterAxes(ax_sst_s, varx, vary, vMin=dmin, vMax=dmax)
+plotScatterAxes(ax_sst_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 
 fig.savefig("fit.png")

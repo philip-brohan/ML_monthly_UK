@@ -89,8 +89,9 @@ canvas = FigureCanvas(fig)
 font = {"family": "sans-serif", "sans-serif": "Arial", "weight": "normal", "size": 14}
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
+axb.set_axis_off()
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(1.0, 1.0, 1.0, 1), fill=True, zorder=1,)
+    Rectangle((0, 0), 1, 1, facecolor=(1.0, 1.0, 1.0, 1), fill=True, zorder=1,)
 )
 
 ax = fig.add_axes(
