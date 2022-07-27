@@ -33,7 +33,7 @@ warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=830)
+parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=99)
 parser.add_argument("--year", help="Test year", type=int, required=False, default=1969)
 parser.add_argument("--month", help="Test month", type=int, required=False, default=3)
 parser.add_argument(

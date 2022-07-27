@@ -39,7 +39,7 @@ from plot_variable import plotFieldAxes
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=830)
+parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=99)
 args = parser.parse_args()
 
 # Load the model specification

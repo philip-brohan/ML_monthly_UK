@@ -25,7 +25,7 @@ dask.config.set(scheduler="single-threaded")
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=990)
+parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=99)
 parser.add_argument(
     "--year", help="Year to fit to", type=int, required=True,
 )
@@ -46,6 +46,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
+)
+parser.add_argument(
+    "--iter", help="No. of iterations", type=int, required=False, default=1000,
 )
 args = parser.parse_args()
 
@@ -141,7 +144,7 @@ if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
     loss = tfp.math.minimize(
         decodeFit,
         trainable_variables=[latent],
-        num_steps=1000,
+        num_steps=args.iter,
         optimizer=tf.optimizers.Adam(learning_rate=0.05),
     )
 

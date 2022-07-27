@@ -11,9 +11,7 @@ from localise import LSCRATCH
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--epoch", help="Model epoch", type=int, required=False, default=990
-)
+parser.add_argument("--epoch", help="Model epoch", type=int, required=False, default=99)
 parser.add_argument(
     "--startyear", help="Sequence start year", type=int, required=False, default=1884
 )
@@ -32,6 +30,9 @@ parser.add_argument(
 parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
+parser.add_argument(
+    "--iter", help="No. of iterations", type=int, required=False, default=100,
+)
 args = parser.parse_args()
 
 cName = "constraints"
@@ -44,7 +45,7 @@ def is_done(year, month, member):
     fn = ("%s/fitted/%s/%04d/%04d/%02d/%02d.nc") % (
         LSCRATCH,
         cName,
-        epoch,
+        args.epoch,
         year,
         month,
         member,
@@ -54,17 +55,20 @@ def is_done(year, month, member):
     return False
 
 
+# Get path from cwd to this script
+reldir = os.path.dirname("./" + os.path.relpath(__file__))
+
 for year in range(args.startyear, args.endyear + 1):
     for month in range(1, 13):
         for member in [1, 12, 24, 36, 48, 60, 72]:
             if is_done(year, month, member):
                 continue
             cmd = (
-                "../fit_to_fields/fit_and_save.py --year=%04d "
-                + "--month=%d --member=%d --epoch=%d"
-            ) % (year, month, member, epoch,)
+                "%s/../fit_to_fields/fit_and_save.py --year=%04d "
+                + "--month=%d --member=%d --epoch=%d --iter=%d"
+            ) % (reldir, year, month, member, args.epoch, args.iter)
             for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
                 if vars(args)[constraint]:
-                    cmd += "--%s" % constraint
+                    cmd += " --%s" % constraint
 
             print(cmd)
