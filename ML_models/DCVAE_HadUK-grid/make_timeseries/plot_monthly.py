@@ -101,7 +101,7 @@ axb.add_patch(
 )
 
 ax = fig.add_axes(
-    [0.08, 0.07, 0.91, 0.9],
+    [0.085, 0.07, 0.91, 0.9],
     xlim=(
         datetime.date(args.startyear, args.startmonth, 1),
         datetime.date(args.endyear, args.endmonth, 28),

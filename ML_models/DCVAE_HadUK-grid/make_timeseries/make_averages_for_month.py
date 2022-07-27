@@ -15,7 +15,7 @@ import warnings
 
 warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
 
-sys.path.append("%s/../.." % os.path.dirname(__file__))
+sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 
 import argparse

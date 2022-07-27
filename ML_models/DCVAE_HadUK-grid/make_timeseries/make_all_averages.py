@@ -44,7 +44,7 @@ def is_done(year, month):
     fn = ("%s/UK_averages/%s/%04d/%04d/%02d.pkl") % (
         LSCRATCH,
         cName,
-        epoch,
+        args.epoch,
         year,
         month,
     )
@@ -53,16 +53,20 @@ def is_done(year, month):
     return False
 
 
+# Get path from cwd to this script
+reldir = os.path.dirname("./" + os.path.relpath(__file__))
+
 for year in range(args.startyear, args.endyear + 1):
     for month in range(1, 13):
         if is_done(year, month):
             continue
-        cmd = ("./make_averages_for_month.py --year=%04d --month=%d --epoch=%d") % (
+        cmd = ("%s/make_averages_for_month.py --year=%04d --month=%d --epoch=%d") % (
+            reldir,
             year,
             month,
-            epoch,
+            args.epoch,
         )
         for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
             if vars(args)[constraint]:
-                cmd += "--%s" % constraint
+                cmd += " --%s" % constraint
         print(cmd)

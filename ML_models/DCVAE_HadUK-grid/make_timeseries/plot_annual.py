@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from matplotlib.lines import Line2D
 
-sys.path.append("%s/../.." % os.path.dirname(__file__))
+sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 
 import argparse
@@ -95,7 +95,7 @@ axb.add_patch(
 )
 
 ax = fig.add_axes(
-    [0.08, 0.11, 0.91, 0.86],
+    [0.085, 0.11, 0.91, 0.86],
     xlim=(args.startyear - 0.5, args.endyear + 0.5),
     ylim=(700, 1500),
 )
