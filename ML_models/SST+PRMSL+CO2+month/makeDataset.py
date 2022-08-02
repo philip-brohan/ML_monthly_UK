@@ -1,9 +1,17 @@
 # Make tf.data.Datasets from HadUK-Grid monthly UK fields
+# The training dataset contains three components:
+#  1) Weather fields (4 variables)
+#  2) CO2 level
+#  3) calendar month
 
 import os
 import sys
 import tensorflow as tf
 import numpy as np
+import math
+
+sys.path.append("%s/." % os.path.dirname(__file__))
+from localise import TSOURCE
 
 # Load a pre-standardised 4-variable tensor from a file
 def load_tensor(file_name):
@@ -194,21 +202,24 @@ CO2_since_1850 = (
 )
 
 
-def load_co2(file_name):
+def normalise_co2(file_name):
     year = int(file_name[:4])
     c2 = CO2_since_1850[year - 1850]
     c2 = c2 - 250 / 150  # Normalise to ~0-1
     return c2
 
 
+def normalise_month(file_name):
+    month = int(file_name[5:7])
+    month=math.sin(2*math.pi*(month)/12) # Normalise to 0-1 (periodic)
+    return month
+
+
 # Get a dataset
 def getDataset(purpose, nImages=None):
 
     # Get a list of filenames containing tensors
-    inFiles = os.listdir(
-        "%s/ML_monthly_UK/DCVAE_HadUK-grid/datasets/%s"
-        % (os.getenv("SCRATCH"), purpose)
-    )
+    inFiles = os.listdir("%s/datasets/%s" % (TSOURCE, purpose))
 
     if nImages is not None:
         if len(inFiles) >= nImages:
@@ -218,21 +229,18 @@ def getDataset(purpose, nImages=None):
                 "Only %d images available, can't provide %d" % (len(inFiles), nImages)
             )
 
-    tc_data = tf.data.Dataset.from_tensor_slices([load_co2(x) for x in inFiles])
+    tc_data = tf.data.Dataset.from_tensor_slices([normalise_co2(x) for x in inFiles])
+    tm_data = tf.data.Dataset.from_tensor_slices([normalise_month(x) for x in inFiles])
 
     # Create TensorFlow Dataset object from the file namelist
-    inFiles = [
-        "%s/ML_monthly_UK/DCVAE_HadUK-grid/datasets/%s/%s"
-        % (os.getenv("SCRATCH"), purpose, x)
-        for x in inFiles
-    ]
+    inFiles = ["%s/datasets/%s/%s" % (TSOURCE, purpose, x) for x in inFiles]
     tr_data = tf.data.Dataset.from_tensor_slices(tf.constant(inFiles))
 
     # Convert the Dataset from file names to file contents
     tr_data = tr_data.map(load_tensor, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     # Zip the CO2 and fields together
-    tz_data = tf.data.Dataset.zip((tr_data, tc_data))
+    tz_data = tf.data.Dataset.zip((tr_data, tc_data, tm_data))
 
     # Optimisation
     tz_data = tz_data.cache()

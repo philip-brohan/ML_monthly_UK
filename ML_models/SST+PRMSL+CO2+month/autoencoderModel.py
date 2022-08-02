@@ -1,10 +1,10 @@
 # Specify a Deep Convolutional Variational AutoEncoder
-#  for the HadUK-Grid monthly fields.
+#  for the HadUK-Grid monthly fields - with CO2 and month as scalars
 
-
+import os
+import sys
 import tensorflow as tf
 import numpy as np
-import sys
 
 
 # Hyperparameters
@@ -17,6 +17,8 @@ T2M_scale = 1.0
 PRATE_scale = 1.0
 # Log variance of CO2 level
 C2L = tf.convert_to_tensor(-6, np.float32)
+# Log variance of month
+CML = tf.convert_to_tensor(-4, np.float32)
 
 
 class DCVAE(tf.keras.Model):
@@ -25,34 +27,34 @@ class DCVAE(tf.keras.Model):
         self.latent_dim = 20
         self.encoder = tf.keras.Sequential(
             [
-                tf.keras.layers.InputLayer(input_shape=(1440, 896, 4)),
-                tf.keras.layers.Conv2D(
-                    filters=5 * 4,
-                    kernel_size=3,
-                    strides=(2, 2),
-                    padding="same",
-                    activation="relu",
-                ),
+                tf.keras.layers.InputLayer(input_shape=(1440, 896, 2)),
                 tf.keras.layers.Conv2D(
                     filters=5 * 2,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
-                    activation="relu",
+                    activation="elu",
+                ),
+                tf.keras.layers.Conv2D(
+                    filters=5,
+                    kernel_size=3,
+                    strides=(2, 2),
+                    padding="same",
+                    activation="elu",
                 ),
                 tf.keras.layers.Conv2D(
                     filters=10,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
-                    activation="relu",
+                    activation="elu",
                 ),
                 tf.keras.layers.Conv2D(
                     filters=20,
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
-                    activation="relu",
+                    activation="elu",
                 ),
                 tf.keras.layers.Conv2D(
                     filters=40,
@@ -69,7 +71,7 @@ class DCVAE(tf.keras.Model):
 
         self.decoder = tf.keras.Sequential(
             [
-                tf.keras.layers.InputLayer(input_shape=(self.latent_dim + 1,)),
+                tf.keras.layers.InputLayer(input_shape=(self.latent_dim + 2,)),
                 tf.keras.layers.Dense(units=45 * 28 * 40, activation=tf.nn.relu),
                 tf.keras.layers.Reshape(target_shape=(45, 28, 40)),
                 tf.keras.layers.Conv2DTranspose(
@@ -77,28 +79,28 @@ class DCVAE(tf.keras.Model):
                     kernel_size=3,
                     strides=2,
                     padding="same",
-                    activation="relu",
+                    activation="elu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
                     filters=10,
                     kernel_size=3,
                     strides=2,
                     padding="same",
-                    activation="relu",
+                    activation="elu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
                     filters=5 * 2,
                     kernel_size=3,
                     strides=2,
                     padding="same",
-                    activation="relu",
+                    activation="elu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
                     filters=5 * 4,
                     kernel_size=3,
                     strides=2,
                     padding="same",
-                    activation="relu",
+                    activation="elu",
                 ),
                 tf.keras.layers.Conv2DTranspose(
                     filters=4, kernel_size=3, strides=2, padding="same"
@@ -107,14 +109,22 @@ class DCVAE(tf.keras.Model):
         )
 
     def encode(self, x):
-        field = x[0]
+        field = x[0][:, :, :, :2]  # Only using the first 2 fields (PRMSL & SST)
         c2 = x[1]
+        mn = x[2]
         # Encode the field
         mean, logvar = tf.split(self.encoder(field), num_or_size_splits=2, axis=1)
         # Add the C02 value to the encoded state
-        mean = tf.concat([mean, tf.expand_dims(c2, axis=1)], axis=1)
+        mean = tf.concat(
+            [mean, tf.expand_dims(c2, axis=1), tf.expand_dims(mn, axis=1)], axis=1
+        )
         logvar = tf.concat(
-            [logvar, tf.expand_dims(tf.repeat(C2L, field.shape[0]), axis=1)], axis=1
+            [
+                logvar,
+                tf.expand_dims(tf.repeat(C2L, field.shape[0]), axis=1),
+                tf.expand_dims(tf.repeat(CML, field.shape[0]), axis=1),
+            ],
+            axis=1,
         )
         return mean, logvar
 
@@ -154,7 +164,7 @@ class DCVAE(tf.keras.Model):
 def log_normal_pdf(sample, mean, logvar, raxis=1):
     log2pi = tf.math.log(2.0 * np.pi)
     return tf.reduce_sum(
-        -0.5 * ((sample - mean) ** 2.0 * tf.exp(-logvar) + logvar + log2pi), axis=raxis
+        -0.5 * ((sample - mean) ** 2.0 * tf.exp(-logvar) + logvar + log2pi), axis=raxis,
     )
 
 
@@ -195,11 +205,8 @@ def compute_loss(model, x):
         * RMSE_scale
         * PRATE_scale
     )
-    # print(rmse)
-    logpz = log_normal_pdf(latent[:, :-1], 0.0, 0.0) * -1
-    # print(logpz)
-    # sys.exit(0)
-    logqz_x = log_normal_pdf(latent[:, :-1], mean[:, :-1], logvar[:, :-1])
+    logpz = log_normal_pdf(latent[:, 0:-2], 0.0, 0.0) * -1
+    logqz_x = log_normal_pdf(latent[:, 0:-2], mean[:, 0:-2], logvar[:, 0:-2])
     return tf.stack([rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x])
 
 
