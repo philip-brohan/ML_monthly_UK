@@ -44,7 +44,8 @@ def loadHistory(LSC):
     ymax = 0
     ymin = 1000000
     chts = {}
-    chts["epoch"] = list(range(c_epoch + 1))
+    s_epoch = c_epoch-len(history['PRMSL_train'])+1
+    chts["epoch"] = list(range(s_epoch,c_epoch + 1))
     for key in history:
         chts[key] = [math.log(abs(t.numpy())) for t in history[key]]
         ymax = max(ymax, max(chts[key]))
@@ -100,7 +101,7 @@ def addLine(ax, dta, key, col, z):
 
 # Top left - PRMSL
 ax_prmsl = fig.add_axes(
-    [0.06, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax)
+    [0.055, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax)
 )
 ax_prmsl.set_ylabel("PRMSL")
 ax_prmsl.set_xlabel("epoch")
@@ -111,7 +112,7 @@ if args.comparator is not None:
     addLine(ax_prmsl, chts, "PRMSL_test", (0, 0, 1, 1), 20)
 
 # Bottom left - SST
-ax_sst = fig.add_axes([0.06, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
+ax_sst = fig.add_axes([0.055, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
 ax_sst.set_ylabel("SST")
 ax_sst.set_xlabel("epoch")
 addLine(ax_sst, hts, "SST_train", (1, 0.5, 0.5, 1), 10)
@@ -121,7 +122,7 @@ if args.comparator is not None:
     addLine(ax_sst, chts, "SST_test", (0, 0, 1, 1), 20)
 
 # Top centre - T2M
-ax_t2m = fig.add_axes([0.39, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
+ax_t2m = fig.add_axes([0.385, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
 ax_t2m.set_ylabel("T2M")
 ax_t2m.set_xlabel("epoch")
 addLine(ax_t2m, hts, "T2M_train", (1, 0.5, 0.5, 1), 10)
@@ -132,7 +133,7 @@ if args.comparator is not None:
 
 # Bottom centre - PRATE
 ax_prate = fig.add_axes(
-    [0.39, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax)
+    [0.385, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax)
 )
 ax_prate.set_ylabel("PRATE")
 ax_prate.set_xlabel("epoch")
@@ -143,7 +144,7 @@ if args.comparator is not None:
     addLine(ax_prate, chts, "PRATE_test", (0, 0, 1, 1), 20)
 
 # Top right - logpz
-ax_lpz = fig.add_axes([0.72, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
+ax_lpz = fig.add_axes([0.715, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
 ax_lpz.set_ylabel("logpz")
 ax_lpz.set_xlabel("epoch")
 addLine(ax_lpz, hts, "logpz_train", (1, 0.5, 0.5, 1), 10)
@@ -153,7 +154,7 @@ if args.comparator is not None:
     addLine(ax_lpz, chts, "logpz_test", (0, 0, 1, 1), 20)
 
 # Bottom right - logqz_x
-ax_lqz = fig.add_axes([0.72, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
+ax_lqz = fig.add_axes([0.715, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
 ax_lqz.set_ylabel("logqz_x")
 ax_lqz.set_xlabel("epoch")
 addLine(ax_lqz, hts, "logqz_x_train", (1, 0.5, 0.5, 1), 10)
