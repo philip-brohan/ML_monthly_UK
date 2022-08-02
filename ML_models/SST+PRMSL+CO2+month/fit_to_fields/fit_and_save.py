@@ -47,13 +47,10 @@ parser.add_argument(
 parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
+parser.add_argument(
+    "--iter", help="No. of iterations", type=int, required=False, default=1000,
+)
 args = parser.parse_args()
-
-opfile = "%s/ML_monthly_UK/DCVAE+scalars/fitted/constraints" % os.getenv("SCRATCH")
-for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
-    if vars(args)[constraint]:
-        opfile += "_%s" % constraint
-opfile += "/%04d/%04d/%02d/%02d.nc" % (args.epoch, args.year, args.month, args.member)
 
 sys.path.append("%s/../../../get_data" % os.path.dirname(__file__))
 from HUKG_monthly_load import load_cList
@@ -76,14 +73,13 @@ ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
+from localise import LSCRATCH
 from autoencoderModel import DCVAE
-from makeDataset import load_co2
+from makeDataset import normalise_co2
+from makeDataset import normalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s//ML_monthly_UK/DCVAE+scalars/models/Epoch_%04d") % (
-    os.getenv("SCRATCH"),
-    args.epoch,
-)
+weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -96,12 +92,17 @@ autoencoder.decoder.compile()
 
 latent = tf.Variable(tf.random.normal(shape=(1, autoencoder.latent_dim)))
 target = tf.constant(tf.reshape(ict, [1, 1440, 896, 4]))
-co2t = tf.reshape(tf.convert_to_tensor(load_co2("%s" % args.year), np.float32), [1, 1])
+co2t = tf.reshape(
+    tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32), [1, 1]
+)
+cmt = tf.reshape(
+    tf.convert_to_tensor(normalise_month("0000-%02d" % args.month), np.float32), [1, 1]
+)
 
 
 def decodeFit():
     result = 0.0
-    decoded = autoencoder.decode(tf.concat([latent, co2t], axis=1))
+    decoded = autoencoder.decode(tf.concat([latent, co2t, cmt], axis=1))
     if args.PRMSL:
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(decoded[:, :, :, 0], target[:, :, :, 0])
@@ -146,15 +147,21 @@ if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
     loss = tfp.math.minimize(
         decodeFit,
         trainable_variables=[latent],
-        num_steps=1000,
-        optimizer=tf.optimizers.Adam(learning_rate=0.05),
+        num_steps=args.iter,
+        optimizer=tf.optimizers.Adam(learning_rate=0.1),
     )
 
-encoded = autoencoder.decode(tf.concat([latent, co2t], axis=1))
+encoded = autoencoder.decode(tf.concat([latent, co2t, cmt], axis=1))
 
 fitted = tensor_to_cList(
     encoded[0, :, :, :], sCube, lm_20CR.data.mask, dm_hukg.data.mask
 )
+
+opfile = "%s/fitted/constraints" % LSCRATCH
+for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
+    if vars(args)[constraint]:
+        opfile += "_%s" % constraint
+opfile += "/%04d/%04d/%02d/%02d.nc" % (args.epoch, args.year, args.month, args.member)
 
 if not os.path.isdir(os.path.dirname(opfile)):
     os.makedirs(os.path.dirname(opfile))

@@ -26,6 +26,7 @@ from HUKG_monthly_load import sCube
 from HUKG_monthly_load import lm_plot
 from HUKG_monthly_load import lm_20CR
 from HUKG_monthly_load import dm_hukg
+from TWCR_monthly_load import get_range
 
 sys.path.append("%s/../make_tensors" % os.path.dirname(__file__))
 from tensor_utils import unnormalise
@@ -44,24 +45,29 @@ parser.add_argument(
     required=False,
     default=1969,
 )
+parser.add_argument(
+    "--month", help="Month (for insolation)", type=int, required=False, default=3,
+)
 args = parser.parse_args()
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
+from localise import LSCRATCH
 from autoencoderModel import DCVAE
-from makeDataset import load_co2
+from makeDataset import normalise_co2
+from makeDataset import normalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s//ML_monthly_UK/DCVAE+scalars/models/Epoch_%04d") % (
-    os.getenv("SCRATCH"),
-    args.epoch,
-)
+weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
 eps = tf.random.normal(shape=(1, autoencoder.latent_dim))
-co2t = tf.convert_to_tensor(load_co2("%s" % args.year), np.float32)
-generated = autoencoder.decode(tf.concat([eps, tf.reshape(co2t, [1, 1])], axis=1))
+co2t = tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32)
+cmt = tf.convert_to_tensor(normalise_month("0000-%02d" % args.month), np.float32)
+generated = autoencoder.decode(
+    tf.concat([eps, tf.reshape(co2t, [1, 1]), tf.reshape(cmt, [1, 1])], axis=1)
+)
 
 fig = Figure(
     figsize=(20, 22),
@@ -90,8 +96,9 @@ axb.add_patch(
 var = sCube.copy()
 var.data = np.squeeze(generated[0, :, :, 0].numpy())
 var = unnormalise(var, "PRMSL") / 100
-dmin = np.min(var.data)
-dmax = np.max(var.data)
+(dmin, dmax) = get_range("PRMSL", args.month, var)
+dmin /= 100
+dmax /= 100
 ax_prmsl = fig.add_axes([0.025 / 2, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
@@ -114,8 +121,9 @@ var = sCube.copy()
 var.data = np.squeeze(generated[0, :, :, 1].numpy())
 var.data = np.ma.masked_where(lm_20CR.data.data > 0, var.data, copy=True)
 var = unnormalise(var, "TMPS") - 273.15
-dmin = np.min(var.data)
-dmax = np.max(var.data)
+(dmin, dmax) = get_range("TMPS", args.month, var)
+dmin -= 273.15 + 2
+dmax -= 273.15 - 2
 ax_sst = fig.add_axes([0.025 / 2, 0.125 / 2, 0.95 / 2, 0.85 / 2])
 ax_sst.set_axis_off()
 SST_img = plotFieldAxes(
@@ -138,8 +146,9 @@ var = sCube.copy()
 var.data = np.squeeze(generated[0, :, :, 3].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=True)
 var = unnormalise(var, "PRATE") * 1000
-dmax = np.max(var.data)
+(dmin, dmax) = get_range("PRATE", args.month, var)
 dmin = 0
+dmax *= 1000
 ax_prate = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
@@ -161,8 +170,9 @@ var = sCube.copy()
 var.data = np.squeeze(generated[0, :, :, 2].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=True)
 var = unnormalise(var, "TMP2m") - 273.15
-dmin = np.min(var.data)
-dmax = np.max(var.data)
+(dmin, dmax) = get_range("TMP2m", args.month, var)
+dmin -= 273.15 + 2
+dmax -= 273.15 - 2
 ax_tmp2m = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2, 0.95 / 2, 0.85 / 2])
 ax_tmp2m.set_axis_off()
 TMP2m_img = plotFieldAxes(
