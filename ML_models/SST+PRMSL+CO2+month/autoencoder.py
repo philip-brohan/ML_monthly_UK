@@ -32,21 +32,21 @@ from autoencoderModel import train_step
 from autoencoderModel import compute_loss
 
 # How many images to use?
-nTrainingImages = 149  # Max is 1491
-nTestImages = 16  # Max is 165
+nTrainingImages = 1491  # Max is 1491
+nTestImages = 165  # Max is 165
 
 # How many epochs to train for
 nEpochs = 1000
 # Length of an epoch - if None, same as nTrainingImages
 nImagesInEpoch = None
-nRepeatsPerEpoch = 1  # Show each image this many times
+nRepeatsPerEpoch = 5  # Show each image this many times
 
 if nImagesInEpoch is None:
     nImagesInEpoch = nTrainingImages
 
 # Dataset parameters
-bufferSize = 100  # Untested
-batchSize = 3  # Arbitrary
+bufferSize = 1000  # Untested
+batchSize = 32  # Arbitrary
 
 # Function to store the model weights and the history state
 history = {}
