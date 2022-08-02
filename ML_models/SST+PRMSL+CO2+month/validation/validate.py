@@ -61,14 +61,13 @@ ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
+from localise import LSCRATCH
 from autoencoderModel import DCVAE
-from makeDataset import load_co2
+from makeDataset import normalise_co2
+from makeDataset import normalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s//ML_monthly_UK/DCVAE+scalars/models/Epoch_%04d") % (
-    os.getenv("SCRATCH"),
-    args.epoch,
-)
+weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -77,7 +76,13 @@ load_status.assert_existing_objects_matched()
 encoded = autoencoder.call(
     (
         tf.reshape(ict, [1, 1440, 896, 4]),
-        tf.reshape(tf.convert_to_tensor(load_co2("%s" % args.year), np.float32), [1,]),
+        tf.reshape(
+            tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32), [1,]
+        ),
+        tf.reshape(
+            tf.convert_to_tensor(normalise_month("0000-%02d" % args.month), np.float32),
+            [1,],
+        ),
     )
 )
 
