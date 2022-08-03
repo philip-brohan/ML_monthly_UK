@@ -6,7 +6,7 @@
 import os
 
 # Where to save output
-LSCRATCH = "%s/ML_monthly_UK/SST+PRMSL_CO2+month_diagnostics" % os.getenv("SCRATCH")
+LSCRATCH = "%s/ML_monthly_UK/CO2+month_diagnostics" % os.getenv("SCRATCH")
 
 # Where to get input tensors
 TSOURCE = "%s/ML_monthly_UK/DCVAE_HadUK-grid" % os.getenv("SCRATCH")

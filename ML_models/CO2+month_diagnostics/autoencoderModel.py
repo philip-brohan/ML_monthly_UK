@@ -15,8 +15,8 @@ PRMSL_scale = 1.0
 SST_scale = 1.0
 T2M_scale = 1.0
 PRATE_scale = 1.0
-CO2_scale = 1.0
-MONTH_scale = 1.0
+CO2_scale = 0.001
+MONTH_scale = 0.1
 
 
 class DCVAE(tf.keras.Model):
@@ -216,14 +216,10 @@ def compute_loss(model, x):
     logpz = log_normal_pdf(latent, 0.0, 0.0) * -1
     logqz_x = log_normal_pdf(latent, mean, logvar)
     rmse_CO2 = (
-        tf.reduce_mean(tf.keras.metrics.mean_squared_error(encoded[1], x[1]), axis=[1],)
-        * RMSE_scale
-        * CO2_scale
+        tf.keras.metrics.mean_squared_error(encoded[1], x[1]) * RMSE_scale * CO2_scale
     )
     rmse_MONTH = (
-        tf.reduce_mean(tf.keras.metrics.mean_squared_error(encoded[2], x[1]), axis=[1],)
-        * RMSE_scale
-        * MONTH_scale
+        tf.keras.metrics.mean_squared_error(encoded[2], x[2]) * RMSE_scale * MONTH_scale
     )
     return tf.stack(
         [
