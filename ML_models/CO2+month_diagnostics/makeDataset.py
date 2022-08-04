@@ -205,7 +205,7 @@ CO2_since_1850 = (
 def normalise_co2(file_name):
     year = int(file_name[:4])
     c2 = CO2_since_1850[year - 1850]
-    c2 = c2 - 250 / 150  # Normalise to ~0-1
+    c2 = (c2 - 250) / 150  # Normalise to ~0-1
     return c2
 
 
