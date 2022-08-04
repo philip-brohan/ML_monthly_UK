@@ -15,15 +15,15 @@ PRMSL_scale = 1.0
 SST_scale = 1.0
 T2M_scale = 1.0
 PRATE_scale = 1.0
-CO2_scale = 0.001
-MONTH_scale = 0.1
+CO2_scale = 1.0
+MONTH_scale = 1.0
 
 
 class DCVAE(tf.keras.Model):
     def __init__(self):
         super(DCVAE, self).__init__()
         self.latent_dim = 20
-        self.encoder = tf.keras.Sequential(
+        self.fields_encoder = tf.keras.Sequential(
             [
                 tf.keras.layers.InputLayer(input_shape=(1440, 896, 4)),
                 tf.keras.layers.Conv2D(
@@ -59,15 +59,21 @@ class DCVAE(tf.keras.Model):
                     kernel_size=3,
                     strides=(2, 2),
                     padding="same",
-                    activation="relu",
+                    activation="elu",
                 ),
                 tf.keras.layers.Flatten(),
-                # No activation
-                tf.keras.layers.Dense(self.latent_dim + self.latent_dim),
             ]
         )
 
-        self.decoder = tf.keras.Sequential(
+        self.merge_to_latent = tf.keras.Sequential(
+            [
+                tf.keras.layers.InputLayer(input_shape=(45 * 28 * 40 + 2)),
+                tf.keras.layers.Dense(units=self.latent_dim * 2, activation=tf.nn.elu),
+                tf.keras.layers.Dense(units=self.latent_dim * 2, activation=None),
+            ]
+        )
+
+        self.fields_decoder = tf.keras.Sequential(
             [
                 tf.keras.layers.InputLayer(input_shape=(self.latent_dim,)),
                 tf.keras.layers.Dense(units=45 * 28 * 40, activation=tf.nn.relu),
@@ -124,11 +130,22 @@ class DCVAE(tf.keras.Model):
 
     def encode(self, x):
         field = x[0]
-        mean, logvar = tf.split(self.encoder(field), num_or_size_splits=2, axis=1)
+        c2 = x[1]
+        mn = x[2]
+        # Encode the field
+        encf = self.fields_encoder(field)
+        # Add the CO2 and month to the encoded state
+        encf = tf.concat(
+            [encf, tf.expand_dims(c2, axis=1), tf.expand_dims(mn, axis=1)], axis=1
+        )
+        # Convert the merged encoded state into a latent space
+        mean, logvar = tf.split(
+            self.merge_to_latent(encf), num_or_size_splits=2, axis=1
+        )
         return mean, logvar
 
     def decode(self, z):
-        decoded = self.decoder(z)
+        decoded = self.fields_decoder(z)
         c2 = self.diagnose_co2(z)
         mn = self.diagnose_month(z)
         return (decoded, c2, mn)
