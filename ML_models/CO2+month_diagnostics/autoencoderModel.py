@@ -132,6 +132,10 @@ class DCVAE(tf.keras.Model):
         field = x[0]
         c2 = x[1]
         mn = x[2]
+        # Months are quantised => won't train, add noise to smooth
+       # epsilon_m = tf.keras.backend.random_normal(tf.keras.backend.shape(mn),
+       #                                            mean=0.0,stddev=0.2)
+       # mn = mn + epsilon_m
         # Encode the field
         encf = self.fields_encoder(field)
         # Add the CO2 and month to the encoded state
