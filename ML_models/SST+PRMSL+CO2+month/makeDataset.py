@@ -211,7 +211,7 @@ def normalise_co2(file_name):
 
 def normalise_month(file_name):
     month = int(file_name[5:7])
-    month=math.sin(2*math.pi*(month)/12) # Normalise to 0-1 (periodic)
+    month = math.sin(2 * math.pi * (month-0.25) / 12)/2 +0.5  # Normalise to 0-1 (periodic)
     return month
 
 
