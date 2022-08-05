@@ -16,8 +16,7 @@ SST_scale = 1.0
 T2M_scale = 1.0
 PRATE_scale = 1.0
 CO2_scale = 1.0
-MONTH_scale = 0.01
-
+MONTH_scale = 1.0
 
 class DCVAE(tf.keras.Model):
     def __init__(self):
@@ -67,7 +66,7 @@ class DCVAE(tf.keras.Model):
 
         self.merge_to_latent = tf.keras.Sequential(
             [
-                tf.keras.layers.InputLayer(input_shape=(45 * 28 * 40 + 2)),
+                tf.keras.layers.InputLayer(input_shape=(45 * 28 * 40)),
                 tf.keras.layers.Dense(units=self.latent_dim * 2, activation=tf.nn.elu),
                 tf.keras.layers.Dense(units=self.latent_dim * 2, activation=None),
             ]
@@ -135,9 +134,9 @@ class DCVAE(tf.keras.Model):
         # Encode the field
         encf = self.fields_encoder(field)
         # Add the CO2 and month to the encoded state
-        encf = tf.concat(
-            [encf, tf.expand_dims(c2, axis=1), tf.expand_dims(mn, axis=1)], axis=1
-        )
+        #encf = tf.concat(
+        #    [encf, tf.expand_dims(c2, axis=1), tf.expand_dims(mn, axis=1)], axis=1
+        #)
         # Convert the merged encoded state into a latent space
         mean, logvar = tf.split(
             self.merge_to_latent(encf), num_or_size_splits=2, axis=1

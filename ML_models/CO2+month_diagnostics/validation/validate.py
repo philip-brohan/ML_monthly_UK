@@ -30,7 +30,7 @@ warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=770)
+parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=99)
 parser.add_argument("--year", help="Test year", type=int, required=False, default=1969)
 parser.add_argument("--month", help="Test month", type=int, required=False, default=3)
 parser.add_argument(
@@ -55,16 +55,18 @@ sys.path.append("%s/../plot_quad" % os.path.dirname(__file__))
 from plot_variable import plotFieldAxes
 from plot_variable import plotScatterAxes
 
-# Load and standardise data
-qd = load_cList(args.year, args.month, args.member)
-ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
-
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 from autoencoderModel import DCVAE
 from makeDataset import normalise_co2
 from makeDataset import normalise_month
+
+# Load and standardise data
+qd = load_cList(args.year, args.month, args.member)
+ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
+nco2 = normalise_co2("%04d" % args.year)
+nmth = normalise_month("0000-%02d" % args.month)
 
 autoencoder = DCVAE()
 weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
@@ -77,10 +79,10 @@ encoded = autoencoder.call(
     (
         tf.reshape(ict, [1, 1440, 896, 4]),
         tf.reshape(
-            tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32), [1,]
+            tf.convert_to_tensor(nco2, np.float32), [1,]
         ),
         tf.reshape(
-            tf.convert_to_tensor(normalise_month("0000-%02d" % args.month), np.float32),
+            tf.convert_to_tensor(nmth, np.float32),
             [1,],
         ),
     )
@@ -136,7 +138,7 @@ cb = fig.colorbar(
 )
 
 # Top centre - PRMSL encoded
-var.data = np.squeeze(encoded[0, :, :, 0].numpy())
+var.data = np.squeeze(encoded[0][0, :, :, 0].numpy())
 var = unnormalise(var, "PRMSL") / 100
 ax_prmsl_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
 ax_prmsl_e.set_axis_off()
@@ -164,7 +166,7 @@ varx = sCube.copy()
 varx.data = np.squeeze(ict[:, :, 0].numpy())
 varx = unnormalise(varx, "PRMSL") / 100
 vary = sCube.copy()
-vary.data = np.squeeze(encoded[0, :, :, 0].numpy())
+vary.data = np.squeeze(encoded[0][0, :, :, 0].numpy())
 vary = unnormalise(vary, "PRMSL") / 100
 ax_prmsl_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.75, 0.95 / 3 - 0.06, 0.85 / 4]
@@ -198,7 +200,7 @@ cb = fig.colorbar(
 )
 
 # 2nd centre - PRATE encoded
-var.data = np.squeeze(encoded[0, :, :, 3].numpy())
+var.data = np.squeeze(encoded[0][0, :, :, 3].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "PRATE") * 1000
 ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
@@ -228,7 +230,7 @@ varx.data = np.squeeze(ict[:, :, 3].numpy())
 varx.data = np.ma.masked_where(dm_hukg.data == 0, varx.data, copy=False)
 varx = unnormalise(varx, "PRATE") * 1000
 vary = sCube.copy()
-vary.data = np.squeeze(encoded[0, :, :, 3].numpy())
+vary.data = np.squeeze(encoded[0][0, :, :, 3].numpy())
 vary.data = np.ma.masked_where(dm_hukg.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "PRATE") * 1000
 ax_prate_s = fig.add_axes(
@@ -264,7 +266,7 @@ cb = fig.colorbar(
 
 # 3rd centre - T2m encoded
 var = sCube.copy()
-var.data = np.squeeze(encoded[0, :, :, 2].numpy())
+var.data = np.squeeze(encoded[0][0, :, :, 2].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "TMP2m") - 273.15
 ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
@@ -290,7 +292,7 @@ varx.data = np.squeeze(ict[:, :, 2].numpy())
 varx.data = np.ma.masked_where(dm_hukg.data == 0, varx.data, copy=False)
 varx = unnormalise(varx, "TMP2m") - 273.15
 vary = sCube.copy()
-vary.data = np.squeeze(encoded[0, :, :, 2].numpy())
+vary.data = np.squeeze(encoded[0][0, :, :, 2].numpy())
 vary.data = np.ma.masked_where(dm_hukg.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMP2m") - 273.15
 ax_t2m_s = fig.add_axes(
@@ -324,7 +326,7 @@ cb = fig.colorbar(
 )
 
 # 2nd centre - SST encoded
-var.data = encoded.numpy()[0, :, :, 1]
+var.data = encoded[0].numpy()[0, :, :, 1]
 var.data = np.ma.masked_where(lm_20CR.data > 0, var.data, copy=False)
 var = unnormalise(var, "TMPS") - 273.15
 ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
@@ -348,7 +350,7 @@ cb = fig.colorbar(
 varx.data = np.squeeze(ict[:, :, 1].numpy())
 varx.data = np.ma.masked_where(lm_20CR.data > 0, varx.data, copy=False)
 varx = unnormalise(varx, "TMPS") - 273.15
-vary.data = np.squeeze(encoded[0, :, :, 1].numpy())
+vary.data = np.squeeze(encoded[0][0, :, :, 1].numpy())
 vary.data = np.ma.masked_where(lm_20CR.data > 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMPS") - 273.15
 ax_sst_s = fig.add_axes(

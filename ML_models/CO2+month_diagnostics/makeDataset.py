@@ -208,12 +208,16 @@ def normalise_co2(file_name):
     c2 = (c2 - 250) / 150  # Normalise to ~0-1
     return c2
 
+def unnormalise_co2(c2):
+    return c2*150+250
 
 def normalise_month(file_name):
     month = int(file_name[5:7])
-    month = math.sin(2 * math.pi * (month-0.25) / 12)/2 +0.5  # Normalise to 0-1 (periodic)
+    month = (month-0.5) / 12
     return month
 
+def unnormalise_month(mnth):
+    mn = mnth*12 + 0.5
 
 # Get a dataset
 def getDataset(purpose, nImages=None):
