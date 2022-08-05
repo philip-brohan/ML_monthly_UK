@@ -16,7 +16,7 @@ SST_scale = 1.0
 T2M_scale = 1.0
 PRATE_scale = 1.0
 CO2_scale = 1.0
-MONTH_scale = 1.0
+MONTH_scale = 0.01
 
 
 class DCVAE(tf.keras.Model):
@@ -76,7 +76,7 @@ class DCVAE(tf.keras.Model):
         self.fields_decoder = tf.keras.Sequential(
             [
                 tf.keras.layers.InputLayer(input_shape=(self.latent_dim,)),
-                tf.keras.layers.Dense(units=45 * 28 * 40, activation=tf.nn.relu),
+                tf.keras.layers.Dense(units=45 * 28 * 40, activation=tf.nn.elu),
                 tf.keras.layers.Reshape(target_shape=(45, 28, 40)),
                 tf.keras.layers.Conv2DTranspose(
                     filters=20,
@@ -115,16 +115,16 @@ class DCVAE(tf.keras.Model):
         self.diagnose_co2 = tf.keras.Sequential(
             [
                 tf.keras.layers.InputLayer(input_shape=(self.latent_dim,)),
-                tf.keras.layers.Dense(units=self.latent_dim, activation=tf.nn.relu),
-                tf.keras.layers.Dense(units=1, activation=tf.nn.relu),
+                tf.keras.layers.Dense(units=self.latent_dim, activation=tf.nn.elu),
+                tf.keras.layers.Dense(units=1, activation=tf.nn.elu),
             ]
         )
 
         self.diagnose_month = tf.keras.Sequential(
             [
                 tf.keras.layers.InputLayer(input_shape=(self.latent_dim,)),
-                tf.keras.layers.Dense(units=self.latent_dim, activation=tf.nn.relu),
-                tf.keras.layers.Dense(units=1, activation=tf.nn.relu),
+                tf.keras.layers.Dense(units=self.latent_dim, activation=tf.nn.elu),
+                tf.keras.layers.Dense(units=1, activation=tf.nn.elu),
             ]
         )
 
@@ -132,10 +132,6 @@ class DCVAE(tf.keras.Model):
         field = x[0]
         c2 = x[1]
         mn = x[2]
-        # Months are quantised => won't train, add noise to smooth
-       # epsilon_m = tf.keras.backend.random_normal(tf.keras.backend.shape(mn),
-       #                                            mean=0.0,stddev=0.2)
-       # mn = mn + epsilon_m
         # Encode the field
         encf = self.fields_encoder(field)
         # Add the CO2 and month to the encoded state
