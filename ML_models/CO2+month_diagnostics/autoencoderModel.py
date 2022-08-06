@@ -18,6 +18,7 @@ PRATE_scale = 1.0
 CO2_scale = 1.0
 MONTH_scale = 1.0
 
+
 class DCVAE(tf.keras.Model):
     def __init__(self):
         super(DCVAE, self).__init__()
@@ -123,7 +124,8 @@ class DCVAE(tf.keras.Model):
             [
                 tf.keras.layers.InputLayer(input_shape=(self.latent_dim,)),
                 tf.keras.layers.Dense(units=self.latent_dim, activation=tf.nn.elu),
-                tf.keras.layers.Dense(units=1, activation=tf.nn.elu),
+                tf.keras.layers.Dense(units=12, activation=tf.nn.elu),
+                tf.keras.layers.Softmax(),
             ]
         )
 
@@ -134,9 +136,9 @@ class DCVAE(tf.keras.Model):
         # Encode the field
         encf = self.fields_encoder(field)
         # Add the CO2 and month to the encoded state
-        #encf = tf.concat(
+        # encf = tf.concat(
         #    [encf, tf.expand_dims(c2, axis=1), tf.expand_dims(mn, axis=1)], axis=1
-        #)
+        # )
         # Convert the merged encoded state into a latent space
         mean, logvar = tf.split(
             self.merge_to_latent(encf), num_or_size_splits=2, axis=1
@@ -234,8 +236,10 @@ def compute_loss(model, x):
     rmse_CO2 = (
         tf.keras.metrics.mean_squared_error(encoded[1], x[1]) * RMSE_scale * CO2_scale
     )
-    rmse_MONTH = (
-        tf.keras.metrics.mean_squared_error(encoded[2], x[2]) * RMSE_scale * MONTH_scale
+    cce_MONTH = (
+        tf.keras.metrics.categorical_crossentropy(encoded[2], x[2])
+        * RMSE_scale
+        * MONTH_scale
     )
     return tf.stack(
         [
@@ -246,7 +250,7 @@ def compute_loss(model, x):
             logpz,
             logqz_x,
             rmse_CO2,
-            rmse_MONTH,
+            cce_MONTH,
         ]
     )
 

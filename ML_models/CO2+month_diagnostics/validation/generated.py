@@ -38,24 +38,13 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=770)
-parser.add_argument(
-    "--year",
-    help="Year (for CO2 concentration)",
-    type=int,
-    required=False,
-    default=1969,
-)
-parser.add_argument(
-    "--month", help="Month (for insolation)", type=int, required=False, default=3,
-)
 args = parser.parse_args()
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 from autoencoderModel import DCVAE
-from makeDataset import normalise_co2
-from makeDataset import normalise_month
+from makeDataset import unnormalise_month
 
 autoencoder = DCVAE()
 weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
@@ -63,11 +52,9 @@ load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
 eps = tf.random.normal(shape=(1, autoencoder.latent_dim))
-co2t = tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32)
-cmt = tf.convert_to_tensor(normalise_month("0000-%02d" % args.month), np.float32)
-generated = autoencoder.decode(
-    tf.concat([eps, tf.reshape(co2t, [1, 1]), tf.reshape(cmt, [1, 1])], axis=1)
-)
+generated = autoencoder.decode(eps)
+print(np.squeeze(generated[2].numpy()))
+month = round(unnormalise_month(np.squeeze(generated[2].numpy())))
 
 fig = Figure(
     figsize=(20, 22),
@@ -94,9 +81,9 @@ axb.add_patch(
 
 # Top left - PRMSL
 var = sCube.copy()
-var.data = np.squeeze(generated[0, :, :, 0].numpy())
+var.data = np.squeeze(generated[0][0, :, :, 0].numpy())
 var = unnormalise(var, "PRMSL") / 100
-(dmin, dmax) = get_range("PRMSL", args.month, var)
+(dmin, dmax) = get_range("PRMSL", month, var)
 dmin /= 100
 dmax /= 100
 ax_prmsl = fig.add_axes([0.025 / 2, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
@@ -118,10 +105,10 @@ cb = fig.colorbar(
 
 # Bottom left - SST
 var = sCube.copy()
-var.data = np.squeeze(generated[0, :, :, 1].numpy())
+var.data = np.squeeze(generated[0][0, :, :, 1].numpy())
 var.data = np.ma.masked_where(lm_20CR.data.data > 0, var.data, copy=True)
 var = unnormalise(var, "TMPS") - 273.15
-(dmin, dmax) = get_range("TMPS", args.month, var)
+(dmin, dmax) = get_range("TMPS", month, var)
 dmin -= 273.15 + 2
 dmax -= 273.15 - 2
 ax_sst = fig.add_axes([0.025 / 2, 0.125 / 2, 0.95 / 2, 0.85 / 2])
@@ -143,10 +130,10 @@ cb = fig.colorbar(
 
 # Top right - PRATE
 var = sCube.copy()
-var.data = np.squeeze(generated[0, :, :, 3].numpy())
+var.data = np.squeeze(generated[0][0, :, :, 3].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=True)
 var = unnormalise(var, "PRATE") * 1000
-(dmin, dmax) = get_range("PRATE", args.month, var)
+(dmin, dmax) = get_range("PRATE", month, var)
 dmin = 0
 dmax *= 1000
 ax_prate = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
@@ -167,10 +154,10 @@ cb = fig.colorbar(
 )
 # Bottom left - T2m
 var = sCube.copy()
-var.data = np.squeeze(generated[0, :, :, 2].numpy())
+var.data = np.squeeze(generated[0][0, :, :, 2].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=True)
 var = unnormalise(var, "TMP2m") - 273.15
-(dmin, dmax) = get_range("TMP2m", args.month, var)
+(dmin, dmax) = get_range("TMP2m", month, var)
 dmin -= 273.15 + 2
 dmax -= 273.15 - 2
 ax_tmp2m = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2, 0.95 / 2, 0.85 / 2])

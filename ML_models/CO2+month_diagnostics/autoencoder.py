@@ -195,7 +195,7 @@ with strategy.scope():
             train_logpz,
             train_logqz_x,
             train_rmse_CO2,
-            train_rmse_MONTH,
+            train_cce_MONTH,
         ) = test_stats(autoencoder, validationData)
 
         # Measure performance on test data
@@ -207,7 +207,7 @@ with strategy.scope():
             test_logpz,
             test_logqz_x,
             test_rmse_CO2,
-            test_rmse_MONTH,
+            test_cce_MONTH,
         ) = test_stats(autoencoder, testData)
 
         # Save model state and validation statistics
@@ -228,8 +228,8 @@ with strategy.scope():
             test_logqz_x.result(),
             train_rmse_CO2.result(),
             test_rmse_CO2.result(),
-            train_rmse_MONTH.result(),
-            test_rmse_MONTH.result(),
+            train_cce_MONTH.result(),
+            test_cce_MONTH.result(),
         )
         val_time = time.time()
 
@@ -262,7 +262,7 @@ with strategy.scope():
         )
         print(
             "MONTH  : {:>6.1f}, {:>6.1f}".format(
-                train_rmse_MONTH.result(), test_rmse_MONTH.result()
+                train_cce_MONTH.result(), test_cce_MONTH.result()
             )
         )
         print(
