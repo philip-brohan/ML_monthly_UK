@@ -7,16 +7,45 @@ import iris.coord_systems
 import tensorflow as tf
 import numpy as np
 
+# Want a smooth transition at the edge of the mask, so
+#  set masked points near data points to close to the data value
+def extrapolate_step(cb, scale=0.95):
+    st = cb.data * 0
+    st[:, 1:] = cb.data[:, :-1]*scale
+    sb = cb.data * 0
+    sb[:, :-1] = cb.data[:, 1:]*scale
+    sa = np.maximum(st, sb)
+    sl = cb.data * 0
+    sl[1:, :] = cb.data[:-1, :]*scale
+    sa = np.maximum(sa, sl)
+    sr = cb.data * 0
+    sr[:-1, :] = cb.data[1:, :]*scale
+    sa = np.maximum(sa, sr)
+    sp = np.where(cb.data == 0)
+    result = cb.copy()
+    result.data[sp] = sa[sp]
+    return result
+
+
+def extrapolate_missing(cb, nsteps=10, scale=0.95):
+    cr = cb.copy()
+    for step in range(nsteps):
+        cr = extrapolate_step(cr, scale=scale)
+    return cr
+
 
 def cList_to_tensor(cL, sst_mask, hukg_mask):
     d1 = normalise(cL[0], "PRMSL")
     d2 = normalise(cL[1], "TMPS")
     d2.data[np.where(sst_mask == True)] = 0
+    d2 = extrapolate_missing(d2,nsteps=100,scale=0.95)
     d3 = normalise(cL[2], "TMP2m")
     d3.data[np.where(hukg_mask == True)] = 0
     d3.data[d3.data > 5] = 0  # Kludge - mask varies
+    d3 = extrapolate_missing(d3,nsteps=100,scale=0.95)
     d4 = normalise(cL[3], "PRATE")
     d4.data[np.where(hukg_mask == True)] = 0
+    d4 = extrapolate_missing(d4,nsteps=100,scale=0.95)
     ic = np.stack((d1.data, d2.data, d3.data, d4.data), axis=2)
     ict = tf.convert_to_tensor(ic.data, np.float32)
     return ict
