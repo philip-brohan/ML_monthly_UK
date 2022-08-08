@@ -15,8 +15,8 @@ PRMSL_scale = 1.0
 SST_scale = 1.0
 T2M_scale = 1.0
 PRATE_scale = 1.0
-CO2_scale = 1.0
-MONTH_scale = 1.0
+CO2_scale = 0.1
+MONTH_scale = 0.01
 
 
 class DCVAE(tf.keras.Model):

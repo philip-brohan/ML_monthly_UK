@@ -36,7 +36,7 @@ nTrainingImages = 1491  # Max is 1491
 nTestImages = 165  # Max is 165
 
 # How many epochs to train for
-nEpochs = 100
+nEpochs = 300
 # Length of an epoch - if None, same as nTrainingImages
 nImagesInEpoch = None
 nRepeatsPerEpoch = 5  # Show each image this many times
@@ -168,7 +168,7 @@ with strategy.scope():
 
     # Instantiate the model
     autoencoder = DCVAE()
-    optimizer = tf.keras.optimizers.Adam(1e-3)
+    optimizer = tf.keras.optimizers.Adam(1e-4)
     # If we are doing a restart, load the weights
     if args.epoch > 0:
         weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
