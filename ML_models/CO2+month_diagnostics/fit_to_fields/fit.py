@@ -97,7 +97,7 @@ co2t = tf.reshape(
     tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32), [1, 1]
 )
 cmt = tf.reshape(
-    tf.convert_to_tensor(normalise_month("000-%02d" % args.month), np.float32), [1, 1]
+    tf.convert_to_tensor(normalise_month("000-%02d" % args.month), np.float32), [1, 12]
 )
 
 

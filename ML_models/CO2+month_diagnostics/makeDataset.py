@@ -221,7 +221,7 @@ def normalise_month(file_name):
 
 
 def unnormalise_month(mnth):
-    return np.argmax(mn) + 1
+    return np.argmax(mnth) + 1
 
 
 # Get a dataset

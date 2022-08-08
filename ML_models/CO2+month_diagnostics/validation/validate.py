@@ -61,6 +61,8 @@ from localise import LSCRATCH
 from autoencoderModel import DCVAE
 from makeDataset import normalise_co2
 from makeDataset import normalise_month
+from makeDataset import unnormalise_co2
+from makeDataset import unnormalise_month
 
 # Load and standardise data
 qd = load_cList(args.year, args.month, args.member)
@@ -78,19 +80,14 @@ load_status.assert_existing_objects_matched()
 encoded = autoencoder.call(
     (
         tf.reshape(ict, [1, 1440, 896, 4]),
-        tf.reshape(
-            tf.convert_to_tensor(nco2, np.float32), [1,]
-        ),
-        tf.reshape(
-            tf.convert_to_tensor(nmth, np.float32),
-            [1,],
-        ),
+        tf.reshape(tf.convert_to_tensor(nco2, np.float32), [1,]),
+        tf.reshape(tf.convert_to_tensor(nmth, np.float32), [1, 12],),
     )
 )
 
 # Make the plot
 fig = Figure(
-    figsize=(15, 22),
+    figsize=(15, 23),
     dpi=100,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -112,6 +109,27 @@ axb.add_patch(
     Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
 )
 
+# Top row, date, CO2 and month diagnostics
+
+axb.text(0.03, 0.97, "%04d/%02d" % (args.year, args.month), fontsize=30, zorder=10)
+axb.text(
+    0.15,
+    0.97,
+    "CO2= %5.1f (%5.1f)" % (unnormalise_co2(encoded[1].numpy()), unnormalise_co2(nco2)),
+    fontsize=30,
+    zorder=10,
+)
+axb.text(
+    0.42,
+    0.97,
+    "Month= %2d (%2d)" % (unnormalise_month(encoded[2].numpy()), unnormalise_month(nmth)),
+    fontsize=30,
+    zorder=10,
+)
+ax_mnth = fig.add_axes([0.7, 0.965, 0.29, 0.028],xlim=(0,13),ylim=(0,1))
+ax_mnth.bar(list(range(1,13)),encoded[2][0,:].numpy(),width=0.8,color=(1,0,0,1),tick_label='')
+ax_mnth.set_yticks(())
+
 
 # Top left - PRMSL original
 var = sCube.copy()
@@ -120,7 +138,7 @@ var = unnormalise(var, "PRMSL") / 100
 (dmin, dmax) = get_range("PRMSL", args.month, var)
 dmin /= 100
 dmax /= 100
-ax_prmsl = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
+ax_prmsl = fig.add_axes([0.025 / 3, 0.12 / 4 + 0.72, 0.95 / 3, 0.81 / 4])
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
     ax_prmsl,
@@ -131,7 +149,7 @@ PRMSL_img = plotFieldAxes(
     cMap=cmocean.cm.diff,
     plotCube=sCube,
 )
-ax_prmsl_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.75, 0.75 / 3, 0.05 / 4])
+ax_prmsl_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.72, 0.75 / 3, 0.05 / 4])
 ax_prmsl_cb.set_axis_off()
 cb = fig.colorbar(
     PRMSL_img, ax=ax_prmsl_cb, location="bottom", orientation="horizontal", fraction=1.0
@@ -140,7 +158,7 @@ cb = fig.colorbar(
 # Top centre - PRMSL encoded
 var.data = np.squeeze(encoded[0][0, :, :, 0].numpy())
 var = unnormalise(var, "PRMSL") / 100
-ax_prmsl_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
+ax_prmsl_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.12 / 4 + 0.72, 0.95 / 3, 0.81 / 4])
 ax_prmsl_e.set_axis_off()
 PRMSL_e_img = plotFieldAxes(
     ax_prmsl_e,
@@ -151,7 +169,7 @@ PRMSL_e_img = plotFieldAxes(
     cMap=cmocean.cm.diff,
     plotCube=sCube,
 )
-ax_prmsl_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.75, 0.75 / 3, 0.05 / 4])
+ax_prmsl_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.72, 0.75 / 3, 0.05 / 4])
 ax_prmsl_e_cb.set_axis_off()
 cb = fig.colorbar(
     PRMSL_e_img,
@@ -169,7 +187,7 @@ vary = sCube.copy()
 vary.data = np.squeeze(encoded[0][0, :, :, 0].numpy())
 vary = unnormalise(vary, "PRMSL") / 100
 ax_prmsl_s = fig.add_axes(
-    [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.75, 0.95 / 3 - 0.06, 0.85 / 4]
+    [0.025 / 3 + 2 / 3 + 0.06, 0.12 / 4 + 0.72, 0.95 / 3 - 0.06, 0.81 / 4]
 )
 plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
@@ -182,7 +200,7 @@ var = unnormalise(var, "PRATE") * 1000
 (dmin, dmax) = get_range("PRATE", args.month, var)
 dmin = 0
 dmax *= 1000
-ax_prate = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
+ax_prate = fig.add_axes([0.025 / 3, 0.12 / 4 + 0.48, 0.95 / 3, 0.81 / 4])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
     ax_prate,
@@ -193,7 +211,7 @@ PRATE_img = plotFieldAxes(
     cMap=cmocean.cm.rain,
     plotCube=sCube,
 )
-ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
+ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.48, 0.75 / 3, 0.05 / 4])
 ax_prate_cb.set_axis_off()
 cb = fig.colorbar(
     PRATE_img, ax=ax_prate_cb, location="bottom", orientation="horizontal", fraction=1.0
@@ -203,7 +221,7 @@ cb = fig.colorbar(
 var.data = np.squeeze(encoded[0][0, :, :, 3].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "PRATE") * 1000
-ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
+ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.12 / 4 + 0.48, 0.95 / 3, 0.81 / 4])
 ax_prate_e.set_axis_off()
 PRATE_e_img = plotFieldAxes(
     ax_prate_e,
@@ -214,7 +232,7 @@ PRATE_e_img = plotFieldAxes(
     cMap=cmocean.cm.rain,
     plotCube=sCube,
 )
-ax_prate_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
+ax_prate_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.48, 0.75 / 3, 0.05 / 4])
 ax_prate_e_cb.set_axis_off()
 cb = fig.colorbar(
     PRATE_e_img,
@@ -234,7 +252,7 @@ vary.data = np.squeeze(encoded[0][0, :, :, 3].numpy())
 vary.data = np.ma.masked_where(dm_hukg.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "PRATE") * 1000
 ax_prate_s = fig.add_axes(
-    [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.5, 0.95 / 3 - 0.06, 0.85 / 4]
+    [0.025 / 3 + 2 / 3 + 0.06, 0.12 / 4 + 0.48, 0.95 / 3 - 0.06, 0.81 / 4]
 )
 plotScatterAxes(ax_prate_s, varx, vary, vMin=0.001, vMax=dmax, bins=None)
 
@@ -247,7 +265,7 @@ var = unnormalise(var, "TMP2m") - 273.15
 (dmin, dmax) = get_range("TMP2m", args.month, var)
 dmin -= 273.15 + 2
 dmax -= 273.15 - 2
-ax_t2m = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
+ax_t2m = fig.add_axes([0.025 / 3, 0.12 / 4 + 0.24, 0.95 / 3, 0.81 / 4])
 ax_t2m.set_axis_off()
 T2m_img = plotFieldAxes(
     ax_t2m,
@@ -258,7 +276,7 @@ T2m_img = plotFieldAxes(
     cMap=cmocean.cm.balance,
     plotCube=sCube,
 )
-ax_t2m_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.25, 0.75 / 3, 0.05 / 4])
+ax_t2m_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.24, 0.75 / 3, 0.05 / 4])
 ax_t2m_cb.set_axis_off()
 cb = fig.colorbar(
     T2m_img, ax=ax_t2m_cb, location="bottom", orientation="horizontal", fraction=1.0
@@ -269,7 +287,7 @@ var = sCube.copy()
 var.data = np.squeeze(encoded[0][0, :, :, 2].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "TMP2m") - 273.15
-ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
+ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.12 / 4 + 0.24, 0.95 / 3, 0.81 / 4])
 ax_t2m_e.set_axis_off()
 T2m_e_img = plotFieldAxes(
     ax_t2m_e,
@@ -280,7 +298,7 @@ T2m_e_img = plotFieldAxes(
     cMap=cmocean.cm.balance,
     plotCube=sCube,
 )
-ax_t2m_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.25, 0.75 / 3, 0.05 / 4])
+ax_t2m_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.24, 0.75 / 3, 0.05 / 4])
 ax_t2m_e_cb.set_axis_off()
 cb = fig.colorbar(
     T2m_e_img, ax=ax_t2m_e_cb, location="bottom", orientation="horizontal", fraction=1.0
@@ -296,7 +314,7 @@ vary.data = np.squeeze(encoded[0][0, :, :, 2].numpy())
 vary.data = np.ma.masked_where(dm_hukg.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMP2m") - 273.15
 ax_t2m_s = fig.add_axes(
-    [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.25, 0.95 / 3 - 0.06, 0.85 / 4]
+    [0.025 / 3 + 2 / 3 + 0.06, 0.12 / 4 + 0.24, 0.95 / 3 - 0.06, 0.81 / 4]
 )
 plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
@@ -308,7 +326,7 @@ var = unnormalise(var, "TMPS") - 273.15
 (dmin, dmax) = get_range("TMPS", args.month, var)
 dmin -= 273.15 + 2
 dmax -= 273.15 - 2
-ax_sst = fig.add_axes([0.025 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
+ax_sst = fig.add_axes([0.025 / 3, 0.12 / 4, 0.95 / 3, 0.81 / 4])
 ax_sst.set_axis_off()
 SST_img = plotFieldAxes(
     ax_sst,
@@ -329,7 +347,7 @@ cb = fig.colorbar(
 var.data = encoded[0].numpy()[0, :, :, 1]
 var.data = np.ma.masked_where(lm_20CR.data > 0, var.data, copy=False)
 var = unnormalise(var, "TMPS") - 273.15
-ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
+ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.12 / 4, 0.95 / 3, 0.81 / 4])
 ax_sst_e.set_axis_off()
 SST_e_img = plotFieldAxes(
     ax_sst_e,
@@ -353,9 +371,7 @@ varx = unnormalise(varx, "TMPS") - 273.15
 vary.data = np.squeeze(encoded[0][0, :, :, 1].numpy())
 vary.data = np.ma.masked_where(lm_20CR.data > 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMPS") - 273.15
-ax_sst_s = fig.add_axes(
-    [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4, 0.95 / 3 - 0.06, 0.85 / 4]
-)
+ax_sst_s = fig.add_axes([0.025 / 3 + 2 / 3 + 0.06, 0.12 / 4, 0.95 / 3 - 0.06, 0.81 / 4])
 plotScatterAxes(ax_sst_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 
