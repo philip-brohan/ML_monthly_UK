@@ -228,7 +228,7 @@ def unnormalise_month(mnth):
 def getDataset(purpose, nImages=None):
 
     # Get a list of filenames containing tensors
-    inFiles = os.listdir("%s/datasets/%s" % (TSOURCE, purpose))
+    inFiles = sorted(os.listdir("%s/datasets/%s" % (TSOURCE, purpose)))
 
     if nImages is not None:
         if len(inFiles) >= nImages:
