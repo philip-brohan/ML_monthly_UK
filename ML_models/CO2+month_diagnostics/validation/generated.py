@@ -44,6 +44,7 @@ args = parser.parse_args()
 sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 from autoencoderModel import DCVAE
+from makeDataset import unnormalise_co2
 from makeDataset import unnormalise_month
 
 autoencoder = DCVAE()
@@ -53,11 +54,11 @@ load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 load_status.assert_existing_objects_matched()
 eps = tf.random.normal(shape=(1, autoencoder.latent_dim))
 generated = autoencoder.decode(eps)
-print(np.squeeze(generated[2].numpy()))
-month = round(unnormalise_month(np.squeeze(generated[2].numpy())))
+month = unnormalise_month(generated[2].numpy())
+co2 = unnormalise_co2(generated[1].numpy())
 
 fig = Figure(
-    figsize=(20, 22),
+    figsize=(20, 24),
     dpi=100,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -79,6 +80,25 @@ axb.add_patch(
     Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
 )
 
+# Top row - CO2 and month diagnostics
+
+axb.text(
+    0.03, 0.97, "CO2 = %5.1f " % co2, fontsize=30, zorder=10,
+)
+axb.text(
+    0.18, 0.97, "Month = %d " % month, fontsize=30, zorder=10,
+)
+ax_mnth = fig.add_axes([0.7, 0.965, 0.29, 0.028], xlim=(0, 13), ylim=(0, 1))
+ax_mnth.bar(
+    list(range(1, 13)),
+    generated[2][0, :].numpy(),
+    width=0.8,
+    color=(1, 0, 0, 1),
+    tick_label="",
+)
+ax_mnth.set_yticks(())
+
+
 # Top left - PRMSL
 var = sCube.copy()
 var.data = np.squeeze(generated[0][0, :, :, 0].numpy())
@@ -86,7 +106,7 @@ var = unnormalise(var, "PRMSL") / 100
 (dmin, dmax) = get_range("PRMSL", month, var)
 dmin /= 100
 dmax /= 100
-ax_prmsl = fig.add_axes([0.025 / 2, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
+ax_prmsl = fig.add_axes([0.025 / 2, 0.11 / 2 + 0.46, 0.95 / 2, 0.78 / 2])
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
     ax_prmsl,
@@ -97,7 +117,7 @@ PRMSL_img = plotFieldAxes(
     cMap=cmocean.cm.diff,
     plotCube=None,
 )
-ax_prmsl_cb = fig.add_axes([0.125 / 2, 0.05 / 2 + 0.5, 0.75 / 2, 0.05 / 2])
+ax_prmsl_cb = fig.add_axes([0.125 / 2, 0.04 / 2 + 0.46, 0.75 / 2, 0.05 / 2])
 ax_prmsl_cb.set_axis_off()
 cb = fig.colorbar(
     PRMSL_img, ax=ax_prmsl_cb, location="bottom", orientation="horizontal", fraction=1.0
@@ -111,7 +131,7 @@ var = unnormalise(var, "TMPS") - 273.15
 (dmin, dmax) = get_range("TMPS", month, var)
 dmin -= 273.15 + 2
 dmax -= 273.15 - 2
-ax_sst = fig.add_axes([0.025 / 2, 0.125 / 2, 0.95 / 2, 0.85 / 2])
+ax_sst = fig.add_axes([0.025 / 2, 0.11 / 2, 0.95 / 2, 0.78 / 2])
 ax_sst.set_axis_off()
 SST_img = plotFieldAxes(
     ax_sst,
@@ -122,7 +142,7 @@ SST_img = plotFieldAxes(
     cMap=cmocean.cm.balance,
     plotCube=None,
 )
-ax_sst_cb = fig.add_axes([0.125 / 2, 0.05 / 2, 0.75 / 2, 0.05 / 2])
+ax_sst_cb = fig.add_axes([0.125 / 2, 0.04 / 2, 0.75 / 2, 0.04 / 2])
 ax_sst_cb.set_axis_off()
 cb = fig.colorbar(
     SST_img, ax=ax_sst_cb, location="bottom", orientation="horizontal", fraction=1.0
@@ -136,7 +156,7 @@ var = unnormalise(var, "PRATE") * 1000
 (dmin, dmax) = get_range("PRATE", month, var)
 dmin = 0
 dmax *= 1000
-ax_prate = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
+ax_prate = fig.add_axes([0.025 / 2 + 0.5, 0.11 / 2 + 0.46, 0.95 / 2, 0.78 / 2])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
     ax_prate,
@@ -147,7 +167,7 @@ PRATE_img = plotFieldAxes(
     cMap=cmocean.cm.rain,
     plotCube=None,
 )
-ax_prate_cb = fig.add_axes([0.125 / 2 + 0.5, 0.05 / 2 + 0.5, 0.75 / 2, 0.05 / 2])
+ax_prate_cb = fig.add_axes([0.125 / 2 + 0.5, 0.04 / 2 + 0.46, 0.75 / 2, 0.04 / 2])
 ax_prate_cb.set_axis_off()
 cb = fig.colorbar(
     PRATE_img, ax=ax_prate_cb, location="bottom", orientation="horizontal", fraction=1.0
@@ -160,12 +180,12 @@ var = unnormalise(var, "TMP2m") - 273.15
 (dmin, dmax) = get_range("TMP2m", month, var)
 dmin -= 273.15 + 2
 dmax -= 273.15 - 2
-ax_tmp2m = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2, 0.95 / 2, 0.85 / 2])
+ax_tmp2m = fig.add_axes([0.025 / 2 + 0.5, 0.11 / 2, 0.95 / 2, 0.78 / 2])
 ax_tmp2m.set_axis_off()
 TMP2m_img = plotFieldAxes(
     ax_tmp2m, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
 )
-ax_tmp2m_cb = fig.add_axes([0.125 / 2 + 0.5, 0.05 / 2, 0.75 / 2, 0.05 / 2])
+ax_tmp2m_cb = fig.add_axes([0.125 / 2 + 0.5, 0.04 / 2, 0.75 / 2, 0.04 / 2])
 ax_tmp2m_cb.set_axis_off()
 cb = fig.colorbar(
     TMP2m_img, ax=ax_tmp2m_cb, location="bottom", orientation="horizontal", fraction=1.0

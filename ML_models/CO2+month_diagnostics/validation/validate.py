@@ -109,25 +109,33 @@ axb.add_patch(
     Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
 )
 
-# Top row, date, CO2 and month diagnostics
+# Top row - date, CO2 and month diagnostics
 
 axb.text(0.03, 0.97, "%04d/%02d" % (args.year, args.month), fontsize=30, zorder=10)
 axb.text(
     0.15,
     0.97,
-    "CO2= %5.1f (%5.1f)" % (unnormalise_co2(encoded[1].numpy()), unnormalise_co2(nco2)),
+    "CO2 = %5.1f (%5.1f)"
+    % (unnormalise_co2(encoded[1].numpy()), unnormalise_co2(nco2)),
     fontsize=30,
     zorder=10,
 )
 axb.text(
     0.42,
     0.97,
-    "Month= %2d (%2d)" % (unnormalise_month(encoded[2].numpy()), unnormalise_month(nmth)),
+    "Month = %d (%d)"
+    % (unnormalise_month(encoded[2].numpy()), unnormalise_month(nmth)),
     fontsize=30,
     zorder=10,
 )
-ax_mnth = fig.add_axes([0.7, 0.965, 0.29, 0.028],xlim=(0,13),ylim=(0,1))
-ax_mnth.bar(list(range(1,13)),encoded[2][0,:].numpy(),width=0.8,color=(1,0,0,1),tick_label='')
+ax_mnth = fig.add_axes([0.7, 0.965, 0.29, 0.028], xlim=(0, 13), ylim=(0, 1))
+ax_mnth.bar(
+    list(range(1, 13)),
+    encoded[2][0, :].numpy(),
+    width=0.8,
+    color=(1, 0, 0, 1),
+    tick_label="",
+)
 ax_mnth.set_yticks(())
 
 
