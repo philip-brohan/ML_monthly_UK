@@ -205,12 +205,14 @@ CO2_since_1850 = (
 def normalise_co2(file_name):
     year = int(file_name[:4])
     c2 = CO2_since_1850[year - 1850]
-    c2 = (c2 - 250) / 150  # Normalise to ~0-1
-    return c2
+    c2 = int((c2-280)/10)
+    c2c = np.repeat(np.float32(0), 14)
+    c2c[c2]=1
+    return c2c
 
 
 def unnormalise_co2(c2):
-    return c2 * 150 + 250
+    return np.argmax(c2c)*10+280
 
 
 def normalise_month(file_name):

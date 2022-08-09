@@ -116,7 +116,8 @@ class DCVAE(tf.keras.Model):
             [
                 tf.keras.layers.InputLayer(input_shape=(self.latent_dim,)),
                 tf.keras.layers.Dense(units=self.latent_dim, activation=tf.nn.elu),
-                tf.keras.layers.Dense(units=1, activation=tf.nn.elu),
+                tf.keras.layers.Dense(units=14, activation=tf.nn.elu),
+                tf.keras.layers.Softmax(),
             ]
         )
 
@@ -233,8 +234,8 @@ def compute_loss(model, x):
     )
     logpz = log_normal_pdf(latent, 0.0, 0.0) * -1
     logqz_x = log_normal_pdf(latent, mean, logvar)
-    rmse_CO2 = (
-        tf.keras.metrics.mean_squared_error(encoded[1], x[1]) * RMSE_scale * CO2_scale
+    cce_CO2 = (
+        tf.keras.metrics.categorical_crossentropy(encoded[1], x[1]) * RMSE_scale * CO2_scale
     )
     cce_MONTH = (
         tf.keras.metrics.categorical_crossentropy(encoded[2], x[2])
@@ -249,7 +250,7 @@ def compute_loss(model, x):
             rmse_PRATE,
             logpz,
             logqz_x,
-            rmse_CO2,
+            cce_CO2,
             cce_MONTH,
         ]
     )
