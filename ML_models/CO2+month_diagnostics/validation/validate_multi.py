@@ -35,6 +35,20 @@ parser.add_argument(
     "--endyear", help="Last year to plot", type=int, required=False, default=None
 )
 parser.add_argument(
+    "--xpoint",
+    help="Extract data at this x point",
+    type=int,
+    required=False,
+    default=None,
+)
+parser.add_argument(
+    "--ypoint",
+    help="Extract data at this y point",
+    type=int,
+    required=False,
+    default=None,
+)
+parser.add_argument(
     "--annual",
     help="Make annual averages",
     dest="annual",
@@ -83,26 +97,38 @@ load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
 
+
+def field_to_scalar(field, mask):
+    if args.xpoint is not None and args.ypoint is not None:
+        return field[args.ypoint, args.xpoint]
+    if args.xpoint is None and args.ypoint is None:
+        if mask is not None:
+            return np.mean(field[np.where(mask == False)])
+        return np.mean(field)
+    else:
+        raise Exception("Must specify both xpoint and ypoint (or neither).")
+
+
 # Get target and encoded statistics for one test case
 def compute_stats(model, x):
     mean, logvar = model.encode(x)
     latent = model.reparameterize(mean, logvar)
     encoded = model.decode(latent)
     stats = {}
-    stats["PRMSL_target"] = np.mean(x[0][:, :, :, 0].numpy())
-    stats["PRMSL_model"] = np.mean(encoded[0][:, :, :, 0].numpy())
+    stats["PRMSL_target"] = field_to_scalar(x[0][0, :, :, 0].numpy(), None)
+    stats["PRMSL_model"] = field_to_scalar(encoded[0][0, :, :, 0].numpy(), None)
     vt = x[0][0, :, :, 1].numpy()
-    stats["SST_target"] = np.mean(vt[np.where(lm_20CR.data.mask == False)])
+    stats["SST_target"] = field_to_scalar(vt, lm_20CR.data.mask)
     vm = encoded[0][0, :, :, 1].numpy()
-    stats["SST_model"] = np.mean(vm[np.where(lm_20CR.data.mask == False)])
+    stats["SST_model"] = field_to_scalar(vm, lm_20CR.data.mask)
     vt = x[0][0, :, :, 2].numpy()
-    stats["T2M_target"] = np.mean(vt[np.where(dm_hukg.data.mask == False)])
+    stats["T2M_target"] = field_to_scalar(vt, dm_hukg.data.mask)
     vm = encoded[0][0, :, :, 2].numpy()
-    stats["T2M_model"] = np.mean(vm[np.where(dm_hukg.data.mask == False)])
+    stats["T2M_model"] = field_to_scalar(vm, dm_hukg.data.mask)
     vt = x[0][0, :, :, 3].numpy()
-    stats["PRATE_target"] = np.mean(vt[np.where(dm_hukg.data.mask == False)])
+    stats["PRATE_target"] = field_to_scalar(vt, dm_hukg.data.mask)
     vm = encoded[0][0, :, :, 3].numpy()
-    stats["PRATE_model"] = np.mean(vm[np.where(dm_hukg.data.mask == False)])
+    stats["PRATE_model"] = field_to_scalar(vm, dm_hukg.data.mask)
     stats["CO2_target"] = x[1][0].numpy()
     stats["CO2_model"] = encoded[1][0].numpy()
     stats["MONTH_target"] = x[2][0, :].numpy()
@@ -257,19 +283,22 @@ my = [unnormalise(x, "PRMSL") / 100 for x in all_stats["PRMSL_model"]]
 plot_var(tsx, ty, my, 1, 3, "PRMSL")
 
 # Centre left - SST
-ty = [unnormalise(x, "TMPS") - 273.15 for x in all_stats["SST_target"]]
-my = [unnormalise(x, "TMPS") - 273.15 for x in all_stats["SST_model"]]
-plot_var(tsx, ty, my, 1, 2, "SST")
+if args.xpoint is None or lm_20CR.data.mask[args.ypoint, args.xpoint] == False:
+    ty = [unnormalise(x, "TMPS") - 273.15 for x in all_stats["SST_target"]]
+    my = [unnormalise(x, "TMPS") - 273.15 for x in all_stats["SST_model"]]
+    plot_var(tsx, ty, my, 1, 2, "SST")
 
 # Bottom left - T2M
-ty = [unnormalise(x, "TMP2m") - 273.15 for x in all_stats["T2M_target"]]
-my = [unnormalise(x, "TMP2m") - 273.15 for x in all_stats["T2M_model"]]
-plot_var(tsx, ty, my, 1, 1, "T2M")
+if args.xpoint is None or dm_hukg.data.mask[args.ypoint, args.xpoint] == False:
+    ty = [unnormalise(x, "TMP2m") - 273.15 for x in all_stats["T2M_target"]]
+    my = [unnormalise(x, "TMP2m") - 273.15 for x in all_stats["T2M_model"]]
+    plot_var(tsx, ty, my, 1, 1, "T2M")
 
 # Top right - PRATE
-ty = [unnormalise(x, "PRATE") * 1000 for x in all_stats["PRATE_target"]]
-my = [unnormalise(x, "PRATE") * 1000 for x in all_stats["PRATE_model"]]
-plot_var(tsx, ty, my, 2, 3, "PRATE")
+if args.xpoint is None or dm_hukg.data.mask[args.ypoint, args.xpoint] == False:
+    ty = [unnormalise(x, "PRATE") * 1000 for x in all_stats["PRATE_target"]]
+    my = [unnormalise(x, "PRATE") * 1000 for x in all_stats["PRATE_model"]]
+    plot_var(tsx, ty, my, 2, 3, "PRATE")
 
 # Centre right - CO2
 ty = [unnormalise_co2(x) for x in all_stats["CO2_target"]]

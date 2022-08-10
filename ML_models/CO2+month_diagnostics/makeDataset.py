@@ -232,7 +232,7 @@ def getFileNames(purpose, nImages=None, startyear=None, endyear=None):
     if startyear is not None:
         inFiles = [fn for fn in inFiles if int(fn[:4])>=startyear]
     if endyear is not None:
-        inFiles = [fn for fn in inFiles if int(fn[:4])>=endyear]
+        inFiles = [fn for fn in inFiles if int(fn[:4])<=endyear]
     if nImages is not None:
         if len(inFiles) >= nImages:
             inFiles = inFiles[0:nImages]
