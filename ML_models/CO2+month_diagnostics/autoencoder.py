@@ -32,14 +32,14 @@ from autoencoderModel import train_step
 from autoencoderModel import compute_loss
 
 # How many images to use?
-nTrainingImages = 1491  # Max is 1491
-nTestImages = 165  # Max is 165
+nTrainingImages = 4245  # Max is 4245
+nTestImages = 471  # Max is 471
 
 # How many epochs to train for
 nEpochs = 300
 # Length of an epoch - if None, same as nTrainingImages
 nImagesInEpoch = None
-nRepeatsPerEpoch = 5  # Show each image this many times
+nRepeatsPerEpoch = 2  # Show each image this many times
 
 if nImagesInEpoch is None:
     nImagesInEpoch = nTrainingImages
