@@ -212,7 +212,7 @@ def normalise_co2(file_name):
 
 
 def unnormalise_co2(c2):
-    return np.argmax(c2c)*10+280
+    return np.argmax(c2)*10+280
 
 
 def normalise_month(file_name):
@@ -226,12 +226,13 @@ def unnormalise_month(mnth):
     return np.argmax(mnth) + 1
 
 
-# Get a dataset
-def getDataset(purpose, nImages=None):
-
-    # Get a list of filenames containing tensors
+# Get a list of filenames containing tensors
+def getFileNames(purpose, nImages=None, startyear=None, endyear=None):
     inFiles = sorted(os.listdir("%s/datasets/%s" % (TSOURCE, purpose)))
-
+    if startyear is not None:
+        inFiles = [fn for fn in inFiles if int(fn[:4])>=startyear]
+    if endyear is not None:
+        inFiles = [fn for fn in inFiles if int(fn[:4])>=endyear]
     if nImages is not None:
         if len(inFiles) >= nImages:
             inFiles = inFiles[0:nImages]
@@ -239,6 +240,13 @@ def getDataset(purpose, nImages=None):
             raise ValueError(
                 "Only %d images available, can't provide %d" % (len(inFiles), nImages)
             )
+    return inFiles
+
+# Get a dataset
+def getDataset(purpose, nImages=None, startyear=None, endyear=None):
+
+    # Get a list of filenames containing tensors
+    inFiles = getFileNames(purpose, nImages=nImages, startyear=startyear, endyear=endyear)
 
     tc_data = tf.data.Dataset.from_tensor_slices([normalise_co2(x) for x in inFiles])
     tm_data = tf.data.Dataset.from_tensor_slices([normalise_month(x) for x in inFiles])

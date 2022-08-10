@@ -10,6 +10,7 @@ import iris
 import iris.fileformats
 import iris.analysis
 import datetime
+from statistics import mean
 import cmocean
 
 import matplotlib
@@ -27,6 +28,26 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=99)
+parser.add_argument(
+    "--startyear", help="First year to plot", type=int, required=False, default=None
+)
+parser.add_argument(
+    "--endyear", help="Last year to plot", type=int, required=False, default=None
+)
+parser.add_argument(
+    "--annual",
+    help="Make annual averages",
+    dest="annual",
+    default=False,
+    action="store_true",
+)
+parser.add_argument(
+    "--anomalies",
+    help="Make monthly anomalies",
+    dest="anomalies",
+    default=False,
+    action="store_true",
+)
 args = parser.parse_args()
 
 sys.path.append("%s/../../../get_data" % os.path.dirname(__file__))
@@ -41,19 +62,20 @@ sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 from localise import TSOURCE
 from autoencoderModel import DCVAE
+from makeDataset import getFileNames
 from makeDataset import getDataset
 from makeDataset import unnormalise_co2
 from makeDataset import unnormalise_month
 
 # Set up the test data
-nTestImages = 471  # Max is 471
-testData = getDataset(purpose="test", nImages=nTestImages)
+testData = getDataset(purpose="test", startyear=args.startyear, endyear=args.endyear)
 testData = testData.batch(1)
 # Get the associated dates, so we can do time-series
 inFiles = sorted(os.listdir("%s/datasets/%s" % (TSOURCE, "test")))
 dts = []
-for fn in inFiles[:nTestImages]:
-    dts.append(datetime.date(int(fn[:4]), int(fn[5:7]), 15))
+for fn in getFileNames(purpose="test", startyear=args.startyear, endyear=args.endyear):
+    dtp = datetime.date(int(fn[:4]), int(fn[5:7]), 15)
+    dts.append(dtp)
 
 autoencoder = DCVAE()
 weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
@@ -96,6 +118,32 @@ for case in testData:
             all_stats[key].append(stats[key])
         else:
             all_stats[key] = [stats[key]]
+
+
+def to_annual_averages(ts, monthly):
+    result = []
+    current = []
+    for idx in range(len(ts)):
+        current.append(monthly[idx])
+        if idx == len(ts) - 1 or (ts[idx].year != ts[idx + 1].year):
+            result.append(mean(current))
+            current = []
+    return result
+
+
+def to_monthly_anomalies(ts, monthly):
+    climatology = []
+    for m in range(13):
+        climatology.append([])
+    for idx in range(len(ts)):
+        climatology[ts[idx].month].append(monthly[idx])
+    for m in range(1, 13):
+        climatology[m] = mean(climatology[m])
+    result = []
+    for idx in range(len(ts)):
+        result.append(monthly[idx] - climatology[ts[idx].month])
+    return result
+
 
 # Plot sizes
 tsh = 2
@@ -140,12 +188,22 @@ def unnormalise(value, variable):
 
 
 def plot_var(ts, t, m, xp, yp, label):
+    if args.anomalies:
+        t = to_monthly_anomalies(ts, t)
+        m = to_monthly_anomalies(ts, m)
+    if args.annual:
+        t = to_annual_averages(ts, t)
+        m = to_annual_averages(ts, m)
+        ts = list(range(dts[0].year, dts[-1].year + 1))
+        ts = [datetime.date(y, 7, 1) for y in ts]
     ymin = min(min(t), min(m))
     ymax = max(max(t), max(m))
     ypad = (ymax - ymin) * 0.1
+    if ypad == 0:
+        ypad = 1
     ax_ts = fig.add_axes(
         [
-            (wpad / fig_w) * (2*xp-1) + (tsw + ssw) * (xp - 1) / fig_w,
+            (wpad / fig_w) * (2 * xp - 1) + (tsw + ssw) * (xp - 1) / fig_w,
             (hpad / fig_h) * yp + (tsh / fig_h) * (yp - 1),
             tsw / fig_w,
             tsh / fig_h,
@@ -163,14 +221,14 @@ def plot_var(ts, t, m, xp, yp, label):
         label,
         ha="left",
         va="top",
-        bbox=dict(boxstyle="square,pad=0.5",fc=(1,1,1,1)),
+        bbox=dict(boxstyle="square,pad=0.5", fc=(1, 1, 1, 1)),
         zorder=100,
     )
     ax_ts.add_line(Line2D(ts, t, linewidth=1, color=(0, 0, 0, 1), alpha=1.0, zorder=50))
     ax_ts.add_line(Line2D(ts, m, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=60))
     ax_sc = fig.add_axes(
         [
-            (wpad / fig_w) * (2*xp) + (tsw*xp + ssw*(xp-1)) / fig_w,
+            (wpad / fig_w) * (2 * xp) + (tsw * xp + ssw * (xp - 1)) / fig_w,
             (hpad / fig_h) * yp + (tsh / fig_h) * (yp - 1),
             ssw / fig_w,
             tsh / fig_h,
@@ -209,8 +267,8 @@ my = [unnormalise(x, "TMP2m") - 273.15 for x in all_stats["T2M_model"]]
 plot_var(tsx, ty, my, 1, 1, "T2M")
 
 # Top right - PRATE
-ty = [unnormalise(x, "PRATE")*1000 for x in all_stats["PRATE_target"]]
-my = [unnormalise(x, "PRATE")*1000 for x in all_stats["PRATE_model"]]
+ty = [unnormalise(x, "PRATE") * 1000 for x in all_stats["PRATE_target"]]
+my = [unnormalise(x, "PRATE") * 1000 for x in all_stats["PRATE_model"]]
 plot_var(tsx, ty, my, 2, 3, "PRATE")
 
 # Centre right - CO2
@@ -219,8 +277,9 @@ my = [unnormalise_co2(x) for x in all_stats["CO2_model"]]
 plot_var(tsx, ty, my, 2, 2, "CO2")
 
 # Bottom right - Month
-ty = [unnormalise_month(x) for x in all_stats["MONTH_target"]]
-my = [unnormalise_month(x) for x in all_stats["MONTH_model"]]
-plot_var(tsx, ty, my, 2, 1, "Month")
+if not args.annual:
+    ty = [unnormalise_month(x) for x in all_stats["MONTH_target"]]
+    my = [unnormalise_month(x) for x in all_stats["MONTH_model"]]
+    plot_var(tsx, ty, my, 2, 1, "Month")
 
 fig.savefig("multi.png")
