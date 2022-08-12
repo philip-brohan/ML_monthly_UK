@@ -48,6 +48,12 @@ parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
 parser.add_argument(
+    "--CO2", help="Fit to CO2?", dest="CO2", default=False, action="store_true"
+)
+parser.add_argument(
+    "--MNTH", help="Fit to Month?", dest="MNTH", default=False, action="store_true"
+)
+parser.add_argument(
     "--iter", help="No. of iterations", type=int, required=False, default=1000,
 )
 args = parser.parse_args()
@@ -75,6 +81,12 @@ ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
 sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 from autoencoderModel import DCVAE
+from autoencoderModel import PRMSL_scale
+from autoencoderModel import SST_scale
+from autoencoderModel import T2M_scale
+from autoencoderModel import PRATE_scale
+from autoencoderModel import CO2_scale
+from autoencoderModel import MONTH_scale
 from makeDataset import normalise_co2
 from makeDataset import normalise_month
 
@@ -85,65 +97,99 @@ load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 load_status.assert_existing_objects_matched()
 
 # We are using the model in inference mode - (does this have any effect?)
-autoencoder.decoder.trainable = False
-for layer in autoencoder.decoder.layers:
+autoencoder.fields_decoder.trainable = False
+for layer in autoencoder.fields_decoder.layers:
     layer.trainable = False
-autoencoder.decoder.compile()
+autoencoder.fields_decoder.compile()
+autoencoder.diagnose_co2.trainable = False
+for layer in autoencoder.diagnose_co2.layers:
+    layer.trainable = False
+autoencoder.diagnose_co2.compile()
+autoencoder.diagnose_month.trainable = False
+for layer in autoencoder.diagnose_month.layers:
+    layer.trainable = False
+autoencoder.diagnose_month.compile()
 
 latent = tf.Variable(tf.random.normal(shape=(1, autoencoder.latent_dim)))
 target = tf.constant(tf.reshape(ict, [1, 1440, 896, 4]))
 co2t = tf.reshape(
-    tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32), [1, 1]
+    tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32), [1, 14]
 )
 cmt = tf.reshape(
-    tf.convert_to_tensor(normalise_month("0000-%02d" % args.month), np.float32), [1, 1]
+    tf.convert_to_tensor(normalise_month("0000-%02d" % args.month), np.float32), [1, 12]
 )
 
 
 def decodeFit():
     result = 0.0
-    decoded = autoencoder.decode(tf.concat([latent, co2t, cmt], axis=1))
+    decoded = autoencoder.decode(latent)
     if args.PRMSL:
-        result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(decoded[:, :, :, 0], target[:, :, :, 0])
+        result = (
+            result
+            + tf.reduce_mean(
+                tf.keras.metrics.mean_squared_error(
+                    decoded[0][:, :, :, 0], target[:, :, :, 0]
+                )
+            )
+            * PRMSL_scale
         )
     if args.SST:
-        result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(
-                tf.boolean_mask(
-                    decoded[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
-                ),
-                tf.boolean_mask(
-                    target[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
-                ),
+        result = (
+            result
+            + tf.reduce_mean(
+                tf.keras.metrics.mean_squared_error(
+                    tf.boolean_mask(
+                        decoded[0][:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
+                    ),
+                    tf.boolean_mask(
+                        target[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
+                    ),
+                )
             )
+            * SST_scale
         )
     if args.TMP2m:
-        result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(
-                tf.boolean_mask(
-                    decoded[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
-                ),
-                tf.boolean_mask(
-                    target[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
-                ),
+        result = (
+            result
+            + tf.reduce_mean(
+                tf.keras.metrics.mean_squared_error(
+                    tf.boolean_mask(
+                        decoded[0][:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
+                    ),
+                    tf.boolean_mask(
+                        target[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
+                    ),
+                )
             )
+            * TMP2M_scale
         )
     if args.PRATE:
-        result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(
-                tf.boolean_mask(
-                    decoded[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
-                ),
-                tf.boolean_mask(
-                    target[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
-                ),
+        result = (
+            result
+            + tf.reduce_mean(
+                tf.keras.metrics.mean_squared_error(
+                    tf.boolean_mask(
+                        decoded[0][:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
+                    ),
+                    tf.boolean_mask(
+                        target[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
+                    ),
+                )
             )
+            * PRATE_scale
+        )
+    if args.CO2:
+        result = result + (
+            tf.keras.metrics.categorical_crossentropy(decoded[1], co2t) * CO2_scale
+        )
+    if args.MNTH:
+        result = result + (
+            tf.keras.metrics.categorical_crossentropy(decoded[2], cmt) * MONTH_scale
         )
     return result
 
 
-if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
+if args.PRMSL or args.SST or args.TMP2m or args.PRATE or args.CO2 or args.MNTH:
     loss = tfp.math.minimize(
         decodeFit,
         trainable_variables=[latent],
@@ -151,14 +197,14 @@ if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
         optimizer=tf.optimizers.Adam(learning_rate=0.1),
     )
 
-encoded = autoencoder.decode(tf.concat([latent, co2t, cmt], axis=1))
+encoded = autoencoder.decode(latent)
 
 fitted = tensor_to_cList(
-    encoded[0, :, :, :], sCube, lm_20CR.data.mask, dm_hukg.data.mask
+    encoded[0][0, :, :, :], sCube, lm_20CR.data.mask, dm_hukg.data.mask
 )
 
 opfile = "%s/fitted/constraints" % LSCRATCH
-for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
+for constraint in ["PRMSL", "PRATE", "TMP2m", "SST", "CO2", "MNTH"]:
     if vars(args)[constraint]:
         opfile += "_%s" % constraint
 opfile += "/%04d/%04d/%02d/%02d.nc" % (args.epoch, args.year, args.month, args.member)
@@ -166,4 +212,4 @@ opfile += "/%04d/%04d/%02d/%02d.nc" % (args.epoch, args.year, args.month, args.m
 if not os.path.isdir(os.path.dirname(opfile)):
     os.makedirs(os.path.dirname(opfile))
 
-iris.save(fitted, opfile)
+iris.save([fitted, encoded[1][0, :].numpy(), encoded[2][0, :].numpy()], opfile)
