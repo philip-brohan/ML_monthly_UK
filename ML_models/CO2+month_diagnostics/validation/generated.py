@@ -19,6 +19,7 @@ import cmocean
 import warnings
 
 warnings.filterwarnings("ignore", message=".*invalid units.*")
+warnings.filterwarnings("ignore", message=".*partition.*")
 warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
 
 sys.path.append("%s/../../../get_data" % os.path.dirname(__file__))
@@ -83,12 +84,22 @@ axb.add_patch(
 # Top row - CO2 and month diagnostics
 
 axb.text(
-    0.03, 0.97, "CO2 = %5.1f " % co2, fontsize=30, zorder=10,
+    0.1, 0.96, "CO2", fontsize=30, zorder=10,
 )
+ax_co2 = fig.add_axes([0.15, 0.955, 0.29, 0.028], xlim=(0, 15), ylim=(0, 1))
+ax_co2.bar(
+    list(range(1, 15)),
+    generated[1][0, :].numpy(),
+    width=0.8,
+    color=(1, 0, 0, 1),
+    tick_label="",
+)
+ax_co2.set_yticks(())
+
 axb.text(
-    0.18, 0.97, "Month = %d " % month, fontsize=30, zorder=10,
+    0.5, 0.96, "Month", fontsize=30, zorder=10,
 )
-ax_mnth = fig.add_axes([0.7, 0.965, 0.29, 0.028], xlim=(0, 13), ylim=(0, 1))
+ax_mnth = fig.add_axes([0.57, 0.955, 0.29, 0.028], xlim=(0, 13), ylim=(0, 1))
 ax_mnth.bar(
     list(range(1, 13)),
     generated[2][0, :].numpy(),
@@ -126,7 +137,7 @@ cb = fig.colorbar(
 # Bottom left - SST
 var = sCube.copy()
 var.data = np.squeeze(generated[0][0, :, :, 1].numpy())
-var.data = np.ma.masked_where(lm_20CR.data.data > 0, var.data, copy=True)
+var.data = np.ma.masked_where(lm_20CR.data.mask == True, var.data, copy=True)
 var = unnormalise(var, "TMPS") - 273.15
 (dmin, dmax) = get_range("TMPS", month, var)
 dmin -= 273.15 + 2
@@ -151,7 +162,7 @@ cb = fig.colorbar(
 # Top right - PRATE
 var = sCube.copy()
 var.data = np.squeeze(generated[0][0, :, :, 3].numpy())
-var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=True)
+var.data = np.ma.masked_where(dm_hukg.data.mask == True, var.data, copy=True)
 var = unnormalise(var, "PRATE") * 1000
 (dmin, dmax) = get_range("PRATE", month, var)
 dmin = 0
@@ -175,7 +186,7 @@ cb = fig.colorbar(
 # Bottom left - T2m
 var = sCube.copy()
 var.data = np.squeeze(generated[0][0, :, :, 2].numpy())
-var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=True)
+var.data = np.ma.masked_where(dm_hukg.data.mask == True, var.data, copy=True)
 var = unnormalise(var, "TMP2m") - 273.15
 (dmin, dmax) = get_range("TMP2m", month, var)
 dmin -= 273.15 + 2
