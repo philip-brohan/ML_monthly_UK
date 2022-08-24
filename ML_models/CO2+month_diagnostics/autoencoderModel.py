@@ -131,18 +131,8 @@ class DCVAE(tf.keras.Model):
         )
 
     def encode(self, x):
-        field = x[0]
-        c2 = x[1]
-        mn = x[2]
-        # Encode the field
-        encf = self.fields_encoder(field)
-        # Add the CO2 and month to the encoded state
-        # encf = tf.concat(
-        #    [encf, tf.expand_dims(c2, axis=1), tf.expand_dims(mn, axis=1)], axis=1
-        # )
-        # Convert the merged encoded state into a latent space
         mean, logvar = tf.split(
-            self.merge_to_latent(encf), num_or_size_splits=2, axis=1
+            self.merge_to_latent(self.fields_encoder(x[0])), num_or_size_splits=2, axis=1
         )
         return mean, logvar
 

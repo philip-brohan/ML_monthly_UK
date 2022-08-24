@@ -1,0 +1,28 @@
+name: MLmU-eigen
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+# Basics
+  - python=3.9
+  - iris=3.2
+  - cmocean=2.0
+  - parallel
+# Get data from ERA5
+# You'll need to register, see https://cds.climate.copernicus.eu/api-how-to
+  - cdsapi=0.5
+# ML model building and diagnostics
+# Don't use GPU version - faster on CPU-only?
+  - tensorflow-eigen=2.4
+  - tensorflow-probability=0.12
+# Optional, code formatter
+  - black
+# Optional - documentation generator
+  - sphinx=4.5
+# Optional - needed only for monitoring jobs on Isambard
+  - tmux
+# Some packages are only available via pip
+  - pip
+  - pip:
+  # For bilinear interpolation
+    - tensorflow-addons==0.17
