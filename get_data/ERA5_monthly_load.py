@@ -54,7 +54,7 @@ lm_plot = lm_plot.regrid(sCube, iris.analysis.Linear())
 # And a land-mask for ERA5 SST grid
 fname = "%s/ERA5/monthly/reanalysis/%04d/%s.nc" % (
     os.getenv("SCRATCH"),
-    2014,
+    1959,
     "sea_surface_temperature",
 )
 if not os.path.isfile(fname):
@@ -101,7 +101,7 @@ def load_cList(year, month):
         sst = sst.extract(iris.Constraint(expver=1))
     sst.coord("latitude").coord_system = cs_ERA5
     sst.coord("longitude").coord_system = cs_ERA5
-    sst = sst.regrid(sCube, iris.analysis.Linear())
+    sst = sst.regrid(sCube, iris.analysis.Nearest())
     res.append(sst)
     # T2m
     fname = "%s/ERA5/monthly/reanalysis/%04d/%s.nc" % (

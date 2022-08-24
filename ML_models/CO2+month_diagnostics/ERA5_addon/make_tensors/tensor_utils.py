@@ -2,6 +2,7 @@
 # This version does the ERA5 addon-model tensors
 
 import os
+import sys
 import iris
 import iris.util
 import iris.coord_systems
@@ -38,6 +39,7 @@ def extrapolate_missing(cb, nsteps=10, scale=0.95):
 def cList_to_tensor(cL, sst_mask):
     d1 = normalise(cL[0], "PRMSL")
     d2 = normalise(cL[1], "TMPS")
+    d2.data = d2.data.data
     d2.data[np.where(sst_mask == True)] = 0
     d2 = extrapolate_missing(d2, nsteps=100, scale=0.95)
     d3 = normalise(cL[2], "TMP2m")

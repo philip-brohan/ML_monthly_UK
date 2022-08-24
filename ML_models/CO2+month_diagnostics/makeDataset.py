@@ -18,6 +18,8 @@ def load_tensor(file_name):
     sict = tf.io.read_file(file_name)
     imt = tf.io.parse_tensor(sict, np.float32)
     imt = tf.reshape(imt, [1440, 896, 4])
+    print(file_name)
+    print(tf.math.reduce_mean(imt[:,:,1]))
     return imt
 
 
