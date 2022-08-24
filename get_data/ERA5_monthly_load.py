@@ -45,13 +45,13 @@ sCube = iris.cube.Cube(dummy_data, dim_coords_and_dims=[(y_coord, 0), (x_coord, 
 # ERA5 data don't contain a coordinate system - need one to add
 cs_ERA5 = iris.coord_systems.RotatedGeogCS(90, 180, 0)
 
-# Also want a land mask:
+# Also want a land mask for plotting:
 lm_plot = iris.load_cube(
     "%s/fixed_fields/land_mask/opfc_global_2019.nc" % os.getenv("DATADIR")
 )
 lm_plot = lm_plot.regrid(sCube, iris.analysis.Linear())
 
-# And a land-mask on the ERA5 SST grid
+# And a land-mask for ERA5 SST grid
 fname = "%s/ERA5/monthly/reanalysis/%04d/%s.nc" % (
     os.getenv("SCRATCH"),
     2014,
@@ -63,6 +63,7 @@ ftt = iris.Constraint(time=lambda cell: cell.point.month == 1)
 lm_ERA5 = iris.load_cube(fname, ftt)
 lm_ERA5.coord("latitude").coord_system = cs_ERA5
 lm_ERA5.coord("longitude").coord_system = cs_ERA5
+lm_ERA5 = lm_ERA5.regrid(sCube, iris.analysis.Nearest())
 lm_ERA5.data.data[np.where(lm_ERA5.data.mask == True)] = 0
 lm_ERA5.data.data[np.where(lm_ERA5.data.mask == False)] = 1
 
@@ -79,6 +80,8 @@ def load_cList(year, month):
         raise Exception("No data file %s" % fname)
     ftt = iris.Constraint(time=lambda cell: cell.point.month == month)
     prmsl = iris.load_cube(fname, ftt)
+    if len(prmsl.data.shape) == 3:
+        prmsl = prmsl.extract(iris.Constraint(expver=1))
     prmsl.coord("latitude").coord_system = cs_ERA5
     prmsl.coord("longitude").coord_system = cs_ERA5
     prmsl = prmsl.regrid(sCube, iris.analysis.Linear())
@@ -94,6 +97,8 @@ def load_cList(year, month):
         raise Exception("No data file %s" % fname)
     ftt = iris.Constraint(time=lambda cell: cell.point.month == month)
     sst = iris.load_cube(fname, ftt)
+    if len(sst.data.shape) == 3:
+        sst = sst.extract(iris.Constraint(expver=1))
     sst.coord("latitude").coord_system = cs_ERA5
     sst.coord("longitude").coord_system = cs_ERA5
     sst = sst.regrid(sCube, iris.analysis.Linear())
@@ -108,6 +113,8 @@ def load_cList(year, month):
         raise Exception("No data file %s" % fname)
     ftt = iris.Constraint(time=lambda cell: cell.point.month == month)
     t2m = iris.load_cube(fname, ftt)
+    if len(t2m.data.shape) == 3:
+        t2m = t2m.extract(iris.Constraint(expver=1))
     t2m.coord("latitude").coord_system = cs_ERA5
     t2m.coord("longitude").coord_system = cs_ERA5
     t2m = t2m.regrid(sCube, iris.analysis.Linear())
@@ -122,10 +129,14 @@ def load_cList(year, month):
         raise Exception("No data file %s" % fname)
     ftt = iris.Constraint(time=lambda cell: cell.point.month == month)
     prate = iris.load_cube(fname, ftt)
+    if len(prate.data.shape) == 3:
+        prate = prate.extract(iris.Constraint(expver=1))
     prate.coord("latitude").coord_system = cs_ERA5
     prate.coord("longitude").coord_system = cs_ERA5
     prate = prate.regrid(sCube, iris.analysis.Linear())
-    prate *= 50000 # Empirical for range scaling - 1000 for correct area-weighted match.
+    prate *= (
+        50000  # Empirical for range scaling - 1000 for correct area-weighted match.
+    )
     prate /= 86400 * monthrange(year, month)[1]
 
     res.append(prate)
