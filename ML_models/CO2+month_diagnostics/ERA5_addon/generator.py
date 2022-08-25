@@ -1,4 +1,3 @@
-l
 #!/usr/bin/env python
 
 # Convolutional generator for ERA5 monthly fields from encoded HadUK-Grid state
