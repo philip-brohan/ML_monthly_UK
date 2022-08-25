@@ -36,20 +36,26 @@ def extrapolate_missing(cb, nsteps=10, scale=0.95):
     return cr
 
 
-def cList_to_tensor(cL, sst_mask):
+def cList_to_tensor(cL, sst_mask, ukg_mask):
     d1 = normalise(cL[0], "PRMSL")
     d2 = normalise(cL[1], "TMPS")
     d2.data = d2.data.data
     d2.data[np.where(sst_mask == True)] = 0
     d2 = extrapolate_missing(d2, nsteps=100, scale=0.95)
     d3 = normalise(cL[2], "TMP2m")
+    d3.data = d3.data.data
+    d3.data[np.where(ukg_mask == True)] = 0
+    d3 = extrapolate_missing(d3, nsteps=100, scale=0.95)
     d4 = normalise(cL[3], "PRATE")
+    d4.data = d4.data.data
+    d4.data[np.where(ukg_mask == True)] = 0
+    d4 = extrapolate_missing(d4, nsteps=100, scale=0.95)
     ic = np.stack((d1.data, d2.data, d3.data, d4.data), axis=2)
     ict = tf.convert_to_tensor(ic.data, np.float32)
     return ict
 
 
-def tensor_to_cList(tensor, plotCube, sst_mask):
+def tensor_to_cList(tensor, plotCube, sst_mask, ukg_mask):
     d1 = plotCube.copy()
     d1.data = np.squeeze(tensor[:, :, 0].numpy())
     d1 = unnormalise(d1, "PRMSL")
@@ -62,10 +68,12 @@ def tensor_to_cList(tensor, plotCube, sst_mask):
     d3 = plotCube.copy()
     d3.data = np.squeeze(tensor[:, :, 2].numpy())
     d3 = unnormalise(d3, "TMP2m")
+    d3.data = np.ma.masked_where(ukg_mask, d3.data, copy=False)
     d3.var_name = "TMP2m"
     d4 = plotCube.copy()
     d4.data = np.squeeze(tensor[:, :, 3].numpy())
     d4 = unnormalise(d4, "PRATE")
+    d4.data = np.ma.masked_where(ukg_mask, d4.data, copy=False)
     d4.var_name = "PRATE"
     return [d1, d2, d3, d4]
 

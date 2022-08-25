@@ -33,7 +33,7 @@ sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 
 # How many epochs to train for
-nEpochs = 100
+nEpochs = 200
 # Length of an epoch - if None, use all input data
 nImagesInEpoch = None
 nRepeatsPerEpoch = 2  # Show each input pair this many times

@@ -84,7 +84,7 @@ def load_cList(year, month):
         prmsl = prmsl.extract(iris.Constraint(expver=1))
     prmsl.coord("latitude").coord_system = cs_ERA5
     prmsl.coord("longitude").coord_system = cs_ERA5
-    prmsl = prmsl.regrid(sCube, iris.analysis.Linear())
+    prmsl = prmsl.regrid(sCube, iris.analysis.Nearest())
     res.append(prmsl)
 
     # SST
@@ -117,7 +117,7 @@ def load_cList(year, month):
         t2m = t2m.extract(iris.Constraint(expver=1))
     t2m.coord("latitude").coord_system = cs_ERA5
     t2m.coord("longitude").coord_system = cs_ERA5
-    t2m = t2m.regrid(sCube, iris.analysis.Linear())
+    t2m = t2m.regrid(sCube, iris.analysis.Nearest())
     res.append(t2m)
     # PRATE
     fname = "%s/ERA5/monthly/reanalysis/%04d/%s.nc" % (
@@ -133,7 +133,7 @@ def load_cList(year, month):
         prate = prate.extract(iris.Constraint(expver=1))
     prate.coord("latitude").coord_system = cs_ERA5
     prate.coord("longitude").coord_system = cs_ERA5
-    prate = prate.regrid(sCube, iris.analysis.Linear())
+    prate = prate.regrid(sCube, iris.analysis.Nearest())
     prate *= (
         50000  # Empirical for range scaling - 1000 for correct area-weighted match.
     )

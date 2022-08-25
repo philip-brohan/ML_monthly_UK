@@ -30,9 +30,10 @@ from localise import TSOURCE
 sys.path.append("%s/../../../../get_data/" % os.path.dirname(__file__))
 from ERA5_monthly_load import load_cList
 from ERA5_monthly_load import lm_ERA5
+from HUKG_monthly_load import dm_hukg
 
 sys.path.append("%s/." % os.path.dirname(__file__))
-from tensor_utils import cList_to_tensor
+from E_tensor_utils import cList_to_tensor
 
 import argparse
 
@@ -60,7 +61,7 @@ if not os.path.isdir(os.path.dirname(args.opfile)):
 
 # Load and standardise data
 qd = load_cList(args.year, args.month)
-ict = cList_to_tensor(qd, lm_ERA5.data.mask)
+ict = cList_to_tensor(qd, lm_ERA5.data.mask, dm_hukg.data.mask)
 
 # Write to file
 sict = tf.io.serialize_tensor(ict)
