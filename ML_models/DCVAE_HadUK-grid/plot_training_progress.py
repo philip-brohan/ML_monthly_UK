@@ -44,8 +44,8 @@ def loadHistory(LSC):
     ymax = 0
     ymin = 1000000
     chts = {}
-    s_epoch = c_epoch-len(history['PRMSL_train'])+1
-    chts["epoch"] = list(range(s_epoch,c_epoch + 1))
+    s_epoch = c_epoch - len(history["PRMSL_train"]) + 1
+    chts["epoch"] = list(range(s_epoch, c_epoch + 1))
     for key in history:
         chts[key] = [math.log(abs(t.numpy())) for t in history[key]]
         ymax = max(ymax, max(chts[key]))
@@ -105,7 +105,7 @@ ax_prmsl = fig.add_axes(
 )
 ax_prmsl.set_ylabel("PRMSL")
 ax_prmsl.set_xlabel("epoch")
-ax_prmsl.grid(color=(0,0,0,1), linestyle='-', linewidth=0.1)
+ax_prmsl.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_prmsl, hts, "PRMSL_train", (1, 0.5, 0.5, 1), 10)
 addLine(ax_prmsl, hts, "PRMSL_test", (1, 0, 0, 1), 20)
 if args.comparator is not None:
@@ -116,7 +116,7 @@ if args.comparator is not None:
 ax_sst = fig.add_axes([0.055, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
 ax_sst.set_ylabel("SST")
 ax_sst.set_xlabel("epoch")
-ax_sst.grid(color=(0,0,0,1), linestyle='-', linewidth=0.1)
+ax_sst.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_sst, hts, "SST_train", (1, 0.5, 0.5, 1), 10)
 addLine(ax_sst, hts, "SST_test", (1, 0, 0, 1), 20)
 if args.comparator is not None:
@@ -127,7 +127,7 @@ if args.comparator is not None:
 ax_t2m = fig.add_axes([0.385, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
 ax_t2m.set_ylabel("T2M")
 ax_t2m.set_xlabel("epoch")
-ax_t2m.grid(color=(0,0,0,1), linestyle='-', linewidth=0.1)
+ax_t2m.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_t2m, hts, "T2M_train", (1, 0.5, 0.5, 1), 10)
 addLine(ax_t2m, hts, "T2M_test", (1, 0, 0, 1), 20)
 if args.comparator is not None:
@@ -140,7 +140,7 @@ ax_prate = fig.add_axes(
 )
 ax_prate.set_ylabel("PRATE")
 ax_prate.set_xlabel("epoch")
-ax_prate.grid(color=(0,0,0,1), linestyle='-', linewidth=0.1)
+ax_prate.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_prate, hts, "PRATE_train", (1, 0.5, 0.5, 1), 10)
 addLine(ax_prate, hts, "PRATE_test", (1, 0, 0, 1), 20)
 if args.comparator is not None:
@@ -151,7 +151,7 @@ if args.comparator is not None:
 ax_lpz = fig.add_axes([0.715, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
 ax_lpz.set_ylabel("logpz")
 ax_lpz.set_xlabel("epoch")
-ax_lpz.grid(color=(0,0,0,1), linestyle='-', linewidth=0.1)
+ax_lpz.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_lpz, hts, "logpz_train", (1, 0.5, 0.5, 1), 10)
 addLine(ax_lpz, hts, "logpz_test", (1, 0, 0, 1), 20)
 if args.comparator is not None:
@@ -162,7 +162,7 @@ if args.comparator is not None:
 ax_lqz = fig.add_axes([0.715, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
 ax_lqz.set_ylabel("logqz_x")
 ax_lqz.set_xlabel("epoch")
-ax_lqz.grid(color=(0,0,0,1), linestyle='-', linewidth=0.1)
+ax_lqz.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_lqz, hts, "logqz_x_train", (1, 0.5, 0.5, 1), 10)
 addLine(ax_lqz, hts, "logqz_x_test", (1, 0, 0, 1), 20)
 if args.comparator is not None:

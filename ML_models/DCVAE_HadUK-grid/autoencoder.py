@@ -12,7 +12,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--epoch", help="Restart from epoch", type=int, required=False, default=0
+    "--epoch", help="Restart from epoch", type=int, required=False, default=1
 )
 args = parser.parse_args()
 
@@ -26,12 +26,10 @@ sys.path.append("%s/." % os.path.dirname(__file__))
 from localise import LSCRATCH
 from makeDataset import getDataset
 from autoencoderModel import DCVAE
-from autoencoderModel import train_step
-from autoencoderModel import compute_loss
 
 # How many images to use?
-nTrainingImages = 4245  # Max is 4245
-nTestImages = 471  # Max is 471
+nTrainingImages = None
+nTestImages = None
 
 # How many epochs to train for
 nEpochs = 300
@@ -46,82 +44,6 @@ if nImagesInEpoch is None:
 bufferSize = 1000  # Untested
 batchSize = 32  # Arbitrary
 
-# Function to store the model weights and the history state
-history = {}
-for loss in (
-    "PRMSL_train",
-    "PRMSL_test",
-    "SST_train",
-    "SST_test",
-    "T2M_train",
-    "T2M_test",
-    "PRATE_train",
-    "PRATE_test",
-    "logpz_train",
-    "logpz_test",
-    "logqz_x_train",
-    "logqz_x_test",
-):
-    history[loss] = []
-
-
-def save_state(
-    model,
-    epoch,
-    PRMSL_train,
-    PRMSL_test,
-    SST_train,
-    SST_test,
-    T2M_train,
-    T2M_test,
-    PRATE_train,
-    PRATE_test,
-    logpz_train,
-    logpz_test,
-    logqz_x_train,
-    logqz_x_test,
-):
-    save_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, epoch,)
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-    model.save_weights("%s/ckpt" % save_dir)
-    history["PRMSL_train"].append(PRMSL_train)
-    history["PRMSL_test"].append(PRMSL_test)
-    history["SST_train"].append(SST_train)
-    history["SST_test"].append(SST_test)
-    history["T2M_train"].append(T2M_train)
-    history["T2M_test"].append(T2M_test)
-    history["PRATE_train"].append(PRATE_train)
-    history["PRATE_test"].append(PRATE_test)
-    history["logpz_train"].append(logpz_train)
-    history["logpz_test"].append(logpz_test)
-    history["logqz_x_train"].append(logqz_x_train)
-    history["logqz_x_test"].append(logqz_x_test)
-    history_file = "%s/history.pkl" % save_dir
-    pickle.dump(history, open(history_file, "wb"))
-
-
-# @tf.function - will stop working if uncommented. No idea why.
-def test_stats(autoencoder, tst_ds):
-    rmse_PRMSL = tf.keras.metrics.Mean()
-    rmse_SST = tf.keras.metrics.Mean()
-    rmse_T2M = tf.keras.metrics.Mean()
-    rmse_PRATE = tf.keras.metrics.Mean()
-    logpz = tf.keras.metrics.Mean()
-    logqz_x = tf.keras.metrics.Mean()
-    for test_x in tst_ds:
-        per_replica_loss = strategy.run(compute_loss, args=(autoencoder, test_x))
-        vstack = strategy.reduce(
-            tf.distribute.ReduceOp.SUM, per_replica_loss, axis=None
-        )
-        rmse_PRMSL(vstack[0, :])
-        rmse_SST(vstack[1, :])
-        rmse_T2M(vstack[2, :])
-        rmse_PRATE(vstack[3, :])
-        logpz(vstack[4, :])
-        logqz_x(vstack[5, :])
-    return (rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x)
-
 
 # Instantiate and run the model under the control of the distribution strategy
 with strategy.scope():
@@ -131,109 +53,161 @@ with strategy.scope():
         nRepeatsPerEpoch
     )
     trainingData = trainingData.shuffle(bufferSize).batch(batchSize)
+    trainingData = strategy.experimental_distribute_dataset(trainingData)
 
     # Subset of the training data for metrics
     validationData = getDataset(purpose="training", nImages=nTestImages).batch(
         batchSize
     )
+    validationData = strategy.experimental_distribute_dataset(validationData)
 
     # Set up the test data
     testData = getDataset(purpose="test", nImages=nTestImages)
     testData = testData.batch(batchSize)
+    testData = strategy.experimental_distribute_dataset(validationData)
 
     # Instantiate the model
     autoencoder = DCVAE()
     optimizer = tf.keras.optimizers.Adam(1e-3)
     # If we are doing a restart, load the weights
-    if args.epoch > 0:
+    if args.epoch > 1:
         weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
         load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
-        # Check the load worked
         load_status.assert_existing_objects_matched()
 
-    for epoch in range(nEpochs):
+    # Metrics for training and test loss
+    # Each the mean over all the batches
+    train_rmse_PRMSL = tf.keras.metrics.Mean()
+    train_rmse_SST = tf.keras.metrics.Mean()
+    train_rmse_T2M = tf.keras.metrics.Mean()
+    train_rmse_PRATE = tf.keras.metrics.Mean()
+    train_logpz = tf.keras.metrics.Mean()
+    train_logqz_x = tf.keras.metrics.Mean()
+    train_loss = tf.keras.metrics.Mean()
+    test_rmse_PRMSL = tf.keras.metrics.Mean()
+    test_rmse_SST = tf.keras.metrics.Mean()
+    test_rmse_T2M = tf.keras.metrics.Mean()
+    test_rmse_PRATE = tf.keras.metrics.Mean()
+    test_logpz = tf.keras.metrics.Mean()
+    test_logqz_x = tf.keras.metrics.Mean()
+    test_loss = tf.keras.metrics.Mean()
+
+    # logfile to output the met
+    log_FN = ("%s/models/Training_log") % LSCRATCH
+    if not os.path.isdir(os.path.dirname(log_FN)):
+        os.makedirs(os.path.dirname(log_FN))
+    logfile_writer = tf.summary.create_file_writer(log_FN)
+
+    # For each Epoch: train, save state, and report progress
+    for epoch in range(args.epoch, nEpochs + 1):
         start_time = time.time()
-        # Train
-        for train_x in trainingData:
-            per_replica_losses = strategy.run(
-                train_step, args=(autoencoder, train_x, optimizer)
+
+        # Train on all batches in the training data
+        for batch in trainingData:
+            per_replica_op = strategy.run(
+                autoencoder.train_on_batch, args=(batch, optimizer)
             )
 
-        end_time = time.time()
+        end_training_time = time.time()
 
-        # Measure performance on training data
-        (
-            train_rmse_PRMSL,
-            train_rmse_SST,
-            train_rmse_T2M,
-            train_rmse_PRATE,
-            train_logpz,
-            train_logqz_x,
-        ) = test_stats(autoencoder, validationData)
+        # Accumulate average losses over all batches in the validation data
+        train_rmse_PRMSL.reset_states()
+        train_rmse_SST.reset_states()
+        train_rmse_T2M.reset_states()
+        train_rmse_PRATE.reset_states()
+        train_logpz.reset_states()
+        train_logqz_x.reset_states()
+        train_loss.reset_states()
+        for batch in validationData:
+            per_replica_op = strategy.run(autoencoder.compute_loss, args=(batch,))
+            train_rmse_PRMSL.update_state(autoencoder.rmse_PRMSL)
+            train_rmse_SST.update_state(autoencoder.rmse_SST)
+            train_rmse_T2M.update_state(autoencoder.rmse_T2M)
+            train_rmse_PRATE.update_state(autoencoder.rmse_PRATE)
+            train_logpz.update_state(autoencoder.logpz)
+            train_logqz_x.update_state(autoencoder.logqz_x)
+            train_loss.update_state(autoencoder.loss)
 
-        # Measure performance on test data
-        (
-            test_rmse_PRMSL,
-            test_rmse_SST,
-            test_rmse_T2M,
-            test_rmse_PRATE,
-            test_logpz,
-            test_logqz_x,
-        ) = test_stats(autoencoder, testData)
+        # Same, but for the test data
+        test_rmse_PRMSL.reset_states()
+        test_rmse_SST.reset_states()
+        test_rmse_T2M.reset_states()
+        test_rmse_PRATE.reset_states()
+        test_logpz.reset_states()
+        test_logqz_x.reset_states()
+        for batch in testData:
+            per_replica_op = strategy.run(autoencoder.compute_loss, args=(batch,))
+            test_rmse_PRMSL.update_state(autoencoder.rmse_PRMSL)
+            test_rmse_SST.update_state(autoencoder.rmse_SST)
+            test_rmse_T2M.update_state(autoencoder.rmse_T2M)
+            test_rmse_PRATE.update_state(autoencoder.rmse_PRATE)
+            test_logpz.update_state(autoencoder.logpz)
+            test_logqz_x.update_state(autoencoder.logqz_x)
+            test_loss.update_state(autoencoder.loss)
 
-        # Save model state and validation statistics
-        save_state(
-            autoencoder,
-            epoch,
-            train_rmse_PRMSL.result(),
-            test_rmse_PRMSL.result(),
-            train_rmse_SST.result(),
-            test_rmse_SST.result(),
-            train_rmse_T2M.result(),
-            test_rmse_T2M.result(),
-            train_rmse_PRATE.result(),
-            test_rmse_PRATE.result(),
-            train_logpz.result(),
-            test_logpz.result(),
-            train_logqz_x.result(),
-            test_logqz_x.result(),
-        )
-        val_time = time.time()
+        # Save model state and current metrics
+        save_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, epoch,)
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
+        autoencoder.save_weights("%s/ckpt" % save_dir)
+        with logfile_writer.as_default():
+            tf.summary.scalar("Train_PRMSL", train_rmse_PRMSL.result(), step=epoch)
+            tf.summary.scalar("Train_SST", train_rmse_SST.result(), step=epoch)
+            tf.summary.scalar("Train_T2M", train_rmse_T2M.result(), step=epoch)
+            tf.summary.scalar("Train_PRATE", train_rmse_PRATE.result(), step=epoch)
+            tf.summary.scalar("Train_logpz", train_logpz.result(), step=epoch)
+            tf.summary.scalar("Train_logqz_x", train_logqz_x.result(), step=epoch)
+            tf.summary.scalar("Train_loss", train_loss.result(), step=epoch)
+            tf.summary.scalar("Test_PRMSL", test_rmse_PRMSL.result(), step=epoch)
+            tf.summary.scalar("Test_SST", test_rmse_SST.result(), step=epoch)
+            tf.summary.scalar("Test_T2M", test_rmse_T2M.result(), step=epoch)
+            tf.summary.scalar("Test_PRATE", test_rmse_PRATE.result(), step=epoch)
+            tf.summary.scalar("Test_logpz", test_logpz.result(), step=epoch)
+            tf.summary.scalar("Test_logqz_x", test_logqz_x.result(), step=epoch)
+            tf.summary.scalar("Test_loss", test_loss.result(), step=epoch)
+
+        end_monitoring_time = time.time()
 
         # Report progress
         print("Epoch: {}".format(epoch))
         print(
-            "PRMSL  : {:>6.1f}, {:>6.1f}".format(
+            "PRMSL  : {:>7.1f}, {:>7.1f}".format(
                 train_rmse_PRMSL.result(), test_rmse_PRMSL.result()
             )
         )
         print(
-            "SST    : {:>6.1f}, {:>6.1f}".format(
+            "SST    : {:>7.1f}, {:>7.1f}".format(
                 train_rmse_SST.result(), test_rmse_SST.result()
             )
         )
         print(
-            "T2m    : {:>6.1f}, {:>6.1f}".format(
+            "T2m    : {:>7.1f}, {:>7.1f}".format(
                 train_rmse_T2M.result(), test_rmse_T2M.result()
             )
         )
         print(
-            "PRATE  : {:>6.1f}, {:>6.1f}".format(
+            "PRATE  : {:>7.1f}, {:>7.1f}".format(
                 train_rmse_PRATE.result(), test_rmse_PRATE.result()
             )
         )
         print(
-            "logpz  : {:>6.1f}, {:>6.1f}".format(
+            "logpz  : {:>7.1f}, {:>7.1f}".format(
                 train_logpz.result(), test_logpz.result()
             )
         )
         print(
-            "logqz_x: {:>6.1f}, {:>6.1f}".format(
+            "logqz_x: {:>7.1f}, {:>7.1f}".format(
                 train_logqz_x.result(), test_logqz_x.result()
             )
         )
         print(
+            "loss   : {:>7.1f}, {:>7.1f}".format(
+                train_loss.result(), test_loss.result()
+            )
+        )
+        print(
             "time: {} (+{})".format(
-                int(end_time - start_time), int(val_time - end_time)
+                int(end_training_time - start_time),
+                int(end_monitoring_time - end_training_time),
             )
         )
