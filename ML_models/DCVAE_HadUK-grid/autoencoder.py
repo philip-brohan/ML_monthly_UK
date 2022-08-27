@@ -17,9 +17,9 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Distribute across all GPUs
-# strategy = tf.distribute.MirroredStrategy()
-# strategy = tf.distribute.experimental.CentralStorageStrategy()
-strategy = tf.distribute.get_strategy()
+#strategy = tf.distribute.MirroredStrategy()
+strategy = tf.distribute.experimental.CentralStorageStrategy()
+#strategy = tf.distribute.get_strategy()
 
 # Load the data path, data source, and model specification
 sys.path.append("%s/." % os.path.dirname(__file__))
@@ -27,9 +27,9 @@ from localise import LSCRATCH
 from makeDataset import getDataset
 from autoencoderModel import DCVAE
 
-# How many images to use?
+# How many month's data to use?
 nTrainingImages = None
-nTestImages = None
+nTestImages = 100
 
 # How many epochs to train for
 nEpochs = 300
@@ -56,41 +56,42 @@ with strategy.scope():
     trainingData = strategy.experimental_distribute_dataset(trainingData)
 
     # Subset of the training data for metrics
-    validationData = getDataset(purpose="training", nImages=nTestImages).batch(
-        batchSize
-    )
+    validationData = getDataset(purpose="training", nImages=nTestImages)
+    validationData = validationData.batch(batchSize)
     validationData = strategy.experimental_distribute_dataset(validationData)
 
     # Set up the test data
     testData = getDataset(purpose="test", nImages=nTestImages)
     testData = testData.batch(batchSize)
-    testData = strategy.experimental_distribute_dataset(validationData)
+    testData = strategy.experimental_distribute_dataset(testData)
 
     # Instantiate the model
     autoencoder = DCVAE()
     optimizer = tf.keras.optimizers.Adam(1e-3)
     # If we are doing a restart, load the weights
     if args.epoch > 1:
-        weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+        weights_dir = ("%s/models/Epoch_%04d") % (
+            LSCRATCH,
+            args.epoch,
+        )
         load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
         load_status.assert_existing_objects_matched()
 
     # Metrics for training and test loss
-    # Each the mean over all the batches
-    train_rmse_PRMSL = tf.keras.metrics.Mean()
-    train_rmse_SST = tf.keras.metrics.Mean()
-    train_rmse_T2M = tf.keras.metrics.Mean()
-    train_rmse_PRATE = tf.keras.metrics.Mean()
-    train_logpz = tf.keras.metrics.Mean()
-    train_logqz_x = tf.keras.metrics.Mean()
-    train_loss = tf.keras.metrics.Mean()
-    test_rmse_PRMSL = tf.keras.metrics.Mean()
-    test_rmse_SST = tf.keras.metrics.Mean()
-    test_rmse_T2M = tf.keras.metrics.Mean()
-    test_rmse_PRATE = tf.keras.metrics.Mean()
-    test_logpz = tf.keras.metrics.Mean()
-    test_logqz_x = tf.keras.metrics.Mean()
-    test_loss = tf.keras.metrics.Mean()
+    train_rmse_PRMSL = tf.Variable(0.0, trainable=False)
+    train_rmse_SST = tf.Variable(0.0, trainable=False)
+    train_rmse_T2M = tf.Variable(0.0, trainable=False)
+    train_rmse_PRATE = tf.Variable(0.0, trainable=False)
+    train_logpz = tf.Variable(0.0, trainable=False)
+    train_logqz_x = tf.Variable(0.0, trainable=False)
+    train_loss = tf.Variable(0.0, trainable=False)
+    test_rmse_PRMSL = tf.Variable(0.0, trainable=False)
+    test_rmse_SST = tf.Variable(0.0, trainable=False)
+    test_rmse_T2M = tf.Variable(0.0, trainable=False)
+    test_rmse_PRATE = tf.Variable(0.0, trainable=False)
+    test_logpz = tf.Variable(0.0, trainable=False)
+    test_logqz_x = tf.Variable(0.0, trainable=False)
+    test_loss = tf.Variable(0.0, trainable=False)
 
     # logfile to output the met
     log_FN = ("%s/models/Training_log") % LSCRATCH
@@ -111,60 +112,74 @@ with strategy.scope():
         end_training_time = time.time()
 
         # Accumulate average losses over all batches in the validation data
-        train_rmse_PRMSL.reset_states()
-        train_rmse_SST.reset_states()
-        train_rmse_T2M.reset_states()
-        train_rmse_PRATE.reset_states()
-        train_logpz.reset_states()
-        train_logqz_x.reset_states()
-        train_loss.reset_states()
+        train_rmse_PRMSL.assign(0.0)
+        train_rmse_SST.assign(0.0)
+        train_rmse_T2M.assign(0.0)
+        train_rmse_PRATE.assign(0.0)
+        train_logpz.assign(0.0)
+        train_logqz_x.assign(0.0)
+        train_loss.assign(0.0)
+        validation_batch_count = 0
         for batch in validationData:
-            per_replica_op = strategy.run(autoencoder.compute_loss, args=(batch,))
-            train_rmse_PRMSL.update_state(autoencoder.rmse_PRMSL)
-            train_rmse_SST.update_state(autoencoder.rmse_SST)
-            train_rmse_T2M.update_state(autoencoder.rmse_T2M)
-            train_rmse_PRATE.update_state(autoencoder.rmse_PRATE)
-            train_logpz.update_state(autoencoder.logpz)
-            train_logqz_x.update_state(autoencoder.logqz_x)
-            train_loss.update_state(autoencoder.loss)
+            per_replica_losses = strategy.run(autoencoder.compute_loss, args=(batch,))
+            batch_losses = strategy.reduce(
+                tf.distribute.ReduceOp.MEAN, per_replica_losses, axis=None
+            )
+            train_rmse_PRMSL.assign_add(batch_losses[0])
+            train_rmse_SST.assign_add(batch_losses[1])
+            train_rmse_T2M.assign_add(batch_losses[2])
+            train_rmse_PRATE.assign_add(batch_losses[3])
+            train_logpz.assign_add(batch_losses[4])
+            train_logqz_x.assign_add(batch_losses[5])
+            train_loss.assign_add(tf.math.reduce_sum(batch_losses, axis=0))
+            validation_batch_count += 1
 
         # Same, but for the test data
-        test_rmse_PRMSL.reset_states()
-        test_rmse_SST.reset_states()
-        test_rmse_T2M.reset_states()
-        test_rmse_PRATE.reset_states()
-        test_logpz.reset_states()
-        test_logqz_x.reset_states()
+        test_rmse_PRMSL.assign(0.0)
+        test_rmse_SST.assign(0.0)
+        test_rmse_T2M.assign(0.0)
+        test_rmse_PRATE.assign(0.0)
+        test_logpz.assign(0.0)
+        test_logqz_x.assign(0.0)
+        test_loss.assign(0.0)
+        test_batch_count = 0
         for batch in testData:
-            per_replica_op = strategy.run(autoencoder.compute_loss, args=(batch,))
-            test_rmse_PRMSL.update_state(autoencoder.rmse_PRMSL)
-            test_rmse_SST.update_state(autoencoder.rmse_SST)
-            test_rmse_T2M.update_state(autoencoder.rmse_T2M)
-            test_rmse_PRATE.update_state(autoencoder.rmse_PRATE)
-            test_logpz.update_state(autoencoder.logpz)
-            test_logqz_x.update_state(autoencoder.logqz_x)
-            test_loss.update_state(autoencoder.loss)
+            per_replica_losses = strategy.run(autoencoder.compute_loss, args=(batch,))
+            batch_losses = strategy.reduce(
+                tf.distribute.ReduceOp.MEAN, per_replica_losses, axis=None
+            )
+            test_rmse_PRMSL.assign_add(batch_losses[0])
+            test_rmse_SST.assign_add(batch_losses[1])
+            test_rmse_T2M.assign_add(batch_losses[2])
+            test_rmse_PRATE.assign_add(batch_losses[3])
+            test_logpz.assign_add(batch_losses[4])
+            test_logqz_x.assign_add(batch_losses[5])
+            test_loss.assign_add(tf.math.reduce_sum(batch_losses, axis=0))
+            test_batch_count += 1
 
         # Save model state and current metrics
-        save_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, epoch,)
+        save_dir = ("%s/models/Epoch_%04d") % (
+            LSCRATCH,
+            epoch,
+        )
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
         autoencoder.save_weights("%s/ckpt" % save_dir)
         with logfile_writer.as_default():
-            tf.summary.scalar("Train_PRMSL", train_rmse_PRMSL.result(), step=epoch)
-            tf.summary.scalar("Train_SST", train_rmse_SST.result(), step=epoch)
-            tf.summary.scalar("Train_T2M", train_rmse_T2M.result(), step=epoch)
-            tf.summary.scalar("Train_PRATE", train_rmse_PRATE.result(), step=epoch)
-            tf.summary.scalar("Train_logpz", train_logpz.result(), step=epoch)
-            tf.summary.scalar("Train_logqz_x", train_logqz_x.result(), step=epoch)
-            tf.summary.scalar("Train_loss", train_loss.result(), step=epoch)
-            tf.summary.scalar("Test_PRMSL", test_rmse_PRMSL.result(), step=epoch)
-            tf.summary.scalar("Test_SST", test_rmse_SST.result(), step=epoch)
-            tf.summary.scalar("Test_T2M", test_rmse_T2M.result(), step=epoch)
-            tf.summary.scalar("Test_PRATE", test_rmse_PRATE.result(), step=epoch)
-            tf.summary.scalar("Test_logpz", test_logpz.result(), step=epoch)
-            tf.summary.scalar("Test_logqz_x", test_logqz_x.result(), step=epoch)
-            tf.summary.scalar("Test_loss", test_loss.result(), step=epoch)
+            tf.summary.scalar("Train_PRMSL", train_rmse_PRMSL, step=epoch)
+            tf.summary.scalar("Train_SST", train_rmse_SST, step=epoch)
+            tf.summary.scalar("Train_T2M", train_rmse_T2M, step=epoch)
+            tf.summary.scalar("Train_PRATE", train_rmse_PRATE, step=epoch)
+            tf.summary.scalar("Train_logpz", train_logpz, step=epoch)
+            tf.summary.scalar("Train_logqz_x", train_logqz_x, step=epoch)
+            tf.summary.scalar("Train_loss", train_loss, step=epoch)
+            tf.summary.scalar("Test_PRMSL", test_rmse_PRMSL, step=epoch)
+            tf.summary.scalar("Test_SST", test_rmse_SST, step=epoch)
+            tf.summary.scalar("Test_T2M", test_rmse_T2M, step=epoch)
+            tf.summary.scalar("Test_PRATE", test_rmse_PRATE, step=epoch)
+            tf.summary.scalar("Test_logpz", test_logpz, step=epoch)
+            tf.summary.scalar("Test_logqz_x", test_logqz_x, step=epoch)
+            tf.summary.scalar("Test_loss", test_loss, step=epoch)
 
         end_monitoring_time = time.time()
 
@@ -172,37 +187,44 @@ with strategy.scope():
         print("Epoch: {}".format(epoch))
         print(
             "PRMSL  : {:>7.1f}, {:>7.1f}".format(
-                train_rmse_PRMSL.result(), test_rmse_PRMSL.result()
+                train_rmse_PRMSL.numpy() / validation_batch_count,
+                test_rmse_PRMSL.numpy() / test_batch_count,
             )
         )
         print(
             "SST    : {:>7.1f}, {:>7.1f}".format(
-                train_rmse_SST.result(), test_rmse_SST.result()
+                train_rmse_SST.numpy() / validation_batch_count,
+                test_rmse_SST.numpy() / test_batch_count,
             )
         )
         print(
             "T2m    : {:>7.1f}, {:>7.1f}".format(
-                train_rmse_T2M.result(), test_rmse_T2M.result()
+                train_rmse_T2M.numpy() / validation_batch_count,
+                test_rmse_T2M.numpy() / test_batch_count,
             )
         )
         print(
             "PRATE  : {:>7.1f}, {:>7.1f}".format(
-                train_rmse_PRATE.result(), test_rmse_PRATE.result()
+                train_rmse_PRATE.numpy() / validation_batch_count,
+                test_rmse_PRATE.numpy() / test_batch_count,
             )
         )
         print(
             "logpz  : {:>7.1f}, {:>7.1f}".format(
-                train_logpz.result(), test_logpz.result()
+                train_logpz.numpy() / validation_batch_count,
+                test_logpz.numpy() / test_batch_count,
             )
         )
         print(
             "logqz_x: {:>7.1f}, {:>7.1f}".format(
-                train_logqz_x.result(), test_logqz_x.result()
+                train_logqz_x.numpy() / validation_batch_count,
+                test_logqz_x.numpy() / test_batch_count,
             )
         )
         print(
             "loss   : {:>7.1f}, {:>7.1f}".format(
-                train_loss.result(), test_loss.result()
+                train_loss.numpy() / validation_batch_count,
+                test_loss.numpy() / test_batch_count,
             )
         )
         print(

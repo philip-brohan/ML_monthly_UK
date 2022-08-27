@@ -22,15 +22,6 @@ class DCVAE(tf.keras.Model):
         self.T2M_scale = tf.constant(1.0, dtype=tf.float32)
         self.PRATE_scale = tf.constant(1.0, dtype=tf.float32)
 
-        # Measures for performance on current batch
-        self.rmse_PRMSL = tf.Variable(0.0)
-        self.rmse_PRATE = tf.Variable(0.0)
-        self.rmse_T2M = tf.Variable(0.0)
-        self.rmse_SST = tf.Variable(0.0)
-        self.logpz = tf.Variable(0.0)
-        self.logqz_x = tf.Variable(0.0)
-        self.loss = tf.Variable(0.0)
-
         # Model to encode input to latent space distribution
         self.encoder = tf.keras.Sequential(
             [
@@ -155,13 +146,13 @@ class DCVAE(tf.keras.Model):
     #  two components of the latent space KLD regularizer. This is useful
     #  for monitoring and debugging, but the weight update only depends
     #  on a single value (their sum).
-    # @tf.function - Breaks function (all losses=0, why?)
+    @tf.function  # - Breaks function (all losses=0, why?)
     def compute_loss(self, x):
         mean, logvar = self.encode(x)
         latent = self.reparameterize(mean, logvar)
         generated = self.generate(latent)
 
-        self.rmse_PRMSL = (
+        rmse_PRMSL = (
             tf.math.sqrt(
                 tf.reduce_mean(
                     tf.math.squared_difference(generated[:, :, :, 0], x[:, :, :, 0])
@@ -170,7 +161,7 @@ class DCVAE(tf.keras.Model):
             * self.RMSE_scale
             * self.PRMSL_scale
         )
-        self.rmse_SST = (
+        rmse_SST = (
             tf.math.sqrt(
                 tf.reduce_mean(
                     tf.math.squared_difference(generated[:, :, :, 1], x[:, :, :, 1])
@@ -179,7 +170,7 @@ class DCVAE(tf.keras.Model):
             * self.RMSE_scale
             * self.SST_scale
         )
-        self.rmse_T2M = (
+        rmse_T2M = (
             tf.math.sqrt(
                 tf.reduce_mean(
                     tf.math.squared_difference(generated[:, :, :, 2], x[:, :, :, 2])
@@ -188,7 +179,7 @@ class DCVAE(tf.keras.Model):
             * self.RMSE_scale
             * self.T2M_scale
         )
-        self.rmse_PRATE = (
+        rmse_PRATE = (
             tf.math.sqrt(
                 tf.reduce_mean(
                     tf.math.squared_difference(generated[:, :, :, 3], x[:, :, :, 3])
@@ -197,24 +188,16 @@ class DCVAE(tf.keras.Model):
             * self.RMSE_scale
             * self.PRATE_scale
         )
-        self.logpz = self.log_normal_pdf(latent, 0.0, 0.0) * -1
-        self.logqz_x = self.log_normal_pdf(latent, mean, logvar)
-        self.loss = (
-            self.rmse_PRMSL
-            + self.rmse_SST
-            + self.rmse_T2M
-            + self.rmse_PRATE
-            + self.logpz
-            + self.logqz_x
-        )
-
-        return self.loss
+        logpz = tf.reduce_mean(self.log_normal_pdf(latent, 0.0, 0.0) * -1)
+        logqz_x = tf.reduce_mean(self.log_normal_pdf(latent, mean, logvar))
+        return tf.stack([rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x])
 
     # Run the autoencoder for one batch, calculate the errors, calculate the
     #  gradients and update the layer weights.
     @tf.function
     def train_on_batch(self, x, optimizer):
         with tf.GradientTape() as tape:
-            loss_value = self.compute_loss(x)
-        gradients = tape.gradient(loss_value, self.trainable_variables)
+            loss_values = self.compute_loss(x)
+            overall_loss = tf.math.reduce_sum(loss_values, axis=0)
+        gradients = tape.gradient(overall_loss, self.trainable_variables)
         optimizer.apply_gradients(zip(gradients, self.trainable_variables))

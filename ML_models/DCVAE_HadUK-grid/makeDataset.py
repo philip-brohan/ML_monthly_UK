@@ -17,7 +17,7 @@ def load_tensor(file_name):
 
 
 # Get a dataset
-def getDataset(purpose, nImages=None):
+def getDataset(purpose, nImages=None, cache=False):
 
     # Get a list of filenames containing tensors
     inFiles = os.listdir("%s/datasets/%s" % (TSOURCE, purpose))
@@ -37,7 +37,8 @@ def getDataset(purpose, nImages=None):
     # Convert the Dataset from file names to file contents
     tr_data = tr_data.map(load_tensor, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     # Optimisation
-    tr_data = tr_data.cache()
+    if cache:
+        tr_data = tr_data.cache()  # Great, iff you have enough RAM for it
     tr_data = tr_data.prefetch(tf.data.experimental.AUTOTUNE)
 
     return tr_data
