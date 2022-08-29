@@ -96,7 +96,7 @@ def load_cList(year, month, member=1):
     prmsl = iris.load_cube(fname, ftt)
     prmsl.coord("latitude").coord_system = cs_20CR
     prmsl.coord("longitude").coord_system = cs_20CR
-    prmsl = prmsl.regrid(sCube, iris.analysis.Linear())
+    prmsl = prmsl.regrid(sCube, iris.analysis.Nearest())
     res.append(prmsl)
 
     # SST
@@ -113,7 +113,7 @@ def load_cList(year, month, member=1):
     sst = iris.load_cube(fname, ftt)
     sst.coord("latitude").coord_system = cs_20CR
     sst.coord("longitude").coord_system = cs_20CR
-    sst = sst.regrid(sCube, iris.analysis.Linear())
+    sst = sst.regrid(sCube, iris.analysis.Nearest())
     sst.data[lm_20CR.data > 0] = 0
     sst.data = np.ma.masked_where(lm_20CR.data > 0.0, sst.data, copy=False)
     res.append(sst)

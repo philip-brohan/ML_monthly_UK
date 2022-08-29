@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Make 50 years of monthly-data tensors
+# Make 130 years of monthly-data tensors
 
 import os
 import sys
@@ -20,13 +20,13 @@ member = 1
 count = 0
 for year in range(1884, 2015):
     for month in range(1, 13):
-        for memcnt in range(3):
+        for memcnt in range(1):  # Only use a single member
             member += 7
             if member > 80:
                 member -= 80
             purpose = "training"
             count += 1
-            if count % 10 == 0:
+            if count % 17 == 0:
                 purpose = "test"
             if is_done(year, month, member, purpose):
                 continue

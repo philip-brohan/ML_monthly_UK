@@ -148,14 +148,14 @@ class DCVAE(tf.keras.Model):
     #  on a single value (their sum).
     @tf.function  # - Breaks function (all losses=0, why?)
     def compute_loss(self, x):
-        mean, logvar = self.encode(x)
+        mean, logvar = self.encode(x[0])
         latent = self.reparameterize(mean, logvar)
         generated = self.generate(latent)
 
         rmse_PRMSL = (
             tf.math.sqrt(
                 tf.reduce_mean(
-                    tf.math.squared_difference(generated[:, :, :, 0], x[:, :, :, 0])
+                    tf.math.squared_difference(generated[:, :, :, 0], x[0][:, :, :, 0])
                 )
             )
             * self.RMSE_scale
@@ -164,7 +164,7 @@ class DCVAE(tf.keras.Model):
         rmse_SST = (
             tf.math.sqrt(
                 tf.reduce_mean(
-                    tf.math.squared_difference(generated[:, :, :, 1], x[:, :, :, 1])
+                    tf.math.squared_difference(generated[:, :, :, 1], x[0][:, :, :, 1])
                 )
             )
             * self.RMSE_scale
@@ -173,7 +173,7 @@ class DCVAE(tf.keras.Model):
         rmse_T2M = (
             tf.math.sqrt(
                 tf.reduce_mean(
-                    tf.math.squared_difference(generated[:, :, :, 2], x[:, :, :, 2])
+                    tf.math.squared_difference(generated[:, :, :, 2], x[0][:, :, :, 2])
                 )
             )
             * self.RMSE_scale
@@ -182,7 +182,7 @@ class DCVAE(tf.keras.Model):
         rmse_PRATE = (
             tf.math.sqrt(
                 tf.reduce_mean(
-                    tf.math.squared_difference(generated[:, :, :, 3], x[:, :, :, 3])
+                    tf.math.squared_difference(generated[:, :, :, 3], x[0][:, :, :, 3])
                 )
             )
             * self.RMSE_scale

@@ -7,7 +7,6 @@ import sys
 import time
 import tensorflow as tf
 
-import pickle
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -17,9 +16,9 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Distribute across all GPUs
-#strategy = tf.distribute.MirroredStrategy()
+# strategy = tf.distribute.MirroredStrategy()
 strategy = tf.distribute.experimental.CentralStorageStrategy()
-#strategy = tf.distribute.get_strategy()
+# strategy = tf.distribute.get_strategy()
 
 # Load the data path, data source, and model specification
 sys.path.append("%s/." % os.path.dirname(__file__))
@@ -27,21 +26,21 @@ from localise import LSCRATCH
 from makeDataset import getDataset
 from autoencoderModel import DCVAE
 
-# How many month's data to use?
+# Can use less than all the data (for testing)
 nTrainingImages = None
-nTestImages = 100
+nTestImages = None
 
 # How many epochs to train for
 nEpochs = 300
 # Length of an epoch - if None, same as nTrainingImages
 nImagesInEpoch = None
-nRepeatsPerEpoch = 2  # Show each month this many times
+nRepeatsPerEpoch = 5  # Show each month this many times
 
 if nImagesInEpoch is None:
     nImagesInEpoch = nTrainingImages
 
 # Dataset parameters
-bufferSize = 1000  # Untested
+bufferSize = 100  # Already shuffled data, so not important
 batchSize = 32  # Arbitrary
 
 
@@ -49,19 +48,23 @@ batchSize = 32  # Arbitrary
 with strategy.scope():
 
     # Set up the training data
-    trainingData = getDataset(purpose="training", nImages=nTrainingImages).repeat(
-        nRepeatsPerEpoch
-    )
+    trainingData = getDataset(
+        purpose="training", nImages=nTrainingImages, shuffle=True, cache=True
+    ).repeat(nRepeatsPerEpoch)
     trainingData = trainingData.shuffle(bufferSize).batch(batchSize)
     trainingData = strategy.experimental_distribute_dataset(trainingData)
 
     # Subset of the training data for metrics
-    validationData = getDataset(purpose="training", nImages=nTestImages)
+    validationData = getDataset(
+        purpose="training", nImages=nTestImages, shuffle=False, cache=True
+    )
     validationData = validationData.batch(batchSize)
     validationData = strategy.experimental_distribute_dataset(validationData)
 
     # Set up the test data
-    testData = getDataset(purpose="test", nImages=nTestImages)
+    testData = getDataset(
+        purpose="test", nImages=nTestImages, shuffle=False, cache=True
+    )
     testData = testData.batch(batchSize)
     testData = strategy.experimental_distribute_dataset(testData)
 
