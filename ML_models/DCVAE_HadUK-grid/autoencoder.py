@@ -96,7 +96,7 @@ with strategy.scope():
     test_logqz_x = tf.Variable(0.0, trainable=False)
     test_loss = tf.Variable(0.0, trainable=False)
 
-    # logfile to output the met
+    # logfile to output the metrics
     log_FN = ("%s/models/Training_log") % LSCRATCH
     if not os.path.isdir(os.path.dirname(log_FN)):
         os.makedirs(os.path.dirname(log_FN))
@@ -169,20 +169,40 @@ with strategy.scope():
             os.makedirs(save_dir)
         autoencoder.save_weights("%s/ckpt" % save_dir)
         with logfile_writer.as_default():
-            tf.summary.scalar("Train_PRMSL", train_rmse_PRMSL, step=epoch)
-            tf.summary.scalar("Train_SST", train_rmse_SST, step=epoch)
-            tf.summary.scalar("Train_T2M", train_rmse_T2M, step=epoch)
-            tf.summary.scalar("Train_PRATE", train_rmse_PRATE, step=epoch)
-            tf.summary.scalar("Train_logpz", train_logpz, step=epoch)
-            tf.summary.scalar("Train_logqz_x", train_logqz_x, step=epoch)
-            tf.summary.scalar("Train_loss", train_loss, step=epoch)
-            tf.summary.scalar("Test_PRMSL", test_rmse_PRMSL, step=epoch)
-            tf.summary.scalar("Test_SST", test_rmse_SST, step=epoch)
-            tf.summary.scalar("Test_T2M", test_rmse_T2M, step=epoch)
-            tf.summary.scalar("Test_PRATE", test_rmse_PRATE, step=epoch)
-            tf.summary.scalar("Test_logpz", test_logpz, step=epoch)
-            tf.summary.scalar("Test_logqz_x", test_logqz_x, step=epoch)
-            tf.summary.scalar("Test_loss", test_loss, step=epoch)
+            tf.summary.scalar(
+                "Train_PRMSL", train_rmse_PRMSL / validation_batch_count, step=epoch
+            )
+            tf.summary.scalar(
+                "Train_SST", train_rmse_SST / validation_batch_count, step=epoch
+            )
+            tf.summary.scalar(
+                "Train_T2M", train_rmse_T2M / validation_batch_count, step=epoch
+            )
+            tf.summary.scalar(
+                "Train_PRATE", train_rmse_PRATE / validation_batch_count, step=epoch
+            )
+            tf.summary.scalar(
+                "Train_logpz", train_logpz / validation_batch_count, step=epoch
+            )
+            tf.summary.scalar(
+                "Train_logqz_x", train_logqz_x / validation_batch_count, step=epoch
+            )
+            tf.summary.scalar(
+                "Train_loss", train_loss / validation_batch_count, step=epoch
+            )
+            tf.summary.scalar(
+                "Test_PRMSL", test_rmse_PRMSL / test_batch_count, step=epoch
+            )
+            tf.summary.scalar("Test_SST", test_rmse_SST / test_batch_count, step=epoch)
+            tf.summary.scalar("Test_T2M", test_rmse_T2M / test_batch_count, step=epoch)
+            tf.summary.scalar(
+                "Test_PRATE", test_rmse_PRATE / test_batch_count, step=epoch
+            )
+            tf.summary.scalar("Test_logpz", test_logpz / test_batch_count, step=epoch)
+            tf.summary.scalar(
+                "Test_logqz_x", test_logqz_x / test_batch_count, step=epoch
+            )
+            tf.summary.scalar("Test_loss", test_loss / test_batch_count, step=epoch)
 
         end_monitoring_time = time.time()
 
