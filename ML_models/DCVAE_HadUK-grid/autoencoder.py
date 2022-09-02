@@ -31,7 +31,7 @@ nTrainingImages = None
 nTestImages = None
 
 # How many epochs to train for
-nEpochs = 300
+nEpochs = 100
 # Length of an epoch - if None, same as nTrainingImages
 nImagesInEpoch = None
 nRepeatsPerEpoch = 5  # Show each month this many times
@@ -40,7 +40,7 @@ if nImagesInEpoch is None:
     nImagesInEpoch = nTrainingImages
 
 # Dataset parameters
-bufferSize = 100  # Already shuffled data, so not important
+bufferSize = 100  # Already shuffled data, so shouldn't have to be large
 batchSize = 32  # Arbitrary
 
 
