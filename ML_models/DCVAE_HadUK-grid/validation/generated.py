@@ -52,7 +52,7 @@ load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
 eps = tf.random.normal(shape=(1, autoencoder.latent_dim))
-generated = autoencoder.decode(eps)
+generated = autoencoder.generate(eps)
 
 fig = Figure(
     figsize=(20, 22),
