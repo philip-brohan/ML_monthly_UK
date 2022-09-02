@@ -15,7 +15,7 @@ class DCVAE(tf.keras.Model):
         # Latent space dimension
         self.latent_dim = 20
         # Ratio of RMSE to KLD in error
-        self.RMSE_scale = tf.constant(10000.0, dtype=tf.float32)
+        self.RMSE_scale = tf.constant(100.0, dtype=tf.float32)
         # Relative importances of each variable in error
         self.PRMSL_scale = tf.constant(1.0, dtype=tf.float32)
         self.SST_scale = tf.constant(1.0, dtype=tf.float32)
@@ -155,34 +155,46 @@ class DCVAE(tf.keras.Model):
         rmse_PRMSL = (
             tf.math.sqrt(
                 tf.reduce_mean(
-                    tf.math.squared_difference(generated[:, :, :, 0], x[0][:, :, :, 0])
+                    tf.math.squared_difference(generated[:, :, :, 0], x[1][:, :, :, 0])
                 )
             )
             * self.RMSE_scale
             * self.PRMSL_scale
         )
+        mask = x[1][:, :, :, 1] != 0
         rmse_SST = (
             tf.math.sqrt(
                 tf.reduce_mean(
-                    tf.math.squared_difference(generated[:, :, :, 1], x[0][:, :, :, 1])
+                    tf.math.squared_difference(
+                        tf.boolean_mask(generated[:, :, :, 1], mask),
+                        tf.boolean_mask(x[1][:, :, :, 1], mask),
+                    )
                 )
             )
             * self.RMSE_scale
             * self.SST_scale
         )
+        mask = x[1][:, :, :, 2] != 0
         rmse_T2M = (
             tf.math.sqrt(
                 tf.reduce_mean(
-                    tf.math.squared_difference(generated[:, :, :, 2], x[0][:, :, :, 2])
+                    tf.math.squared_difference(
+                        tf.boolean_mask(generated[:, :, :, 2], mask),
+                        tf.boolean_mask(x[1][:, :, :, 2], mask),
+                    )
                 )
             )
             * self.RMSE_scale
             * self.T2M_scale
         )
+        mask = x[1][:, :, :, 3] != 0
         rmse_PRATE = (
             tf.math.sqrt(
                 tf.reduce_mean(
-                    tf.math.squared_difference(generated[:, :, :, 3], x[0][:, :, :, 3])
+                    tf.math.squared_difference(
+                        tf.boolean_mask(generated[:, :, :, 3], mask),
+                        tf.boolean_mask(x[1][:, :, :, 3], mask),
+                    )
                 )
             )
             * self.RMSE_scale

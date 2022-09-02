@@ -16,8 +16,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Distribute across all GPUs
-# strategy = tf.distribute.MirroredStrategy()
-strategy = tf.distribute.experimental.CentralStorageStrategy()
+strategy = tf.distribute.MirroredStrategy()
+# strategy = tf.distribute.experimental.CentralStorageStrategy()
 # strategy = tf.distribute.get_strategy()
 
 # Load the data path, data source, and model specification
@@ -41,7 +41,7 @@ if nImagesInEpoch is None:
 
 # Dataset parameters
 bufferSize = 100  # Already shuffled data, so not important
-batchSize = 32  # Arbitrary
+batchSize = 16  # Arbitrary
 
 
 # Instantiate and run the model under the control of the distribution strategy
@@ -73,10 +73,7 @@ with strategy.scope():
     optimizer = tf.keras.optimizers.Adam(1e-3)
     # If we are doing a restart, load the weights
     if args.epoch > 1:
-        weights_dir = ("%s/models/Epoch_%04d") % (
-            LSCRATCH,
-            args.epoch,
-        )
+        weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
         load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
         load_status.assert_existing_objects_matched()
 
@@ -161,10 +158,7 @@ with strategy.scope():
             test_batch_count += 1
 
         # Save model state and current metrics
-        save_dir = ("%s/models/Epoch_%04d") % (
-            LSCRATCH,
-            epoch,
-        )
+        save_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, epoch,)
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
         autoencoder.save_weights("%s/ckpt" % save_dir)
@@ -209,43 +203,43 @@ with strategy.scope():
         # Report progress
         print("Epoch: {}".format(epoch))
         print(
-            "PRMSL  : {:>7.1f}, {:>7.1f}".format(
+            "PRMSL  : {:>9.3f}, {:>9.3f}".format(
                 train_rmse_PRMSL.numpy() / validation_batch_count,
                 test_rmse_PRMSL.numpy() / test_batch_count,
             )
         )
         print(
-            "SST    : {:>7.1f}, {:>7.1f}".format(
+            "SST    : {:>9.3f}, {:>9.3f}".format(
                 train_rmse_SST.numpy() / validation_batch_count,
                 test_rmse_SST.numpy() / test_batch_count,
             )
         )
         print(
-            "T2m    : {:>7.1f}, {:>7.1f}".format(
+            "T2m    : {:>9.3f}, {:>9.3f}".format(
                 train_rmse_T2M.numpy() / validation_batch_count,
                 test_rmse_T2M.numpy() / test_batch_count,
             )
         )
         print(
-            "PRATE  : {:>7.1f}, {:>7.1f}".format(
+            "PRATE  : {:>9.3f}, {:>9.3f}".format(
                 train_rmse_PRATE.numpy() / validation_batch_count,
                 test_rmse_PRATE.numpy() / test_batch_count,
             )
         )
         print(
-            "logpz  : {:>7.1f}, {:>7.1f}".format(
+            "logpz  : {:>9.3f}, {:>9.3f}".format(
                 train_logpz.numpy() / validation_batch_count,
                 test_logpz.numpy() / test_batch_count,
             )
         )
         print(
-            "logqz_x: {:>7.1f}, {:>7.1f}".format(
+            "logqz_x: {:>9.3f}, {:>9.3f}".format(
                 train_logqz_x.numpy() / validation_batch_count,
                 test_logqz_x.numpy() / test_batch_count,
             )
         )
         print(
-            "loss   : {:>7.1f}, {:>7.1f}".format(
+            "loss   : {:>9.3f}, {:>9.3f}".format(
                 train_loss.numpy() / validation_batch_count,
                 test_loss.numpy() / test_batch_count,
             )

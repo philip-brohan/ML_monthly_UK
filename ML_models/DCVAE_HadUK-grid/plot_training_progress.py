@@ -28,6 +28,13 @@ parser.add_argument(
     "--comparator", help="Comparison model name", type=str, required=False, default=None
 )
 parser.add_argument(
+    "--rscale",
+    help="Scale RMS losses in comparator",
+    type=float,
+    required=False,
+    default=1.0,
+)
+parser.add_argument(
     "--ymax", help="Y range maximum", type=float, required=False, default=None
 )
 parser.add_argument(
@@ -107,22 +114,15 @@ matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.set_axis_off()
 axb.add_patch(
-    Rectangle(
-        (0, 0),
-        1,
-        1,
-        facecolor=(0.95, 0.95, 0.95, 1),
-        fill=True,
-        zorder=1,
-    )
+    Rectangle((0, 0), 1, 1, facecolor=(0.95, 0.95, 0.95, 1), fill=True, zorder=1,)
 )
 
 
-def addLine(ax, dta, key, col, z):
+def addLine(ax, dta, key, col, z, rscale=1):
     ax.add_line(
         Line2D(
             dta["epoch"],
-            dta[key],
+            np.array(dta[key]) * rscale,
             linewidth=2,
             color=col,
             alpha=1.0,
@@ -141,8 +141,8 @@ ax_prmsl.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_prmsl, hts, "Train_PRMSL", (1, 0.5, 0.5, 1), 10)
 addLine(ax_prmsl, hts, "Test_PRMSL", (1, 0, 0, 1), 20)
 if args.comparator is not None:
-    addLine(ax_prmsl, chts, "PRMSL_train", (0.5, 0.5, 1, 1), 10)
-    addLine(ax_prmsl, chts, "PRMSL_test", (0, 0, 1, 1), 20)
+    addLine(ax_prmsl, chts, "PRMSL_train", (0.5, 0.5, 1, 1), 10, rscale=args.rscale)
+    addLine(ax_prmsl, chts, "PRMSL_test", (0, 0, 1, 1), 20, rscale=args.rscale)
 
 # Bottom left - SST
 ax_sst = fig.add_axes([0.055, 0.06, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
@@ -152,8 +152,8 @@ ax_sst.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_sst, hts, "Train_SST", (1, 0.5, 0.5, 1), 10)
 addLine(ax_sst, hts, "Test_SST", (1, 0, 0, 1), 20)
 if args.comparator is not None:
-    addLine(ax_sst, chts, "SST_train", (0.5, 0.5, 1, 1), 10)
-    addLine(ax_sst, chts, "SST_test", (0, 0, 1, 1), 20)
+    addLine(ax_sst, chts, "SST_train", (0.5, 0.5, 1, 1), 10, rscale=args.rscale)
+    addLine(ax_sst, chts, "SST_test", (0, 0, 1, 1), 20, rscale=args.rscale)
 
 # Top centre - T2M
 ax_t2m = fig.add_axes([0.385, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))
@@ -163,8 +163,8 @@ ax_t2m.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_t2m, hts, "Train_T2M", (1, 0.5, 0.5, 1), 10)
 addLine(ax_t2m, hts, "Test_T2M", (1, 0, 0, 1), 20)
 if args.comparator is not None:
-    addLine(ax_t2m, chts, "T2M_train", (0.5, 0.5, 1, 1), 10)
-    addLine(ax_t2m, chts, "T2M_test", (0, 0, 1, 1), 20)
+    addLine(ax_t2m, chts, "T2M_train", (0.5, 0.5, 1, 1), 10, rscale=args.rscale)
+    addLine(ax_t2m, chts, "T2M_test", (0, 0, 1, 1), 20, rscale=args.rscale)
 
 # Bottom centre - PRATE
 ax_prate = fig.add_axes(
@@ -176,8 +176,8 @@ ax_prate.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 addLine(ax_prate, hts, "Train_PRATE", (1, 0.5, 0.5, 1), 10)
 addLine(ax_prate, hts, "Test_PRATE", (1, 0, 0, 1), 20)
 if args.comparator is not None:
-    addLine(ax_prate, chts, "PRATE_train", (0.5, 0.5, 1, 1), 10)
-    addLine(ax_prate, chts, "PRATE_test", (0, 0, 1, 1), 20)
+    addLine(ax_prate, chts, "PRATE_train", (0.5, 0.5, 1, 1), 10, rscale=args.rscale)
+    addLine(ax_prate, chts, "PRATE_test", (0, 0, 1, 1), 20, rscale=args.rscale)
 
 # Top right - logpz
 ax_lpz = fig.add_axes([0.715, 0.55, 0.27, 0.4], xlim=(-1, epoch + 1), ylim=(ymin, ymax))

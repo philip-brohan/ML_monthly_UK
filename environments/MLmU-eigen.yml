@@ -15,6 +15,7 @@ dependencies:
 # Don't use GPU version - faster on CPU-only?
   - tensorflow-eigen=2.4
   - tensorflow-probability=0.12
+  - google-auth=1.35 #  Version 2 breaks tensorboard
 # Optional, code formatter
   - black
 # Optional - documentation generator
