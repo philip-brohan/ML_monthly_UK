@@ -48,7 +48,7 @@ parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
 parser.add_argument(
-    "--iter", help="No. of iterations", type=int, required=False, default=1000,
+    "--iter", help="No. of iterations", type=int, required=False, default=100,
 )
 args = parser.parse_args()
 
@@ -88,27 +88,25 @@ load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 load_status.assert_existing_objects_matched()
 
 # We are using the model in inference mode - (does this have any effect?)
-autoencoder.decoder.trainable = False
-for layer in autoencoder.decoder.layers:
-    layer.trainable = False
-autoencoder.decoder.compile()
+autoencoder.generator.trainable = False
+autoencoder.generator.compile()
 
 latent = tf.Variable(tf.random.normal(shape=(1, autoencoder.latent_dim)))
 target = tf.constant(tf.reshape(ict, [1, 1440, 896, 4]))
 
 
-def decodeFit():
+def generateFit():
     result = 0.0
-    decoded = autoencoder.decode(latent)
+    generated = autoencoder.generate(latent)
     if args.PRMSL:
         result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(decoded[:, :, :, 0], target[:, :, :, 0])
+            tf.keras.metrics.mean_squared_error(generated[:, :, :, 0], target[:, :, :, 0])
         )
     if args.SST:
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    decoded[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
+                    generated[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
                 ),
                 tf.boolean_mask(
                     target[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
@@ -119,7 +117,7 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    decoded[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
+                    generated[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
                 ),
                 tf.boolean_mask(
                     target[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
@@ -130,7 +128,7 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    decoded[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
+                    generated[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
                 ),
                 tf.boolean_mask(
                     target[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
@@ -142,16 +140,16 @@ def decodeFit():
 
 if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
     loss = tfp.math.minimize(
-        decodeFit,
+        generateFit,
         trainable_variables=[latent],
         num_steps=args.iter,
         optimizer=tf.optimizers.Adam(learning_rate=0.05),
     )
 
-encoded = autoencoder.decode(latent)
+generated = autoencoder.generate(latent)
 
 fitted = tensor_to_cList(
-    encoded[0, :, :, :], sCube, lm_20CR.data.mask, dm_hukg.data.mask
+    generated[0, :, :, :], sCube, lm_20CR.data.mask, dm_hukg.data.mask
 )
 
 if not os.path.isdir(os.path.dirname(opfile)):

@@ -47,7 +47,7 @@ parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
 parser.add_argument(
-    "--iter", help="No. of iterations", type=int, required=False, default=1000,
+    "--iter", help="No. of iterations", type=int, required=False, default=100,
 )
 args = parser.parse_args()
 
@@ -80,14 +80,10 @@ from autoencoderModel import DCVAE
 autoencoder = DCVAE()
 weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
-# Check the load worked
 load_status.assert_existing_objects_matched()
 
 # We are using the model in inference mode - (does this have any effect?)
-autoencoder.decoder.trainable = False
-for layer in autoencoder.decoder.layers:
-    layer.trainable = False
-autoencoder.decoder.compile()
+autoencoder.trainable = False
 
 latent = tf.Variable(tf.random.normal(shape=(1, autoencoder.latent_dim)))
 target = tf.constant(tf.reshape(ict, [1, 1440, 896, 4]))
@@ -95,16 +91,16 @@ target = tf.constant(tf.reshape(ict, [1, 1440, 896, 4]))
 
 def decodeFit():
     result = 0.0
-    decoded = autoencoder.decode(latent)
+    generated = autoencoder.generate(latent)
     if args.PRMSL:
         result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(decoded[:, :, :, 0], target[:, :, :, 0])
+            tf.keras.metrics.mean_squared_error(generated[:, :, :, 0], target[:, :, :, 0])
         )
     if args.SST:
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    decoded[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
+                    generated[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
                 ),
                 tf.boolean_mask(
                     target[:, :, :, 1], np.invert(lm_20CR.data.mask), axis=1
@@ -115,7 +111,7 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    decoded[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
+                    generated[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
                 ),
                 tf.boolean_mask(
                     target[:, :, :, 2], np.invert(dm_hukg.data.mask), axis=1
@@ -126,7 +122,7 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    decoded[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
+                    generated[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
                 ),
                 tf.boolean_mask(
                     target[:, :, :, 3], np.invert(dm_hukg.data.mask), axis=1
@@ -145,7 +141,7 @@ if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
     )
 
 
-encoded = autoencoder.decode(latent)
+generated = autoencoder.generate(latent)
 
 # Make the plot - same as for validation script
 fig = Figure(
@@ -197,8 +193,8 @@ cb = fig.colorbar(
     PRMSL_img, ax=ax_prmsl_cb, location="bottom", orientation="horizontal", fraction=1.0
 )
 
-# Top centre - PRMSL encoded
-var.data = np.squeeze(encoded[0, :, :, 0].numpy())
+# Top centre - PRMSL generated
+var.data = np.squeeze(generated[0, :, :, 0].numpy())
 var = unnormalise(var, "PRMSL") / 100
 ax_prmsl_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
 ax_prmsl_e.set_axis_off()
@@ -220,7 +216,7 @@ varx = sCube.copy()
 varx.data = np.squeeze(ict[:, :, 0].numpy())
 varx = unnormalise(varx, "PRMSL") / 100
 vary = sCube.copy()
-vary.data = np.squeeze(encoded[0, :, :, 0].numpy())
+vary.data = np.squeeze(generated[0, :, :, 0].numpy())
 vary = unnormalise(vary, "PRMSL") / 100
 ax_prmsl_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.75, 0.95 / 3 - 0.06, 0.85 / 4]
@@ -253,8 +249,8 @@ cb = fig.colorbar(
     PRATE_img, ax=ax_prate_cb, location="bottom", orientation="horizontal", fraction=1.0
 )
 
-# 2nd centre - PRATE encoded
-var.data = np.squeeze(encoded[0, :, :, 3].numpy())
+# 2nd centre - PRATE generated
+var.data = np.squeeze(generated[0, :, :, 3].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "PRATE") * 1000
 ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
@@ -278,7 +274,7 @@ varx.data = np.squeeze(ict[:, :, 3].numpy())
 varx.data = np.ma.masked_where(dm_hukg.data == 0, varx.data, copy=False)
 varx = unnormalise(varx, "PRATE") * 1000
 vary = sCube.copy()
-vary.data = np.squeeze(encoded[0, :, :, 3].numpy())
+vary.data = np.squeeze(generated[0, :, :, 3].numpy())
 vary.data = np.ma.masked_where(dm_hukg.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "PRATE") * 1000
 ax_prate_s = fig.add_axes(
@@ -312,8 +308,8 @@ cb = fig.colorbar(
     T2m_img, ax=ax_t2m_cb, location="bottom", orientation="horizontal", fraction=1.0
 )
 
-# 3rd centre - T2m encoded
-var.data = np.squeeze(encoded[0, :, :, 2].numpy())
+# 3rd centre - T2m generated
+var.data = np.squeeze(generated[0, :, :, 2].numpy())
 var.data = np.ma.masked_where(dm_hukg.data == 0, var.data, copy=False)
 var = unnormalise(var, "TMP2m") - 273.15
 ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
@@ -333,7 +329,7 @@ varx.data = np.squeeze(ict[:, :, 2].numpy())
 varx.data = np.ma.masked_where(dm_hukg.data == 0, varx.data, copy=False)
 varx = unnormalise(varx, "TMP2m") - 273.15
 vary = sCube.copy()
-vary.data = np.squeeze(encoded[0, :, :, 2].numpy())
+vary.data = np.squeeze(generated[0, :, :, 2].numpy())
 vary.data = np.ma.masked_where(dm_hukg.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMP2m") - 273.15
 ax_t2m_s = fig.add_axes(
@@ -367,8 +363,8 @@ cb = fig.colorbar(
     SST_img, ax=ax_sst_cb, location="bottom", orientation="horizontal", fraction=1.0
 )
 
-# 2nd centre - SST encoded
-var.data = encoded.numpy()[0, :, :, 1]
+# 2nd centre - SST generated
+var.data = generated.numpy()[0, :, :, 1]
 var.data = np.ma.masked_where(lm_20CR.data > 0, var.data, copy=False)
 var = unnormalise(var, "TMPS") - 273.15
 ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
@@ -388,7 +384,7 @@ varx.data = np.squeeze(ict[:, :, 1].numpy())
 varx.data = np.ma.masked_where(lm_20CR.data > 0, varx.data, copy=False)
 varx = unnormalise(varx, "TMPS") - 273.15
 vary = sCube.copy()
-vary.data = np.squeeze(encoded[0, :, :, 1].numpy())
+vary.data = np.squeeze(generated[0, :, :, 1].numpy())
 vary.data = np.ma.masked_where(lm_20CR.data > 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMPS") - 273.15
 ax_sst_s = fig.add_axes(
