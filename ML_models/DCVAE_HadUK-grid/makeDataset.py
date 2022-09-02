@@ -41,22 +41,26 @@ def getDataset(
 
     # Get a list of filenames containing tensors
     inFiles = getFileNames(
-        purpose, nImages=nImages, startyear=startyear, endyear=endyear
+        purpose + "_source", nImages=nImages, startyear=startyear, endyear=endyear
     )
     if shuffle:
         random.shuffle(inFiles)
 
-    # Create TensorFlow Dataset object from the file namelist
+    # Create TensorFlow Dataset object from the source file names
     tn_data = tf.data.Dataset.from_tensor_slices(tf.constant(inFiles))
 
-    # Convert from list of file names to Dataset of file contents
-    inFiles = ["%s/datasets/%s/%s" % (TSOURCE, purpose, x) for x in inFiles]
-    tr_data = tf.data.Dataset.from_tensor_slices(tf.constant(inFiles))
-    tr_data = tr_data.map(load_tensor, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # Convert from list of file names to Dataset of source file contents
+    fnFiles = ["%s/datasets/%s/%s" % (TSOURCE, purpose + "_source", x) for x in inFiles]
+    ts_data = tf.data.Dataset.from_tensor_slices(tf.constant(fnFiles))
+    ts_data = ts_data.map(load_tensor, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # Same but for target file contents
+    fnFiles = ["%s/datasets/%s/%s" % (TSOURCE, purpose + "_target", x) for x in inFiles]
+    tt_data = tf.data.Dataset.from_tensor_slices(tf.constant(fnFiles))
+    tt_data = tt_data.map(load_tensor, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     # Zip the data together with the filenames (so we can find the date and source of each
     #   data tensor if we need it).
-    tz_data = tf.data.Dataset.zip((tr_data, tn_data))
+    tz_data = tf.data.Dataset.zip((ts_data, tt_data, tn_data))
 
     # Optimisation
     if cache:

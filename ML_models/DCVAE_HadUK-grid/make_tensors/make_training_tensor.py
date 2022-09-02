@@ -44,6 +44,9 @@ parser.add_argument(
 )
 parser.add_argument("--test", help="test data, not training", action="store_true")
 parser.add_argument(
+    "--extrapolate", help="Fill in missing data with extrapolation", action="store_true"
+)
+parser.add_argument(
     "--opfile", help="tf data file name", default=None, type=str, required=False
 )
 args = parser.parse_args()
@@ -51,6 +54,10 @@ if args.opfile is None:
     purpose = "training"
     if args.test:
         purpose = "test"
+    if args.extrapolate:
+        purpose += "_source"
+    else:
+        purpose += "_target"
     args.opfile = ("%s/datasets/%s/%04d-%02d_%02d.tfd") % (
         TSOURCE,
         purpose,
@@ -64,7 +71,9 @@ if not os.path.isdir(os.path.dirname(args.opfile)):
 
 # Load and standardise data
 qd = load_cList(args.year, args.month, args.member)
-ict = cList_to_tensor(qd, lm_20CR.data.mask, dm_hukg.data.mask)
+ict = cList_to_tensor(
+    qd, lm_20CR.data.mask, dm_hukg.data.mask, extrapolate=args.extrapolate
+)
 
 # Write to file
 sict = tf.io.serialize_tensor(ict)

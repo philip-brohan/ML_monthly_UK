@@ -28,6 +28,13 @@ parser.add_argument(
     "--comparator", help="Comparison model name", type=str, required=False, default=None
 )
 parser.add_argument(
+    "--rscale",
+    help="Scale RMS losses in comparator",
+    type=float,
+    required=False,
+    default=1.0,
+)
+parser.add_argument(
     "--ymax", help="Y range maximum", type=float, required=False, default=None
 )
 parser.add_argument(
@@ -112,22 +119,15 @@ matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.set_axis_off()
 axb.add_patch(
-    Rectangle(
-        (0, 0),
-        1,
-        1,
-        facecolor=(0.95, 0.95, 0.95, 1),
-        fill=True,
-        zorder=1,
-    )
+    Rectangle((0, 0), 1, 1, facecolor=(0.95, 0.95, 0.95, 1), fill=True, zorder=1,)
 )
 
 
-def addLine(ax, dta, key, col, z):
+def addLine(ax, dta, key, col, z, rscale=1):
     ax.add_line(
         Line2D(
             dta["epoch"],
-            dta[key],
+            np.array(dta[key]) * rscale,
             linewidth=2,
             color=col,
             alpha=1.0,

@@ -46,7 +46,7 @@ if not os.path.isdir(args.opdir):
     os.makedirs(args.opdir)
 
 if args.opfile is None:
-    args.opfile = "Extrapolations.png" 
+    args.opfile = "Extrapolations.png"
 
 fig = Figure(
     figsize=(20, 22),
@@ -82,7 +82,7 @@ var = qd[2].copy()
 var -= np.min(var.data)
 dmin = 0
 dmax = np.max(var.data)
-var.data[np.where(var.data.mask==True)]=0
+var.data[np.where(var.data.mask == True)] = 0
 var.data = var.data.data
 a1 = fig.add_axes([0.025 / 2, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
 a1.set_axis_off()
@@ -101,8 +101,8 @@ cb = fig.colorbar(
     p1_img, ax=ax1_cb, location="bottom", orientation="horizontal", fraction=1.0
 )
 
-# Bottom left - 20 iterations
-v20 = extrapolate_missing(var,nsteps=20,scale=0.99)
+# Bottom left - 100 iterations
+v20 = extrapolate_missing(var, nsteps=100, scale=1.0)
 a2 = fig.add_axes([0.025 / 2, 0.125 / 2, 0.95 / 2, 0.85 / 2])
 a2.set_axis_off()
 a2_img = plotFieldAxes(
@@ -120,8 +120,10 @@ cb = fig.colorbar(
     a2_img, ax=a2_cb, location="bottom", orientation="horizontal", fraction=1.0
 )
 
-# Top right - 10 iterations
-v10 = extrapolate_missing(var,nsteps=10,scale=0.99)
+# Top right - 100 iterations
+v2 = var.copy()
+v2.data = v2.data.data
+v10 = extrapolate_missing(v2, nsteps=100, scale=1.0)
 a3 = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2 + 0.5, 0.95 / 2, 0.85 / 2])
 a3.set_axis_off()
 a3_img = plotFieldAxes(
@@ -138,8 +140,8 @@ a3_cb.set_axis_off()
 cb = fig.colorbar(
     a3_img, ax=a3_cb, location="bottom", orientation="horizontal", fraction=1.0
 )
-# Bottom right - 30 iterations
-v30 = extrapolate_missing(var,nsteps=100,scale=0.95)
+# Bottom right - 300 iterations
+v30 = extrapolate_missing(var, nsteps=300, scale=1.0)
 a4 = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2, 0.95 / 2, 0.85 / 2])
 a4.set_axis_off()
 a4_img = plotFieldAxes(
