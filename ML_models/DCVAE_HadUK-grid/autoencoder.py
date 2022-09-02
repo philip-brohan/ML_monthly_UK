@@ -49,7 +49,7 @@ with strategy.scope():
 
     # Set up the training data
     trainingData = getDataset(
-        purpose="training", nImages=nTrainingImages, shuffle=True, cache=True
+        purpose="training", nImages=nTrainingImages, shuffle=True, cache=False
     ).repeat(nRepeatsPerEpoch)
     trainingData = trainingData.shuffle(bufferSize).batch(batchSize)
     trainingData = strategy.experimental_distribute_dataset(trainingData)

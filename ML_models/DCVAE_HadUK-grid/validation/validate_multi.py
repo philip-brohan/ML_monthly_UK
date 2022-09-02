@@ -98,7 +98,7 @@ def field_to_scalar(field, mask):
 # Get target and encoded statistics for one test case
 def compute_stats(model, x):
     # get the date from the filename tensor
-    fn = x[1].numpy()[0]
+    fn = x[2].numpy()[0]
     dtp = datetime.date(int(fn[:4]), int(fn[5:7]), 15)
     # Pass the test field through the autoiencoder
     mean, logvar = model.encode(x[0])
@@ -107,20 +107,23 @@ def compute_stats(model, x):
 
     stats = {}
     stats['dtp'] = dtp
-    stats["PRMSL_target"] = field_to_scalar(x[0][0, :, :, 0].numpy(), None)
+    stats["PRMSL_target"] = field_to_scalar(x[1][0, :, :, 0].numpy(), None)
     stats["PRMSL_model"] = field_to_scalar(generated[0, :, :, 0].numpy(), None)
-    vt = x[0][0, :, :, 1].numpy()
-    stats["SST_target"] = field_to_scalar(vt, lm_20CR.data.mask)
+    vt = x[1][0, :, :, 1].numpy()
+    mask = x[1][0, :, :, 1] == 0
+    stats["SST_target"] = field_to_scalar(vt, mask)
     vm = generated[0, :, :, 1].numpy()
-    stats["SST_model"] = field_to_scalar(vm, lm_20CR.data.mask)
-    vt = x[0][0, :, :, 2].numpy()
-    stats["T2M_target"] = field_to_scalar(vt, dm_hukg.data.mask)
+    stats["SST_model"] = field_to_scalar(vm, mask)
+    vt = x[1][0, :, :, 2].numpy()
+    mask = x[1][0, :, :, 2] == 0
+    stats["T2M_target"] = field_to_scalar(vt, mask)
     vm = generated[0, :, :, 2].numpy()
-    stats["T2M_model"] = field_to_scalar(vm, dm_hukg.data.mask)
-    vt = x[0][0, :, :, 3].numpy()
-    stats["PRATE_target"] = field_to_scalar(vt, dm_hukg.data.mask)
+    stats["T2M_model"] = field_to_scalar(vm, mask)
+    vt = x[1][0, :, :, 3].numpy()
+    mask = x[1][0, :, :, 3] == 0
+    stats["PRATE_target"] = field_to_scalar(vt, mask)
     vm = generated[0, :, :, 3].numpy()
-    stats["PRATE_model"] = field_to_scalar(vm, dm_hukg.data.mask)
+    stats["PRATE_model"] = field_to_scalar(vm, mask)
     return stats
 
 
