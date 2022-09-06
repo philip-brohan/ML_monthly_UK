@@ -19,7 +19,7 @@ sys.path.append("%s/../../.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 
 sys.path.append("%s/.." % os.path.dirname(__file__))
-from latentDataset import getDataset
+from originalsDataset import getDataset
 from generatorModel import NNG
 
 import argparse
@@ -38,7 +38,7 @@ args = parser.parse_args()
 
 # Instantiate the model
 generator = NNG()
-weights_dir = ("%s/additional_diagnostics/months/models/Epoch_%04d") % (
+weights_dir = ("%s/additional_diagnostics/months2/models/Epoch_%04d") % (
     LSCRATCH,
     args.epoch,
 )
@@ -56,7 +56,7 @@ testData = testData.batch(1)
 count = numpy.zeros(13)
 pmatrix = numpy.zeros((13, 13))
 for testCase in testData:
-    orig = testCase[2][0, :]
+    orig = testCase[1][0, :]
     original = numpy.where(orig == 1.0)[0][0] + 1
     generated = generator.call(testCase)
     dgProbabilities = generated[0, :]
@@ -104,7 +104,7 @@ ax_full.add_patch(
 )
 
 for td in range(1, 13):
-    ax_digit = fig.add_axes([0.05, 0.04 + (td * 1 / 12) * 0.95, 0.94, 0.9 / 12])
+    ax_digit = fig.add_axes([0.05, 0.04 + ((td - 1) * 1 / 12) * 0.95, 0.94, 0.9 / 12])
     ax_digit.set_xlim([0.5, 12.5])
     ax_digit.set_ylim([0, 1])
     ax_digit.spines["top"].set_visible(False)
