@@ -56,13 +56,19 @@ testData = testData.batch(1)
 count = numpy.zeros(13)
 pmatrix = numpy.zeros((13, 13))
 for testCase in testData:
-    orig = testCase[2][0, :]
-    original = numpy.where(orig == 1.0)[0][0] + 1
+    orig = testCase[2][0]
+    original = int(tf.math.round(orig * 12 + 0.5).numpy())
     generated = generator.call(testCase)
-    dgProbabilities = generated[0, :]
-    pmatrix[original, 1:] += dgProbabilities
+    #    print(orig)
+    #    print(generated[0,0])
+    gnorm = int(tf.math.round(generated[0] * 12 + 0.5).numpy()[0])
+    if gnorm < 1 or gnorm > 12:
+        continue
+    pmatrix[original, gnorm] += 1
     count[original] += 1
-pmatrix /= count
+for idx in range(1, 13):
+    if count[idx] > 0:
+        pmatrix[idx, :] /= count[idx]
 
 # Plot a bar chart of generation probabilities for a single month
 def plot1(ax, d):
@@ -104,7 +110,7 @@ ax_full.add_patch(
 )
 
 for td in range(1, 13):
-    ax_digit = fig.add_axes([0.05, 0.04 + (td * 1 / 12) * 0.95, 0.94, 0.9 / 12])
+    ax_digit = fig.add_axes([0.05, 0.04 + ((td - 1) * 1 / 12) * 0.95, 0.94, 0.9 / 12])
     ax_digit.set_xlim([0.5, 12.5])
     ax_digit.set_ylim([0, 1])
     ax_digit.spines["top"].set_visible(False)

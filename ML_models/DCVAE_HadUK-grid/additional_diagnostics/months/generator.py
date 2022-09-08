@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# NN generator making pdf of calendar month from the ncoded latent space.
+# NN generator making estimate of calendar month from the encoded latent space.
 
 import os
 import sys
@@ -37,14 +37,14 @@ nTestImages = None
 nEpochs = 100
 # Length of an epoch - if None, same as nTrainingImages
 nImagesInEpoch = None
-nRepeatsPerEpoch = 20  # Show each month this many times
+nRepeatsPerEpoch = 5  # Show each month this many times
 
 if nImagesInEpoch is None:
     nImagesInEpoch = nTrainingImages
 
 # Dataset parameters
-bufferSize = 1000  # Already shuffled data, so not important
-batchSize = 8  # Arbitrary
+bufferSize = 48  # Already shuffled data, so not important
+batchSize = 1  # Doesn't work with larger batches - why not?
 
 
 # Instantiate and run the model under the control of the distribution strategy
@@ -52,7 +52,7 @@ with strategy.scope():
 
     # Set up the training data
     trainingData = getDataset(
-        purpose="training", nImages=nTrainingImages, shuffle=False, cache=True
+        purpose="training", nImages=nTrainingImages, shuffle=True, cache=True
     ).repeat(nRepeatsPerEpoch)
     trainingData = trainingData.shuffle(bufferSize).batch(batchSize)
     trainingData = strategy.experimental_distribute_dataset(trainingData)
@@ -113,7 +113,7 @@ with strategy.scope():
             batch_losses = strategy.reduce(
                 tf.distribute.ReduceOp.MEAN, per_replica_losses, axis=None
             )
-            train_loss.assign_add(batch_losses[0])
+            train_loss.assign_add(batch_losses)
             validation_batch_count += 1
 
         # Same, but for the test data
@@ -124,7 +124,7 @@ with strategy.scope():
             batch_losses = strategy.reduce(
                 tf.distribute.ReduceOp.MEAN, per_replica_losses, axis=None
             )
-            test_loss.assign_add(batch_losses[0])
+            test_loss.assign_add(batch_losses)
             test_batch_count += 1
 
         # Save model state and current metrics

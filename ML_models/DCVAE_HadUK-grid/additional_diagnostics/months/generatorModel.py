@@ -1,6 +1,5 @@
 # Specify a simple NN generator
-# Generates pdf of calendar month (12 probs, one per month)
-#   from the encoded latent space
+# Generates estimate of calendar month from the encoded latent space
 
 import os
 import sys
@@ -17,17 +16,21 @@ class NNG(tf.keras.Model):
             [
                 tf.keras.layers.InputLayer(input_shape=(self.latent_dim,)),
                 tf.keras.layers.Dense(
-                    units=100,
+                    units=250,
                     activation=tf.nn.elu,
-                    kernel_regularizer=tf.keras.regularizers.l2(0.1),
+                    kernel_regularizer=tf.keras.regularizers.l2(0.001),
                 ),
                 tf.keras.layers.Dense(
-                    units=100,
+                    units=250,
                     activation=tf.nn.elu,
-                    kernel_regularizer=tf.keras.regularizers.l2(0.1),
+                    kernel_regularizer=tf.keras.regularizers.l2(0.001),
                 ),
-                tf.keras.layers.Dense(units=12, activation=None),
-                tf.keras.layers.Softmax(),
+                tf.keras.layers.Dense(
+                    units=250,
+                    activation=tf.nn.elu,
+                    kernel_regularizer=tf.keras.regularizers.l2(0.001),
+                ),
+                tf.keras.layers.Dense(units=1, activation=tf.nn.sigmoid),
             ]
         )
 
@@ -47,14 +50,11 @@ class NNG(tf.keras.Model):
     def compute_loss(self, x):
         latent = self.reparameterize(x[0], x[1])
         mnth = self.generate(latent)
-        target = x[2]
-        cce_MNTH = tf.keras.metrics.categorical_crossentropy(mnth, target)
-        target = tf.roll(x[2], shift=1, axis=1)
-        cce_MNTH += tf.keras.metrics.categorical_crossentropy(mnth, target) * 0.25
-        target = tf.roll(x[2], shift=-1, axis=1)
-        cce_MNTH += tf.keras.metrics.categorical_crossentropy(mnth, target) * 0.25
-        cce_MNTH -= 16.11 * 0.5
-        return cce_MNTH
+        d1 = tf.math.squared_difference(mnth, x[2])
+        d2 = tf.math.squared_difference(mnth + 1, x[2])
+        d3 = tf.math.squared_difference(mnth - 1, x[2])
+        d = tf.math.minimum(tf.math.minimum(d1, d2), d3)
+        return tf.math.sqrt(tf.reduce_mean(d))
 
     @tf.function
     def train_on_batch(self, x, optimizer):

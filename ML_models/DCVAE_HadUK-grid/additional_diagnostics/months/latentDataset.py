@@ -21,13 +21,11 @@ def load_latent(file_name):
 
 def normalise_month(file_name):
     month = int(file_name[5:7])
-    mnth = np.repeat(np.float32(0), 12)
-    mnth[month - 1] = 1
-    return mnth
+    return (month - 0.5) / 12
 
 
 def unnormalise_month(mnth):
-    return np.argmax(mnth) + 1
+    return month * 12 + 0.5
 
 
 # Get a list of filenames containing latent-space mean tensors
