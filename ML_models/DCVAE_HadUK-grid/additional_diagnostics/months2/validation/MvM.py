@@ -62,6 +62,7 @@ for testCase in testData:
     dgProbabilities = generated[0, :]
     pmatrix[original, 1:] += dgProbabilities
     count[original] += 1
+count[count==0]=1
 pmatrix /= count
 
 # Plot a bar chart of generation probabilities for a single month

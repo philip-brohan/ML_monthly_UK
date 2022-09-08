@@ -17,9 +17,8 @@ args = parser.parse_args()
 
 # Distribute across all GPUs
 # Not worth it, for such a simple model, but let's keep all the models the same
-# strategy = tf.distribute.MirroredStrategy()
+strategy = tf.distribute.MirroredStrategy()
 # strategy = tf.distribute.experimental.CentralStorageStrategy()
-strategy = tf.distribute.get_strategy()
 
 # Load the data path, data source, and model specification
 sys.path.append("%s/../.." % os.path.dirname(__file__))
@@ -73,7 +72,7 @@ with strategy.scope():
 
     # Instantiate the model
     generator = NNG()
-    optimizer = tf.keras.optimizers.Adam(1e-4)
+    optimizer = tf.keras.optimizers.Adam(1e-5)
     # If we are doing a restart, load the weights
     if args.epoch > 1:
         weights_dir = ("%s/additional_diagnostics/months2/models/Epoch_%04d") % (
