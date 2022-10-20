@@ -5,17 +5,16 @@ channels:
 dependencies:
 # Basics
   - python=3.9
-  - iris=3.2
+  - scipy=1.9 # otherwise installs 1.7 (why?), which complains about numpy
+  - iris=3.3
   - cmocean=2.0
   - parallel
 # Get data from ERA5
 # You'll need to register, see https://cds.climate.copernicus.eu/api-how-to
   - cdsapi=0.5
 # ML model building and diagnostics
-# Don't use GPU version - faster on CPU-only?
-  - tensorflow-eigen=2.4
-  - tensorflow-probability=0.12
-  - google-auth=1.35 #  Version 2 breaks tensorboard
+# If you have a gpu, install gpu_py39hd4ae112_0 instead
+  - tensorflow=2.9.1=eigen_py39h0984c0c_0
 # Optional, code formatter
   - black
 # Optional - documentation generator
@@ -26,4 +25,6 @@ dependencies:
   - pip
   - pip:
   # For bilinear interpolation
-    - tensorflow-addons==0.17
+    - tensorflow-addons==0.18
+  # For input space search
+    - tensorflow-probability==0.17

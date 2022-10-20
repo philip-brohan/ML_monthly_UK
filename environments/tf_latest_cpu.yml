@@ -1,9 +1,0 @@
-name: tf_latest_cpu
-channels:
-  - conda-forge
-dependencies:
-  - python=3.*
-  - pip
-  - pip:
-    - tensorflow
- 
