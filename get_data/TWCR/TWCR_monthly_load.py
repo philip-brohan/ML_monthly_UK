@@ -19,7 +19,7 @@ lm_TWCR = iris.load_cube("%s/20CR/version_3/fixed/land.nc" % os.getenv("SCRATCH"
 lm_TWCR = iris.util.squeeze(lm_TWCR)
 lm_TWCR.coord("latitude").coord_system = coord_s
 lm_TWCR.coord("longitude").coord_system = coord_s
-lm_TWCR.data = np.ma.masked_where(lm_TWCR.data > 0.5, lm_TWCR.data, copy=False)
+lm_TWCR.data = np.ma.masked_where(lm_TWCR.data > 0.0, lm_TWCR.data, copy=False)
 lm_TWCR.data.data[np.where(lm_TWCR.data.mask == True)] = 0
 lm_TWCR.data.data[np.where(lm_TWCR.data.mask == False)] = 1
 
@@ -33,8 +33,6 @@ def load_quad(year, month, member):
 def load_monthly_member(variable, year, month, member):
     if variable == "SST":
         ts = load_monthly_member("TMPS", year, month, member)
-        ts = ts.regrid(lm_TWCR, iris.analysis.Linear())
-        msk = np.ma.masked_where(lm_TWCR.data.mask, ts.data, copy=False)
         return ts
     else:
         fname = "%s/20CR/version_3/monthly/members/%04d/%s.%04d.mnmean_mem%03d.nc" % (
@@ -81,6 +79,9 @@ def load_monthly_ensemble(variable, year, month):
 
 
 def load_climatology(variable, month):
+    if variable=='SST':
+        ts = load_climatology('TMPS',month)
+        return ts
     fname = "%s/20CR/version_3/monthly/climatology/%s_%02d.nc" % (
         os.getenv("SCRATCH"),
         variable,
@@ -92,6 +93,9 @@ def load_climatology(variable, month):
 
 
 def load_sd_climatology(variable, month):
+    if variable=='SST':
+        ts = load_sd_climatology('TMPS',month)
+        return ts
     fname = "%s/20CR/version_3/monthly/sd_climatology/%s_%02d.nc" % (
         os.getenv("SCRATCH"),
         variable,

@@ -22,10 +22,10 @@ def load_variable(variable, year, month):
     )
     return varC
 
-def load_climatology(variable, year, month):
+def load_climatology(variable, month):
     varC = iris.load_cube(
-        "%s/haduk-grid/%s_climatology/1961-90/%s.nc"
-        % (os.getenv("SCRATCH"), variable, year, month_abbr(month).lower())
+        "%s/haduk-grid/%s_climatology/1961-1990/%s.nc"
+        % (os.getenv("SCRATCH"), variable, month_abbr[month].lower())
     )
     return varC
 
