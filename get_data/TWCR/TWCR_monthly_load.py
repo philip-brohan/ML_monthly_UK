@@ -10,6 +10,9 @@ import iris.coord_systems
 import iris.fileformats
 import datetime
 import numpy as np
+import warnings
+
+warnings.filterwarnings("ignore", message=".*frac.*")
 
 # Need to add coordinate system metadata so they work with cartopy
 coord_s = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
@@ -106,8 +109,10 @@ def load_sd_climatology(variable, month):
     return iris.load_cube(fname)
 
 
-def get_range(variable, month, cube=None):
+def get_range(variable, month, cube=None, anomaly=False):
     clim = load_climatology(variable, month)
+    if anomaly:
+        clim.data *= 0
     sdc = load_sd_climatology(variable, month)
     if cube is not None:
         clim = clim.regrid(cube, iris.analysis.Nearest())
