@@ -417,8 +417,8 @@ if args.PRATE:
             zorder=1,
         )
     )
-ty = [x * 1000 for x in all_stats["PRATE_target"]]
-my = [x * 1000 for x in all_stats["PRATE_model"]]
+ty = [x * 1 for x in all_stats["PRATE_target"]]
+my = [x * 1 for x in all_stats["PRATE_model"]]
 plot_var(tsx, ty, my, 2, 2, "PRATE")
 
 

@@ -99,7 +99,7 @@ if args.selfc is not None:
     ymin = min(ymin, cymin)
 
 if args.comparator is not None:
-    LSC = "%s/ML_monthly_China/%s" % (os.getenv("SCRATCH"), args.comparator)
+    LSC = "%s/ML_monthly_UK/%s" % (os.getenv("SCRATCH"), args.comparator)
     (chts, cymax, cymin, cepoch) = loadHistory(LSC)
     epoch = max(epoch, cepoch)
     ymax = max(ymax, cymax)
