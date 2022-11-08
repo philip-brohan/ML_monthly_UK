@@ -70,6 +70,7 @@ font = {
 }
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
+axb.set_axis_off()
 axb.add_patch(
     Rectangle(
         (0, 0),
