@@ -119,10 +119,12 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 2], np.invert(dm_HUKG.data.mask), axis=1
+                    generated[:, :, :, 2],
+                    target[:, :, :, 2] != 0.5,
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 2], np.invert(dm_HUKG.data.mask), axis=1
+                    target[:, :, :, 2],
+                    target[:, :, :, 2] != 0.5,
                 ),
             )
         )
@@ -130,10 +132,12 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 3], np.invert(dm_HUKG.data.mask), axis=1
+                    generated[:, :, :, 3],
+                    target[:, :, :, 3] != 0.5,
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 3], np.invert(dm_HUKG.data.mask), axis=1
+                    target[:, :, :, 3],
+                    target[:, :, :, 3] != 0.5,
                 ),
             )
         )
@@ -283,7 +287,7 @@ if args.PRATE:
         )
     )
 varx.data = np.squeeze(original[0, :, :, 3].numpy())
-varx.data = np.ma.masked_where(dm_HUKG.data.mask, varx.data, copy=False)
+varx.data = np.ma.masked_where(target[0, :, :, 3].numpy() == 0.5, varx.data, copy=False)
 varx = unnormalise(varx, "monthly_rainfall")
 (dmin, dmax) = get_range("PRATE", args.month, anomaly=True)
 dmin *= 86400 * 30
@@ -306,7 +310,7 @@ cb = fig.colorbar(
 
 # 2nd centre - PRATE generated
 vary.data = np.squeeze(perturbed[0, :, :, 3].numpy())
-vary.data = np.ma.masked_where(dm_HUKG.data.mask, vary.data, copy=False)
+vary.data = np.ma.masked_where(target[0, :, :, 3].numpy() == 0.5, vary.data, copy=False)
 vary = unnormalise(vary, "monthly_rainfall")
 ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate_e.set_axis_off()
@@ -350,7 +354,7 @@ if args.TMP2m:
         )
     )
 varx.data = np.squeeze(original[0, :, :, 2].numpy())
-varx.data = np.ma.masked_where(dm_HUKG.data.mask, varx.data, copy=False)
+varx.data = np.ma.masked_where(target[0, :, :, 2].numpy() == 0.5, varx.data, copy=False)
 varx = unnormalise(varx, "monthly_meantemp")
 (dmin, dmax) = get_range("TMP2m", args.month, anomaly=True)
 dmin += 2
@@ -373,7 +377,7 @@ cb = fig.colorbar(
 
 # 3rd centre - T2m generated
 vary.data = np.squeeze(perturbed[0, :, :, 2].numpy())
-vary.data = np.ma.masked_where(dm_HUKG.data.mask, vary.data, copy=False)
+vary.data = np.ma.masked_where(target[0, :, :, 2].numpy() == 0.5, vary.data, copy=False)
 vary = unnormalise(vary, "monthly_meantemp")
 ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
 ax_t2m_e.set_axis_off()
