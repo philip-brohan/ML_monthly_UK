@@ -89,12 +89,15 @@ autoencoder.trainable = False
 latent = tf.Variable(tf.random.normal(shape=(1, autoencoder.latent_dim)))
 target = tf.constant(tf.reshape(ict, [1, 1440, 896, 4]))
 
+
 def decodeFit():
     result = 0.0
-    generated = autoencoder.generate(latent,training=False)
+    generated = autoencoder.generate(latent, training=False)
     if args.PRMSL:
         result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(generated[:, :, :, 0], target[:, :, :, 0])
+            tf.keras.metrics.mean_squared_error(
+                generated[:, :, :, 0], target[:, :, :, 0]
+            )
         )
     if args.SST:
         result = result + tf.reduce_mean(
@@ -111,10 +114,12 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 2], np.invert(dm_HUKG.data.mask), axis=1
+                    generated[:, :, :, 2],
+                    target[:, :, :, 2] != 0.5,
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 2], np.invert(dm_HUKG.data.mask), axis=1
+                    target[:, :, :, 2],
+                    target[:, :, :, 2] != 0.5,
                 ),
             )
         )
@@ -122,14 +127,17 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 3], np.invert(dm_HUKG.data.mask), axis=1
+                    generated[:, :, :, 3],
+                    target[:, :, :, 3] != 0.5,
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 3], np.invert(dm_HUKG.data.mask), axis=1
+                    target[:, :, :, 3],
+                    target[:, :, :, 3] != 0.5,
                 ),
             )
         )
     return result
+
 
 if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
     loss = tfp.math.minimize(
@@ -140,7 +148,7 @@ if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
     )
 
 
-generated = autoencoder.generate(latent,training=False)
+generated = autoencoder.generate(latent, training=False)
 
 # Make the plot - same as for validation script
 fig = Figure(
@@ -239,7 +247,7 @@ cb = fig.colorbar(
 ax_prmsl_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.75, 0.95 / 3 - 0.06, 0.85 / 4]
 )
-plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax,bins=None)
+plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 
 # 2nd left - PRATE original
@@ -257,11 +265,11 @@ if args.PRATE:
         )
     )
 varx.data = np.squeeze(ict[:, :, 3].numpy())
-varx.data = np.ma.masked_where(dm_HUKG.data.mask, varx.data, copy=False)
+varx.data = np.ma.masked_where(varx.data == 0.5, varx.data, copy=False)
 varx = unnormalise(varx, "monthly_rainfall")
 (dmin, dmax) = get_range("PRATE", args.month, anomaly=True)
-dmin *= 86400*30
-dmax *= 86400*30
+dmin *= 86400 * 30
+dmax *= 86400 * 30
 ax_prate = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
@@ -280,7 +288,7 @@ cb = fig.colorbar(
 
 # 2nd centre - PRATE generated
 vary.data = np.squeeze(generated[0, :, :, 3].numpy())
-vary.data = np.ma.masked_where(dm_HUKG.data.mask, vary.data, copy=False)
+vary.data = np.ma.masked_where(varx.data == 0.5, vary.data, copy=False)
 vary = unnormalise(vary, "monthly_rainfall")
 ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate_e.set_axis_off()
@@ -324,11 +332,11 @@ if args.TMP2m:
         )
     )
 varx.data = np.squeeze(ict[:, :, 2].numpy())
-varx.data = np.ma.masked_where(dm_HUKG.data.mask, varx.data, copy=False)
+varx.data = np.ma.masked_where(varx.data == 0.5, varx.data, copy=False)
 varx = unnormalise(varx, "monthly_meantemp")
 (dmin, dmax) = get_range("TMP2m", args.month, anomaly=True)
-dmin +=2
-dmax -=2
+dmin += 2
+dmax -= 2
 ax_t2m = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
 ax_t2m.set_axis_off()
 T2m_img = plotFieldAxes(
@@ -347,7 +355,7 @@ cb = fig.colorbar(
 
 # 3rd centre - T2m generated
 vary.data = np.squeeze(generated[0, :, :, 2].numpy())
-vary.data = np.ma.masked_where(dm_HUKG.data.mask, vary.data, copy=False)
+vary.data = np.ma.masked_where(varx.data == 0.5, vary.data, copy=False)
 vary = unnormalise(vary, "monthly_meantemp")
 ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
 ax_t2m_e.set_axis_off()
@@ -369,7 +377,7 @@ cb = fig.colorbar(
 ax_t2m_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.25, 0.95 / 3 - 0.06, 0.85 / 4]
 )
-plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax,bins=None)
+plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 
 # Bottom left - SST original
@@ -432,7 +440,7 @@ cb = fig.colorbar(
 ax_sst_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4, 0.95 / 3 - 0.06, 0.85 / 4]
 )
-plotScatterAxes(ax_sst_s, varx, vary, vMin=dmin, vMax=dmax,bins=None)
+plotScatterAxes(ax_sst_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 
 fig.savefig("fit.png")

@@ -24,7 +24,7 @@ from matplotlib.lines import Line2D
 # I don't need all the messages about a missing font
 import logging
 
-#logging.getLogger("matplotlib.font_manager").disabled = True
+# logging.getLogger("matplotlib.font_manager").disabled = True
 
 
 import argparse
@@ -84,11 +84,12 @@ from localise import LSCRATCH
 from localise import TSOURCE
 from autoencoderModel import DCVAE
 from makeDataset import getDataset
-#from make_tensors.tensor_utils import load_cList
-#from make_tensors.tensor_utils import cList_to_tensor
-#from make_tensors.tensor_utils import normalise
-#from make_tensors.tensor_utils import unnormalise
-#from make_tensors.tensor_utils import lm_plot
+
+# from make_tensors.tensor_utils import load_cList
+# from make_tensors.tensor_utils import cList_to_tensor
+# from make_tensors.tensor_utils import normalise
+# from make_tensors.tensor_utils import unnormalise
+# from make_tensors.tensor_utils import lm_plot
 from make_tensors.tensor_utils import lm_TWCR
 from make_tensors.tensor_utils import dm_HUKG
 from make_tensors.tensor_utils import sCube
@@ -132,12 +133,15 @@ def field_to_scalar(field, variable, month, mask):
     else:
         raise Exception("Must specify both xpoint and ypoint (or neither).")
 
+
 def decodeFit():
     result = 0.0
-    generated = model.generate(latent,training=False)
+    generated = model.generate(latent, training=False)
     if args.PRMSL:
         result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(generated[:, :, :, 0], target[:, :, :, 0])
+            tf.keras.metrics.mean_squared_error(
+                generated[:, :, :, 0], target[:, :, :, 0]
+            )
         )
     if args.SST:
         result = result + tf.reduce_mean(
@@ -154,10 +158,12 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 2], np.invert(dm_HUKG.data.mask), axis=1
+                    generated[:, :, :, 2],
+                    target[:, :, :, 2] != 0.5,
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 2], np.invert(dm_HUKG.data.mask), axis=1
+                    target[:, :, :, 2],
+                    target[:, :, :, 2] != 0.5,
                 ),
             )
         )
@@ -165,14 +171,17 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 3], np.invert(dm_HUKG.data.mask), axis=1
+                    generated[:, :, :, 3],
+                    target[:, :, :, 3] != 0.5,
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 3], np.invert(dm_HUKG.data.mask), axis=1
+                    target[:, :, :, 3],
+                    target[:, :, :, 3] != 0.5,
                 ),
             )
         )
     return result
+
 
 # Get target and encoded statistics for one test case
 def compute_stats(x):
@@ -210,33 +219,25 @@ def compute_stats(x):
     )
     vt = x[0][0, :, :, 1].numpy()
     mask = x[1][0, :, :, 1].numpy()
-    stats["SST_target"] = field_to_scalar(
-        vt, "SST", month, mask
-    )
+    stats["SST_target"] = field_to_scalar(vt, "SST", month, mask)
     vm = generated[0, :, :, 1].numpy()
-    stats["SST_model"] = field_to_scalar(
-        vm, "SST", month, mask
-    )
+    stats["SST_model"] = field_to_scalar(vm, "SST", month, mask)
     vt = x[0][0, :, :, 2].numpy()
     mask = x[1][0, :, :, 2].numpy()
     stats["T2M_target"] = field_to_scalar(
-        vt, "monthly_meantemp", month, mask,
+        vt,
+        "monthly_meantemp",
+        month,
+        mask,
     )
     vm = generated[0, :, :, 2].numpy()
-    stats["T2M_model"] = field_to_scalar(
-        vm, "monthly_meantemp", month, mask
-    )
+    stats["T2M_model"] = field_to_scalar(vm, "monthly_meantemp", month, mask)
     vt = x[0][0, :, :, 3].numpy()
     mask = x[1][0, :, :, 3].numpy()
-    stats["PRATE_target"] = field_to_scalar(
-        vt, "monthly_rainfall", month, mask
-    )
+    stats["PRATE_target"] = field_to_scalar(vt, "monthly_rainfall", month, mask)
     vm = generated[0, :, :, 3].numpy()
-    stats["PRATE_model"] = field_to_scalar(
-        vm, "monthly_rainfall", month, mask
-    )
+    stats["PRATE_model"] = field_to_scalar(vm, "monthly_rainfall", month, mask)
     return stats
-
 
 
 all_stats = {}
