@@ -5,6 +5,7 @@
 import sys
 import csv
 from statistics import mean
+import math
 
 # Load the data
 fdata = {}
@@ -57,7 +58,8 @@ for year in range(1884, 2021):
     for month in range(1, 13):
         yr = "%04d" % year
         mn = "%02d" % month
-        fdata[yr][mn] -= clim[mn]
+        fdata[yr][mn] /= clim[mn]
+        fdata[yr][mn] = math.log(fdata[yr][mn])
         if fdata[yr][mn] > max:
             max = fdata[yr][mn]
         if fdata[yr][mn] < min:

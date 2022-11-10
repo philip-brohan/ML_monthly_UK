@@ -23,15 +23,16 @@ class GeneratorM(tf.keras.Model):
                     units=100,
                     activation="elu",
                     kernel_regularizer=tf.keras.regularizers.L2(0.01),
-                    activity_regularizer=tf.keras.regularizers.L2(0.1),
+                    activity_regularizer=tf.keras.regularizers.L2(0.01),
                 ),
                 tf.keras.layers.Dense(
                     units=100,
                     activation="elu",
                     kernel_regularizer=tf.keras.regularizers.L2(0.01),
-                    activity_regularizer=tf.keras.regularizers.L2(0.1),
+                    activity_regularizer=tf.keras.regularizers.L2(0.01),
                 ),
-                tf.keras.layers.Dense(units=1, activation=None),
+                tf.keras.layers.Dense(units=20, activation=None),
+                tf.keras.layers.Softmax(),
             ]
         )
 
@@ -45,9 +46,13 @@ class GeneratorM(tf.keras.Model):
     def fit_loss(self, generated, target, climatology):
 
         # Metric is fractional variance reduction compared to climatology
-        skill = tf.reduce_mean(tf.math.squared_difference(generated, target))
-        guess = tf.reduce_mean(tf.math.squared_difference(climatology, target))
-        return skill / guess
+        # skill = tf.reduce_mean(tf.math.squared_difference(generated, target))
+        # guess = tf.reduce_mean(tf.math.squared_difference(climatology, target))
+        skill = tf.reduce_mean(
+            tf.keras.metrics.categorical_crossentropy(generated, target)
+        )
+        return skill
+        # return skill / guess
 
     # Calculate the losses from autoencoding a batch of inputs
     # We are calculating a seperate loss for each variable, and for for the
@@ -56,9 +61,9 @@ class GeneratorM(tf.keras.Model):
     #  on a single value (their sum).
     @tf.function
     def compute_loss(self, x, training):
-        generated = self.generate(x[0], training=training)
+        generated = self.call(x[0], training=training)
         clim = generated * 0.0 + tf.reduce_mean(x[1])  # Climatology
-        loss = self.fit_loss(generated, x[0], clim)
+        loss = self.fit_loss(generated, x[1], clim)
         return loss
 
     # Run the generator for one batch, calculate the errors, calculate the
