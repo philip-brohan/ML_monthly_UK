@@ -42,8 +42,8 @@ if nImagesInEpoch is None:
     nImagesInEpoch = nTrainingImages
 
 # Dataset parameters
-bufferSize = 100  # Already shuffled data, so not so important
-batchSize = 3  # Arbitrary
+bufferSize = 1000  # Already shuffled data, so not so important
+batchSize = 32  # Arbitrary
 
 # Instantiate and run the model under the control of the distribution strategy
 with strategy.scope():
@@ -113,7 +113,7 @@ with strategy.scope():
             batch_losses = strategy.reduce(
                 tf.distribute.ReduceOp.MEAN, per_replica_losses, axis=None
             )
-            train_loss.assign_add(batch_losses[0])
+            train_loss.assign_add(batch_losses)
             validation_batch_count += 1
 
         # Same, but for the test data
@@ -126,7 +126,7 @@ with strategy.scope():
             batch_losses = strategy.reduce(
                 tf.distribute.ReduceOp.MEAN, per_replica_losses, axis=None
             )
-            test_loss.assign_add(batch_losses[0])
+            test_loss.assign_add(batch_losses)
             test_batch_count += 1
 
         # Save model state and current metrics

@@ -38,11 +38,15 @@ def load_flow(file_name):
     fname = os.path.basename(file_name)
     year = fname[:4]
     month = fname[5:7]
-    return fdata[year][month]
+    # return fdata[year][month]
+    c2 = int(fdata[year][month] * 17) + 1
+    c2c = np.repeat(np.float32(0), 20)
+    c2c[c2] = 1.0
+    return c2c
 
 
 # Get a list of filenames containing tensors
-def getFileNames(purpose, nImages=None, startyear=1885, endyear=2020):
+def getFileNames(purpose, nImages=None, startyear=1885, endyear=2014):
     inFiles = sorted(os.listdir("%s/latents/%s" % (TSOURCE, purpose)))
     if startyear is not None:
         inFiles = [fn for fn in inFiles if int(fn[:4]) >= startyear]
@@ -60,7 +64,7 @@ def getFileNames(purpose, nImages=None, startyear=1885, endyear=2020):
 
 # Get a dataset
 def getDataset(
-    purpose, nImages=None, startyear=1885, endyear=2020, shuffle=True, cache=False
+    purpose, nImages=None, startyear=1885, endyear=2014, shuffle=True, cache=False
 ):
 
     # Get a list of filenames containing LS tensors

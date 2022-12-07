@@ -126,14 +126,13 @@ def find_latent(x):
     target = x[1]
     global latent
     latent = tf.Variable(tf.random.normal(shape=(1, model.latent_dim)))
-    if args.PRMSL or args.SST or args.TMP2m or args.PRATE:
-        loss = tfp.math.minimize(
-            decodeFit,
-            trainable_variables=[latent],
-            num_steps=args.iter,
-            optimizer=tf.optimizers.Adam(learning_rate=0.1),
-        )
-    return (year,month,latent)
+    loss = tfp.math.minimize(
+        decodeFit,
+        trainable_variables=[latent],
+        num_steps=args.iter,
+        optimizer=tf.optimizers.Adam(learning_rate=0.1),
+    )
+    return (year,month)
 
 
 # Calculate and store the latent for each input case
@@ -142,8 +141,8 @@ if not os.path.isdir(opdir):
     os.makedirs(opdir)
 
 for case in testData:
-    (year,month,latent) = find_latent(case)
+    (year,month) = find_latent(case)
     opfile = "%s/%04d-%02d.tfd" % (opdir,year,month)
     sict = tf.io.serialize_tensor(latent)
-    tf.io.write_file(args.opfile, sict)
+    tf.io.write_file(opfile, sict)
 
