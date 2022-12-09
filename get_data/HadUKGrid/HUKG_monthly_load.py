@@ -11,6 +11,10 @@ import numpy as np
 from calendar import month_abbr
 import csv
 
+import warnings
+
+warnings.filterwarnings("ignore", message=".*datum.*")
+
 
 def load_variable(variable, year, month):
     if variable == "cbrt_rainfall":
