@@ -76,7 +76,7 @@ for year in range(args.startyear, args.endyear + 1):
     for month in range(1, 13):
         try:
             huk_m = load_variable("monthly_rainfall", year, month).data[y_grid, x_grid]
-        except FileNotFoundError:
+        except (FileNotFoundError, IOError):
             huk_m = np.nan
         if huk_m is None:
             huk_series["%04d%02d" % (year, month)] = np.nan
@@ -84,7 +84,7 @@ for year in range(args.startyear, args.endyear + 1):
             huk_series["%04d%02d" % (year, month)] = huk_m - clim[month]
 
 
-# Make plottable series and calculate limits
+# Make plotable series and calculate limits
 st_pl = []
 ht_pl = []
 dt_pl = []
@@ -96,17 +96,17 @@ for year in range(args.startyear, args.endyear + 1):
 
 ymin = np.nanmin([np.nanmin(st_pl), np.nanmin(ht_pl)])
 ymax = np.nanmax([np.nanmax(st_pl), np.nanmax(ht_pl)])
-# print(st_pl)
-# print(ht_pl)
-# sys.exit(0)
 yr = ymax - ymin
-ymax += yr / 10
-ymin -= yr / 10
+ymax += yr / 20
+ymin -= yr / 20
+ymax = max(ymax, ymin * -1)
+ymin = min(ymin, ymax * -1)
 
 # Make the plot
 aspect = 3
+fsize = 5
 fig = Figure(
-    figsize=(5 * aspect, 5),
+    figsize=(fsize * aspect, fsize * 1.5),
     dpi=100,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -135,8 +135,10 @@ axb.add_patch(
         zorder=1,
     )
 )
+
+# Main axes with station and grid time-series
 ax_ts = fig.add_axes(
-    [0.045, 0.08, 0.95, 0.9],
+    [0.045, 0.08 / 1.5 + 0.33, 0.95, 0.9 / 1.5],
     xlim=(
         dt_pl[0] - datetime.timedelta(days=15),
         dt_pl[-1] + datetime.timedelta(days=15),
@@ -150,9 +152,36 @@ ax_ts.add_line(
 ax_ts.add_line(
     Line2D(dt_pl, st_pl, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=60)
 )
+ax_ts.set_xticklabels([])  # Share labels with the secondary axes
+
+# Secondary axes with difference time-series
+df_pl = [st_pl[i] - ht_pl[i] for i in range(len(st_pl))]
+yr = ymax - ymin
+dymin = np.nanmin(df_pl)
+dymax = np.nanmax(df_pl)
+dymax = np.nanmax((dymax, yr / 10))
+dymin = np.nanmin((dymin, -1 * yr / 10))
+dyr = dymax - dymin
+dymax += dyr / 20
+dymin -= dyr / 20
+dymax = max(dymax, dymin * -1)
+dymin = min(dymin, dymax * -1)
+ax_ss = fig.add_axes(
+    [0.045, 0.08 / 1.5, 0.95, 0.45 / 1.5],
+    xlim=(
+        dt_pl[0] - datetime.timedelta(days=15),
+        dt_pl[-1] + datetime.timedelta(days=15),
+    ),
+    ylim=(dymin, dymax),
+)
+ax_ss.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
+
+ax_ss.add_line(
+    Line2D(dt_pl, df_pl, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=50)
+)
 
 # Add thumbnail showing station location
-axt = fig.add_axes([0.01, 0.75, 0.15 / aspect, 0.15 * 1450 / 900])
+axt = fig.add_axes([0.046, 0.75 * 0.67 + 0.33, 0.15 / aspect, 0.10 * 1450 / 900])
 plotStationLocationsAxes(
     axt,
     {args.src_id: meta},
