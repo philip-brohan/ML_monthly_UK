@@ -90,7 +90,8 @@ def load_rr_stations(year, srcid=None, month=None):
                 else:
                     row[var] = None
             if month is not None:
-                monthly[row[0]] = row[month]
+                if row[month] is not None:
+                    monthly[row[0]] = row[month]
             else:
                 monthly[row[0]] = row
     if srcid is not None:
