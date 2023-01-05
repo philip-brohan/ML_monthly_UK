@@ -53,10 +53,14 @@ parser.add_argument(
     nargs="*",
     action="extend",
 )
+parser.add_argument(
+    "--ssize", help="station plot size", type=float, required=False, default=5
+)
 args = parser.parse_args()
 
 if args.match is not None and args.skip is not None:
     raise Exception("Can't use --match and --skip together")
+
 
 sys.path.append("%s/../../.." % os.path.dirname(__file__))
 from get_data.HadUKGrid.HUKG_monthly_load import load_station_metadata
@@ -97,6 +101,8 @@ sys.path.append("%s/../../.." % os.path.dirname(__file__))
 from get_data.TWCR.TWCR_monthly_load import get_range
 from plot_functions.plot_variable import plotFieldAxes
 from plot_functions.plot_variable import plotScatterAxes
+from plot_functions.plot_station import plotObsAxes
+from plot_functions.plot_station import plotObsScatterAxes
 
 
 # convert a station location to a grid index
@@ -117,28 +123,50 @@ def xy_to_gfl(x, y, cube=sCube):
     return (xf, yf)
 
 
+# convert a grid fraction location (0-1) to a station location
+def gfl_to_xy(x, y, cube=sCube):
+    xg = cube.coord("projection_x_coordinate").bounds
+    xf = x * (xg[-1, 1] - xg[0, 0])
+    xf += xg[0, 0]
+    yg = cube.coord("projection_y_coordinate").bounds
+    yf = y*(yg[-1, 1] - yg[0, 0])
+    yf += yg[0, 0]
+    return (xf, yf)
+
+# Normalise a station value
+def s_normalise(value):
+    value -= nPar["monthly_rainfall"][0]
+    value /= (nPar["monthly_rainfall"][1] - nPar["monthly_rainfall"][0])
+    return value
+
+def s_unnormalise(value):
+    value *= (nPar["monthly_rainfall"][1] - nPar["monthly_rainfall"][0])
+    value += nPar["monthly_rainfall"][0]
+    return value
+
 # Anomalise and normalise the station data
 clim = load_climatology("monthly_rainfall", args.month)
-stn_ids = monthly.keys()
+stn_ids = list(monthly.keys())
 for stn_id in stn_ids:
     try:
         (meta[stn_id]["XI"], meta[stn_id]["YI"]) = xy_to_idx(
-            meta[stn_id]["X"], meta[stn_id]["X"]
+            meta[stn_id]["X"], meta[stn_id]["Y"]
         )
         (meta[stn_id]["XF"], meta[stn_id]["YF"]) = xy_to_gfl(
-            meta[stn_id]["X"], meta[stn_id]["X"]
+            meta[stn_id]["X"], meta[stn_id]["Y"]
         )
-        monthly[stn_id] -= clim.data[meta[stn_id]["XI"], meta[stn_id]["YI"]]
-        monthly[stn_id] -= nPar["monthly_rainfall"][0]
-        monthly[stn_id] /= nPar["monthly_rainfall"][1] - nPar["monthly_rainfall"][0]
+        if clim.data.mask[meta[stn_id]["YI"], meta[stn_id]["XI"]]:
+            raise Exception("Outside HadUKGrid")
+        monthly[stn_id] -= clim.data[meta[stn_id]["YI"], meta[stn_id]["XI"]]
+        monthly[stn_id] = s_normalise(monthly[stn_id])
     except Exception:
         del monthly[stn_id]  # no location or bad obs
-
 
 # Make a tensor with the station locations
 # and another with the normalised station anomalies
 nxp = len(sCube.coord("projection_x_coordinate").points)
 nyp = len(sCube.coord("projection_y_coordinate").points)
+
 s_x_coord = []
 s_y_coord = []
 s_n_anom = []
@@ -148,7 +176,7 @@ for stn_id in monthly.keys():
     s_n_anom.append(monthly[stn_id])
 t_x_coord = tf.convert_to_tensor(s_x_coord, tf.float32)
 t_y_coord = tf.convert_to_tensor(s_y_coord, tf.float32)
-t_coords = tf.stack((t_y_coord, t_x_coord), axis=1)
+t_coords = tf.expand_dims(tf.stack((t_y_coord, t_x_coord), axis=1),axis=0)
 t_obs = tf.convert_to_tensor(s_n_anom, tf.float32)
 
 # Load the gridded data (if we have it)
@@ -174,9 +202,7 @@ target = tf.constant(tf.reshape(ict, [1, 1440, 896, 4]))
 def decodeFit():
     result = 0.0
     generated = autoencoder.generate(latent, training=False)
-    at_obs = tf.squeeze(
-        interpolate_bilinear(generated[0, :, :, 3], t_coords, indexing="ij")
-    )
+    at_obs = tf.squeeze(interpolate_bilinear(generated[0:1, :, :, 3:4], t_coords, indexing="ij"))
     result = tf.reduce_mean(tf.keras.metrics.mean_squared_error(t_obs, at_obs))
     return result
 
@@ -189,10 +215,12 @@ loss = tfp.math.minimize(
 )
 
 generated = autoencoder.generate(latent, training=False)
+generated_at_obs = tf.squeeze(interpolate_bilinear(generated[0:1, :, :, 3:4], t_coords, indexing="ij"))
+hukg_at_obs = tf.squeeze(interpolate_bilinear(tf.expand_dims(ict[ :, :, 3:4],axis=0), t_coords, indexing="ij"))
 
 # Make the plot - same as for validation script
 fig = Figure(
-    figsize=(20, 22),
+    figsize=(20*1.54, 20),
     dpi=100,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -223,94 +251,15 @@ axb.add_patch(
 )
 
 
-# Top left - PRMSL original
-if args.PRMSL:
-    ax_back = fig.add_axes([0.00, 0.75, 1.0, 0.25])
-    ax_back.set_axis_off()
-    ax_back.add_patch(
-        Rectangle(
-            (0, 0),
-            1,
-            1,
-            facecolor=(0.0, 0.0, 0.0, 0.3),
-            fill=True,
-            zorder=1,
-        )
-    )
+# 2nd top - HadUKGrid
 varx = sCube.copy()
-varx.data = np.squeeze(ict[:, :, 0].numpy())
-varx = unnormalise(varx, "PRMSL") / 100
-(dmin, dmax) = get_range("PRMSL", args.month, anomaly=True)
-dmin /= 100
-dmax /= 100
-ax_prmsl = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
-ax_prmsl.set_axis_off()
-PRMSL_img = plotFieldAxes(
-    ax_prmsl,
-    varx,
-    vMax=dmax,
-    vMin=dmin,
-    lMask=lm_plot,
-    cMap=cmocean.cm.diff,
-)
-ax_prmsl_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.75, 0.75 / 3, 0.05 / 4])
-ax_prmsl_cb.set_axis_off()
-cb = fig.colorbar(
-    PRMSL_img, ax=ax_prmsl_cb, location="bottom", orientation="horizontal", fraction=1.0
-)
-
-# Top centre - PRMSL generated
-vary = sCube.copy()
-vary.data = np.squeeze(generated[0, :, :, 0].numpy())
-vary = unnormalise(vary, "PRMSL") / 100
-ax_prmsl_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
-ax_prmsl_e.set_axis_off()
-PRMSL_e_img = plotFieldAxes(
-    ax_prmsl_e,
-    vary,
-    vMax=dmax,
-    vMin=dmin,
-    lMask=lm_plot,
-    cMap=cmocean.cm.diff,
-)
-ax_prmsl_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.75, 0.75 / 3, 0.05 / 4])
-ax_prmsl_e_cb.set_axis_off()
-cb = fig.colorbar(
-    PRMSL_e_img,
-    ax=ax_prmsl_e_cb,
-    location="bottom",
-    orientation="horizontal",
-    fraction=1.0,
-)
-
-# Top right - PRMSL scatter
-ax_prmsl_s = fig.add_axes(
-    [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.75, 0.95 / 3 - 0.06, 0.85 / 4]
-)
-plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
-
-
-# 2nd left - PRATE original
-if args.PRATE:
-    ax_back = fig.add_axes([0.00, 0.5, 1.0, 0.25])
-    ax_back.set_axis_off()
-    ax_back.add_patch(
-        Rectangle(
-            (0, 0),
-            1,
-            1,
-            facecolor=(0.0, 0.0, 0.0, 0.3),
-            fill=True,
-            zorder=1,
-        )
-    )
 varx.data = np.squeeze(ict[:, :, 3].numpy())
 varx.data = np.ma.masked_where(varx.data == 0.5, varx.data, copy=False)
 varx = unnormalise(varx, "monthly_rainfall")
 (dmin, dmax) = get_range("PRATE", args.month, anomaly=True)
 dmin *= 86400 * 30
 dmax *= 86400 * 30
-ax_prate = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
+ax_prate = fig.add_axes([0.01*2+0.188, 0.05+.01+.465, 0.188, 0.465])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
     ax_prate,
@@ -320,17 +269,36 @@ PRATE_img = plotFieldAxes(
     lMask=lm_plot,
     cMap=cmocean.cm.tarn,
 )
-ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
-ax_prate_cb.set_axis_off()
-cb = fig.colorbar(
-    PRATE_img, ax=ax_prate_cb, location="bottom", orientation="horizontal", fraction=1.0
+
+# 1st centre, PRATE observations
+positions = t_coords.numpy()
+n_stations = positions.shape[1]
+s_lats = []
+s_lons = []
+s_anoms = []
+for sidx in range(n_stations):
+    (x,y) = gfl_to_xy(t_x_coord[sidx]/nxp,t_y_coord[sidx]/nyp)
+    s_lons.append(x.numpy())
+    s_lats.append(y.numpy())
+    s_anoms.append(s_unnormalise(t_obs[sidx].numpy()))
+ax_obs = fig.add_axes([0.01, .05+.94/2-.465/2, 0.188, 0.465])
+ax_obs.set_axis_off()
+PRATE_obs = plotObsAxes(
+    ax_obs,
+    s_lons,s_lats,s_anoms,
+    vmax=dmax,
+    vmin=dmin,
+    ssize = args.ssize*1000,
+    lMask=lm_plot,
+    cMap=cmocean.cm.tarn,
 )
 
-# 2nd centre - PRATE generated
+# 2nd bottom - ML generated
+vary = sCube.copy()
 vary.data = np.squeeze(generated[0, :, :, 3].numpy())
 vary.data = np.ma.masked_where(varx.data == 0.5, vary.data, copy=False)
 vary = unnormalise(vary, "monthly_rainfall")
-ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
+ax_prate_e = fig.add_axes([0.01*2+0.188, 0.05, 0.188, 0.465])
 ax_prate_e.set_axis_off()
 PRATE_e_img = plotFieldAxes(
     ax_prate_e,
@@ -340,147 +308,78 @@ PRATE_e_img = plotFieldAxes(
     lMask=lm_plot,
     cMap=cmocean.cm.tarn,
 )
-ax_prate_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
-ax_prate_e_cb.set_axis_off()
-cb = fig.colorbar(
-    PRATE_e_img,
-    ax=ax_prate_e_cb,
-    location="bottom",
-    orientation="horizontal",
-    fraction=1.0,
-)
 
-# 2nd right - PRATE scatter
-ax_prate_s = fig.add_axes(
-    [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.5, 0.95 / 3 - 0.06, 0.85 / 4]
-)
-plotScatterAxes(ax_prate_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
-
-
-# 3rd left - T2m original
-if args.TMP2m:
-    ax_back = fig.add_axes([0.00, 0.25, 1.0, 0.25])
-    ax_back.set_axis_off()
-    ax_back.add_patch(
-        Rectangle(
-            (0, 0),
-            1,
-            1,
-            facecolor=(0.0, 0.0, 0.0, 0.3),
-            fill=True,
-            zorder=1,
-        )
-    )
-varx.data = np.squeeze(ict[:, :, 2].numpy())
-varx.data = np.ma.masked_where(varx.data == 0.5, varx.data, copy=False)
-varx = unnormalise(varx, "monthly_meantemp")
-(dmin, dmax) = get_range("TMP2m", args.month, anomaly=True)
-dmin += 2
-dmax -= 2
-ax_t2m = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
-ax_t2m.set_axis_off()
-T2m_img = plotFieldAxes(
-    ax_t2m,
-    varx,
+# 3rd Centre - Field difference (ML-HadUKG)
+vard = vary - varx
+ax_prate_d = fig.add_axes([0.01*3+.188*2, .05+.94/2-.465/2, 0.188, 0.465])
+ax_prate_d.set_axis_off()
+PRATE_e_img = plotFieldAxes(
+    ax_prate_d,
+    vard,
     vMax=dmax,
     vMin=dmin,
     lMask=lm_plot,
-    cMap=cmocean.cm.balance,
-)
-ax_t2m_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.25, 0.75 / 3, 0.05 / 4])
-ax_t2m_cb.set_axis_off()
-cb = fig.colorbar(
-    T2m_img, ax=ax_t2m_cb, location="bottom", orientation="horizontal", fraction=1.0
+    cMap=cmocean.cm.tarn,
 )
 
-# 3rd centre - T2m generated
-vary.data = np.squeeze(generated[0, :, :, 2].numpy())
-vary.data = np.ma.masked_where(varx.data == 0.5, vary.data, copy=False)
-vary = unnormalise(vary, "monthly_meantemp")
-ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
-ax_t2m_e.set_axis_off()
-T2m_e_img = plotFieldAxes(
-    ax_t2m_e,
-    vary,
-    vMax=dmax,
-    vMin=dmin,
+# 4th Top - HadUKG obs difference (grid-obs)
+dh_stn_diffs = []
+for sidx in range(n_stations):
+    dh_stn_diffs.append(s_unnormalise(hukg_at_obs[sidx].numpy())-s_anoms[sidx])
+ax_dhd = fig.add_axes([0.01*4+.188*3, 0.05+.01+.465, 0.188, 0.465])
+ax_dhd.set_axis_off()
+PRATE_dhd = plotObsAxes(
+    ax_dhd,
+    s_lons,s_lats,dh_stn_diffs,
+    vmax=dmax,
+    vmin=dmin,
+    ssize = args.ssize*1000,
     lMask=lm_plot,
-    cMap=cmocean.cm.balance,
-)
-ax_t2m_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.25, 0.75 / 3, 0.05 / 4])
-ax_t2m_e_cb.set_axis_off()
-cb = fig.colorbar(
-    T2m_e_img, ax=ax_t2m_e_cb, location="bottom", orientation="horizontal", fraction=1.0
+    cMap=cmocean.cm.tarn,
 )
 
-# 3rd right - T2m scatter
-ax_t2m_s = fig.add_axes(
-    [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4 + 0.25, 0.95 / 3 - 0.06, 0.85 / 4]
-)
-plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
-
-
-# Bottom left - SST original
-if args.SST:
-    ax_back = fig.add_axes([0.00, 0.00, 1.0, 0.25])
-    ax_back.set_axis_off()
-    ax_back.add_patch(
-        Rectangle(
-            (0, 0),
-            1,
-            1,
-            facecolor=(0.0, 0.0, 0.0, 0.3),
-            fill=True,
-            zorder=1,
-        )
-    )
-varx.data = np.squeeze(ict[:, :, 1].numpy())
-varx.data = np.ma.masked_where(lm_TWCR.data.mask, varx.data, copy=False)
-varx = unnormalise(varx, "SST")
-(dmin, dmax) = get_range("SST", args.month, anomaly=True)
-dmin += 2
-dmax -= 2
-ax_sst = fig.add_axes([0.025 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
-ax_sst.set_axis_off()
-SST_img = plotFieldAxes(
-    ax_sst,
-    varx,
-    vMax=dmax,
-    vMin=dmin,
+# 4th Bottom - ML obs difference (grid-obs)
+ml_stn_diffs = []
+for sidx in range(n_stations):
+    ml_stn_diffs.append(s_unnormalise(generated_at_obs[sidx].numpy())-s_anoms[sidx])
+ax_mld = fig.add_axes([0.01*4+.188*3, 0.05, 0.188, 0.465])
+ax_mld.set_axis_off()
+PRATE_mld = plotObsAxes(
+    ax_mld,
+    s_lons,s_lats,ml_stn_diffs,
+    vmax=dmax,
+    vmin=dmin,
+    ssize = args.ssize*1000,
     lMask=lm_plot,
-    cMap=cmocean.cm.balance,
+    cMap=cmocean.cm.tarn,
 )
-ax_sst_cb = fig.add_axes([0.125 / 3, 0.05 / 4, 0.75 / 3, 0.05 / 4])
-ax_sst_cb.set_axis_off()
+
+
+# Anomaly colourbar bottom left-ish
+ax_prate_cb = fig.add_axes([0.02, 0.02 , .188*2, 0.02])
+ax_prate_cb.set_axis_off()
 cb = fig.colorbar(
-    SST_img, ax=ax_sst_cb, location="bottom", orientation="horizontal", fraction=1.0
+    PRATE_img, ax=ax_prate_cb, location="bottom", orientation="horizontal", fraction=1.0
 )
 
-# 2nd centre - SST generated
-vary.data = generated.numpy()[0, :, :, 1]
-vary.data = np.ma.masked_where(lm_TWCR.data.mask, vary.data, copy=False)
-vary = unnormalise(vary, "SST")
-ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
-ax_sst_e.set_axis_off()
-SST_e_img = plotFieldAxes(
-    ax_sst_e,
-    vary,
-    vMax=dmax,
-    vMin=dmin,
-    lMask=lm_plot,
-    cMap=cmocean.cm.balance,
+# Right centre - HUKG:ML field scatter
+ax_f_s = fig.add_axes(
+    [0.01*5+.188*4+.038, 0.05+0.0475*2+0.25, 0.15, 0.25 ]
 )
-ax_sst_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4, 0.75 / 3, 0.05 / 4])
-ax_sst_e_cb.set_axis_off()
-cb = fig.colorbar(
-    SST_e_img, ax=ax_sst_e_cb, location="bottom", orientation="horizontal", fraction=1.0
-)
+plotScatterAxes(ax_f_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
-# 2nd right - SST scatter
-ax_sst_s = fig.add_axes(
-    [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4, 0.95 / 3 - 0.06, 0.85 / 4]
+# Right top - hadUKG:obs scatter
+ax_h_s = fig.add_axes(
+    [0.01*5+.188*4+.038, 0.05+0.0475*3+0.25*2, 0.15, 0.25 ]
 )
-plotScatterAxes(ax_sst_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
+dh_stn_anoms = [s_anoms[i]+dh_stn_diffs[i] for i in range(n_stations)]
+plotObsScatterAxes(ax_h_s, s_anoms, dh_stn_anoms, vMin=dmin, vMax=dmax, psize=5)
 
+# Right bottom - ML:obs scatter
+ax_ml_s = fig.add_axes(
+    [0.01*5+.188*4+.038, 0.05+0.0475, 0.15, 0.25 ]
+)
+dh_ml_anoms = [s_anoms[i]+ml_stn_diffs[i] for i in range(n_stations)]
+plotObsScatterAxes(ax_ml_s, s_anoms, dh_ml_anoms, vMin=dmin, vMax=dmax, psize=5)
 
 fig.savefig("fit.png")
