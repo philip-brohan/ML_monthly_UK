@@ -6,6 +6,7 @@
 
 import os
 import sys
+from random import shuffle
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
@@ -55,6 +56,23 @@ parser.add_argument(
 )
 parser.add_argument(
     "--ssize", help="station plot size", type=float, required=False, default=5
+)
+parser.add_argument(
+    "--psize", help="scatter plot point size", type=float, required=False, default=5
+)
+parser.add_argument(
+    "--sdir",
+    help="obs directory",
+    type=str,
+    required=False,
+    default="monthly_rainfall_rainfall-rescue_v1.1.0",
+)
+parser.add_argument(
+    "--decimate_to",
+    help="No. of stations to keep",
+    type=int,
+    required=False,
+    default=None,
 )
 args = parser.parse_args()
 
@@ -129,20 +147,23 @@ def gfl_to_xy(x, y, cube=sCube):
     xf = x * (xg[-1, 1] - xg[0, 0])
     xf += xg[0, 0]
     yg = cube.coord("projection_y_coordinate").bounds
-    yf = y*(yg[-1, 1] - yg[0, 0])
+    yf = y * (yg[-1, 1] - yg[0, 0])
     yf += yg[0, 0]
     return (xf, yf)
+
 
 # Normalise a station value
 def s_normalise(value):
     value -= nPar["monthly_rainfall"][0]
-    value /= (nPar["monthly_rainfall"][1] - nPar["monthly_rainfall"][0])
+    value /= nPar["monthly_rainfall"][1] - nPar["monthly_rainfall"][0]
     return value
 
+
 def s_unnormalise(value):
-    value *= (nPar["monthly_rainfall"][1] - nPar["monthly_rainfall"][0])
+    value *= nPar["monthly_rainfall"][1] - nPar["monthly_rainfall"][0]
     value += nPar["monthly_rainfall"][0]
     return value
+
 
 # Anomalise and normalise the station data
 clim = load_climatology("monthly_rainfall", args.month)
@@ -162,6 +183,31 @@ for stn_id in stn_ids:
     except Exception:
         del monthly[stn_id]  # no location or bad obs
 
+if args.decimate_to is not None:
+    all_keys = list(monthly.keys())
+    if len(all_keys) > args.decimate_to:
+        keep_keys = []
+        lats = [meta[x]["Y"] for x in all_keys]
+        min_l = min(lats)
+        max_l = max(lats)
+        for lr in range(1, args.decimate_to):
+            lat_range = [
+                min_l + (max_l - min_l) * x / args.decimate_to for x in (lr - 1, lr)
+            ]
+            range_keys = [
+                x
+                for x in all_keys
+                if meta[x]["Y"] > lat_range[0]
+                if meta[x]["Y"] <= lat_range[1]
+            ]
+            if len(range_keys) == 0:
+                continue
+            range_keys = sorted(range_keys)
+            keep_keys.append(range_keys[0])
+        for stn_id in all_keys:
+            if stn_id not in keep_keys:
+                del monthly[stn_id]
+
 # Make a tensor with the station locations
 # and another with the normalised station anomalies
 nxp = len(sCube.coord("projection_x_coordinate").points)
@@ -176,7 +222,7 @@ for stn_id in monthly.keys():
     s_n_anom.append(monthly[stn_id])
 t_x_coord = tf.convert_to_tensor(s_x_coord, tf.float32)
 t_y_coord = tf.convert_to_tensor(s_y_coord, tf.float32)
-t_coords = tf.expand_dims(tf.stack((t_y_coord, t_x_coord), axis=1),axis=0)
+t_coords = tf.expand_dims(tf.stack((t_y_coord, t_x_coord), axis=1), axis=0)
 t_obs = tf.convert_to_tensor(s_n_anom, tf.float32)
 
 # Load the gridded data (if we have it)
@@ -202,7 +248,9 @@ target = tf.constant(tf.reshape(ict, [1, 1440, 896, 4]))
 def decodeFit():
     result = 0.0
     generated = autoencoder.generate(latent, training=False)
-    at_obs = tf.squeeze(interpolate_bilinear(generated[0:1, :, :, 3:4], t_coords, indexing="ij"))
+    at_obs = tf.squeeze(
+        interpolate_bilinear(generated[0:1, :, :, 3:4], t_coords, indexing="ij")
+    )
     result = tf.reduce_mean(tf.keras.metrics.mean_squared_error(t_obs, at_obs))
     return result
 
@@ -215,12 +263,18 @@ loss = tfp.math.minimize(
 )
 
 generated = autoencoder.generate(latent, training=False)
-generated_at_obs = tf.squeeze(interpolate_bilinear(generated[0:1, :, :, 3:4], t_coords, indexing="ij"))
-hukg_at_obs = tf.squeeze(interpolate_bilinear(tf.expand_dims(ict[ :, :, 3:4],axis=0), t_coords, indexing="ij"))
+generated_at_obs = tf.squeeze(
+    interpolate_bilinear(generated[0:1, :, :, 3:4], t_coords, indexing="ij")
+)
+hukg_at_obs = tf.squeeze(
+    interpolate_bilinear(
+        tf.expand_dims(ict[:, :, 3:4], axis=0), t_coords, indexing="ij"
+    )
+)
 
 # Make the plot - same as for validation script
 fig = Figure(
-    figsize=(20*1.54, 20),
+    figsize=(20 * 1.54, 20),
     dpi=100,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -259,7 +313,7 @@ varx = unnormalise(varx, "monthly_rainfall")
 (dmin, dmax) = get_range("PRATE", args.month, anomaly=True)
 dmin *= 86400 * 30
 dmax *= 86400 * 30
-ax_prate = fig.add_axes([0.01*2+0.188, 0.05+.01+.465, 0.188, 0.465])
+ax_prate = fig.add_axes([0.01 * 2 + 0.188, 0.05 + 0.01 + 0.465, 0.188, 0.465])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
     ax_prate,
@@ -267,7 +321,7 @@ PRATE_img = plotFieldAxes(
     vMax=dmax,
     vMin=dmin,
     lMask=lm_plot,
-    cMap=cmocean.cm.tarn,
+    cMap=cmocean.cm.balance,
 )
 
 # 1st centre, PRATE observations
@@ -277,20 +331,22 @@ s_lats = []
 s_lons = []
 s_anoms = []
 for sidx in range(n_stations):
-    (x,y) = gfl_to_xy(t_x_coord[sidx]/nxp,t_y_coord[sidx]/nyp)
+    (x, y) = gfl_to_xy(t_x_coord[sidx] / nxp, t_y_coord[sidx] / nyp)
     s_lons.append(x.numpy())
     s_lats.append(y.numpy())
     s_anoms.append(s_unnormalise(t_obs[sidx].numpy()))
-ax_obs = fig.add_axes([0.01, .05+.94/2-.465/2, 0.188, 0.465])
+ax_obs = fig.add_axes([0.01, 0.05 + 0.94 / 2 - 0.465 / 2, 0.188, 0.465])
 ax_obs.set_axis_off()
 PRATE_obs = plotObsAxes(
     ax_obs,
-    s_lons,s_lats,s_anoms,
+    s_lons,
+    s_lats,
+    s_anoms,
     vmax=dmax,
     vmin=dmin,
-    ssize = args.ssize*1000,
+    ssize=args.ssize * 1000,
     lMask=lm_plot,
-    cMap=cmocean.cm.tarn,
+    cMap=cmocean.cm.balance,
 )
 
 # 2nd bottom - ML generated
@@ -298,7 +354,7 @@ vary = sCube.copy()
 vary.data = np.squeeze(generated[0, :, :, 3].numpy())
 vary.data = np.ma.masked_where(varx.data == 0.5, vary.data, copy=False)
 vary = unnormalise(vary, "monthly_rainfall")
-ax_prate_e = fig.add_axes([0.01*2+0.188, 0.05, 0.188, 0.465])
+ax_prate_e = fig.add_axes([0.01 * 2 + 0.188, 0.05, 0.188, 0.465])
 ax_prate_e.set_axis_off()
 PRATE_e_img = plotFieldAxes(
     ax_prate_e,
@@ -306,12 +362,14 @@ PRATE_e_img = plotFieldAxes(
     vMax=dmax,
     vMin=dmin,
     lMask=lm_plot,
-    cMap=cmocean.cm.tarn,
+    cMap=cmocean.cm.balance,
 )
 
 # 3rd Centre - Field difference (ML-HadUKG)
 vard = vary - varx
-ax_prate_d = fig.add_axes([0.01*3+.188*2, .05+.94/2-.465/2, 0.188, 0.465])
+ax_prate_d = fig.add_axes(
+    [0.01 * 3 + 0.188 * 2, 0.05 + 0.94 / 2 - 0.465 / 2, 0.188, 0.465]
+)
 ax_prate_d.set_axis_off()
 PRATE_e_img = plotFieldAxes(
     ax_prate_d,
@@ -319,44 +377,48 @@ PRATE_e_img = plotFieldAxes(
     vMax=dmax,
     vMin=dmin,
     lMask=lm_plot,
-    cMap=cmocean.cm.tarn,
+    cMap=cmocean.cm.balance,
 )
 
 # 4th Top - HadUKG obs difference (grid-obs)
 dh_stn_diffs = []
 for sidx in range(n_stations):
-    dh_stn_diffs.append(s_unnormalise(hukg_at_obs[sidx].numpy())-s_anoms[sidx])
-ax_dhd = fig.add_axes([0.01*4+.188*3, 0.05+.01+.465, 0.188, 0.465])
+    dh_stn_diffs.append(s_unnormalise(hukg_at_obs[sidx].numpy()) - s_anoms[sidx])
+ax_dhd = fig.add_axes([0.01 * 4 + 0.188 * 3, 0.05 + 0.01 + 0.465, 0.188, 0.465])
 ax_dhd.set_axis_off()
 PRATE_dhd = plotObsAxes(
     ax_dhd,
-    s_lons,s_lats,dh_stn_diffs,
+    s_lons,
+    s_lats,
+    dh_stn_diffs,
     vmax=dmax,
     vmin=dmin,
-    ssize = args.ssize*1000,
+    ssize=args.ssize * 1000,
     lMask=lm_plot,
-    cMap=cmocean.cm.tarn,
+    cMap=cmocean.cm.balance,
 )
 
 # 4th Bottom - ML obs difference (grid-obs)
 ml_stn_diffs = []
 for sidx in range(n_stations):
-    ml_stn_diffs.append(s_unnormalise(generated_at_obs[sidx].numpy())-s_anoms[sidx])
-ax_mld = fig.add_axes([0.01*4+.188*3, 0.05, 0.188, 0.465])
+    ml_stn_diffs.append(s_unnormalise(generated_at_obs[sidx].numpy()) - s_anoms[sidx])
+ax_mld = fig.add_axes([0.01 * 4 + 0.188 * 3, 0.05, 0.188, 0.465])
 ax_mld.set_axis_off()
 PRATE_mld = plotObsAxes(
     ax_mld,
-    s_lons,s_lats,ml_stn_diffs,
+    s_lons,
+    s_lats,
+    ml_stn_diffs,
     vmax=dmax,
     vmin=dmin,
-    ssize = args.ssize*1000,
+    ssize=args.ssize * 1000,
     lMask=lm_plot,
-    cMap=cmocean.cm.tarn,
+    cMap=cmocean.cm.balance,
 )
 
 
 # Anomaly colourbar bottom left-ish
-ax_prate_cb = fig.add_axes([0.02, 0.02 , .188*2, 0.02])
+ax_prate_cb = fig.add_axes([0.02, 0.02, 0.188 * 2, 0.02])
 ax_prate_cb.set_axis_off()
 cb = fig.colorbar(
     PRATE_img, ax=ax_prate_cb, location="bottom", orientation="horizontal", fraction=1.0
@@ -364,22 +426,24 @@ cb = fig.colorbar(
 
 # Right centre - HUKG:ML field scatter
 ax_f_s = fig.add_axes(
-    [0.01*5+.188*4+.038, 0.05+0.0475*2+0.25, 0.15, 0.25 ]
+    [0.01 * 5 + 0.188 * 4 + 0.038, 0.05 + 0.0475 * 2 + 0.25, 0.15, 0.25]
 )
 plotScatterAxes(ax_f_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 # Right top - hadUKG:obs scatter
 ax_h_s = fig.add_axes(
-    [0.01*5+.188*4+.038, 0.05+0.0475*3+0.25*2, 0.15, 0.25 ]
+    [0.01 * 5 + 0.188 * 4 + 0.038, 0.05 + 0.0475 * 3 + 0.25 * 2, 0.15, 0.25]
 )
-dh_stn_anoms = [s_anoms[i]+dh_stn_diffs[i] for i in range(n_stations)]
-plotObsScatterAxes(ax_h_s, s_anoms, dh_stn_anoms, vMin=dmin, vMax=dmax, psize=5)
+dh_stn_anoms = [s_anoms[i] + dh_stn_diffs[i] for i in range(n_stations)]
+plotObsScatterAxes(
+    ax_h_s, s_anoms, dh_stn_anoms, vMin=dmin, vMax=dmax, psize=args.psize
+)
 
 # Right bottom - ML:obs scatter
-ax_ml_s = fig.add_axes(
-    [0.01*5+.188*4+.038, 0.05+0.0475, 0.15, 0.25 ]
+ax_ml_s = fig.add_axes([0.01 * 5 + 0.188 * 4 + 0.038, 0.05 + 0.0475, 0.15, 0.25])
+dh_ml_anoms = [s_anoms[i] + ml_stn_diffs[i] for i in range(n_stations)]
+plotObsScatterAxes(
+    ax_ml_s, s_anoms, dh_ml_anoms, vMin=dmin, vMax=dmax, psize=args.psize
 )
-dh_ml_anoms = [s_anoms[i]+ml_stn_diffs[i] for i in range(n_stations)]
-plotObsScatterAxes(ax_ml_s, s_anoms, dh_ml_anoms, vMin=dmin, vMax=dmax, psize=5)
 
 fig.savefig("fit.png")

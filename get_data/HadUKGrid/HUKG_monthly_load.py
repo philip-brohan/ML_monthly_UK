@@ -73,11 +73,11 @@ def load_station_metadata(srcid=None):
 
 
 # Rainfall from Rainfall Rescue stations
-def load_rr_stations(year, srcid=None, month=None):
+def load_rr_stations(year, srcid=None, month=None,dir='monthly_rainfall_rainfall-rescue_v1.1.0'):
     monthly = {}
     with open(
-        "%s/haduk-grid/station_data/monthly_rainfall_rainfall-rescue_v1.1.0/monthly_rainfall_%04d.csv"
-        % (os.getenv("SCRATCH"), year),
+        "%s/haduk-grid/station_data/%s/monthly_rainfall_%04d.csv"
+        % (os.getenv("SCRATCH"), dir, year),
         newline="",
     ) as csvfile:
         reader = csv.reader(csvfile)

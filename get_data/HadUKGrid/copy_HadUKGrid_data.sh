@@ -35,3 +35,4 @@ cp -rn /data/users/haduk/uk_climate_data/supported/haduk-grid/v1.1.0.0/data/grid
 mkdir -p $SCRATCH/haduk-grid/station_data
 cp -rn /data/users/haduk/uk_climate_data/supported/haduk-grid/v1.1.0.0/resources/cedar/cedar_2022-01-25.csv $SCRATCH/haduk-grid/station_data/metadata.csv
 cp -rn /data/users/haduk/uk_climate_data/supported/haduk-grid/v1.1.0.0/data/input_data/monthly_rainfall_rainfall-rescue_v1.1.0 $SCRATCH/haduk-grid/station_data
+cp -rn /data/users/haduk/uk_climate_data/supported/haduk-grid/v1.1.0.0/data/input_data/monthly_rainfall_input $SCRATCH/haduk-grid/station_data
