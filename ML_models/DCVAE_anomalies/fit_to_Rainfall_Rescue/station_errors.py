@@ -109,7 +109,7 @@ from make_tensors.tensor_utils import sCube
 from make_tensors.tensor_utils import nPar
 
 if args.opdir is None:
-    args.opdir = "%s/RR_station_fits/%04d/%02d"
+    args.opdir = "%s/RR_station_fits/%04d/%02d" % (LSCRATCH,args.year,args.month)
 
 # convert a station location to a grid index
 def xy_to_idx(x, y, cube=sCube):
