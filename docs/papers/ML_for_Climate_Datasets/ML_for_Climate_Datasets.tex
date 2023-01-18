@@ -65,7 +65,7 @@
 
 
 \begin{abstract}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Machine Learning (ML) is a very powerful tool for making generative models: models that can make detailed, complex output (often pictures) from a simple input specification. We can use this in science by making generative models of weather and climate --- by training ML models to output gridded fields of weather variables such as temperature and precipitation. Here we show that you can use a Variational AutoEncoder (VAE) to build a fast deep generative model linking physically-plausible weather fields to a complete, continuous, low-dimensional latent space. Such an ML model can be used in place of a General Circulation Model (GCM) for some purposes: We can do reanalysis by constraining the field output to match observations, or perturbation/attribution studies by using the ML model to estimate the effect of changing one variable on another (e.g. change in sea temperature on precipitation). The primary advantage of such an ML model over a traditional GCM is that it can be several orders of magnitude faster.
 \end{abstract}
 
 
@@ -73,6 +73,11 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 
 \introduction  %% \introduction[modified heading if necessary]
+
+Traditional General Circulation Models (GCMs, \citet{phillips1956general}) are examples of {\em Generative Models}: a GCM will output a self-consistent and physically-plausible state of the weather. GCMs are extremely powerful and successful, but they do have important limitations: In particular they are {\em expensive} -- in both user effort and compute required --- so we have to limit the work we do with them.
+
+Modern Machine Learning (ML) 
+
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 \citet{smit54}
 \citep{colu92}
@@ -85,6 +90,21 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 \subsection{Subsection}
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/generator_from_vae.pdf}
+\caption{Making a generative climate model with a variational autoencoder.}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/model_validation.pdf}
+\caption{Left column: VAE input, middle column: VAE output, right column: scatter}
+\end{figure}
+
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/model_validation_multi.pdf}
+\caption{Black lines: VAE input, red lines: VAE output, and I::O scatter. Regional means for all verification months.}
+\end{figure}
 
 
 \subsubsection{Subsubsection}
