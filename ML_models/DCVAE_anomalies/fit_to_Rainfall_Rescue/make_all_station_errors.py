@@ -11,13 +11,13 @@ from localise import LSCRATCH
 
 
 def count_done(year, month):
-    files = glob.glob("%s/RR_station_fits/%04d/%02d/*.csv" % (LSCRATCH,year,month))
+    files = glob.glob("%s/RR_station_fits/%04d/%02d/*.csv" % (LSCRATCH, year, month))
     return len(files)
 
 
-for year in range(1884, 1905):
+for year in range(1884, 1960):
     for month in range(1, 13):
-        nrun = 25-count_done(year,month)
+        nrun = 25 - count_done(year, month)
         for i in range(nrun):
-            cmd = ("./station_errors.py --year=%04d --month=%02d" % (year,month))
+            cmd = "./station_errors.py --year=%04d --month=%02d" % (year, month)
             print(cmd)

@@ -109,7 +109,7 @@ from make_tensors.tensor_utils import sCube
 from make_tensors.tensor_utils import nPar
 
 if args.opdir is None:
-    args.opdir = "%s/RR_station_fits/%04d/%02d" % (LSCRATCH,args.year,args.month)
+    args.opdir = "%s/RR_station_fits/%04d/%02d" % (LSCRATCH, args.year, args.month)
 
 # convert a station location to a grid index
 def xy_to_idx(x, y, cube=sCube):
@@ -177,24 +177,8 @@ if args.decimate_to is not None:
     all_keys = list(monthly.keys())
     args.decimate_to = int(len(all_keys) * args.decimate_to)
     if len(all_keys) > args.decimate_to:
-        keep_keys = []
-        lats = [meta[x]["Y"] for x in all_keys]
-        min_l = min(lats)
-        max_l = max(lats)
-        for lr in range(1, args.decimate_to):
-            lat_range = [
-                min_l + (max_l - min_l) * x / args.decimate_to for x in (lr - 1, lr)
-            ]
-            range_keys = [
-                x
-                for x in all_keys
-                if meta[x]["Y"] > lat_range[0]
-                if meta[x]["Y"] <= lat_range[1]
-            ]
-            if len(range_keys) == 0:
-                continue
-            range_keys = sorted(range_keys)
-            keep_keys.append(range_keys[0])
+        shuffle(all_keys)
+        keep_keys = all_keys[: args.decimate_to]
         for stn_id in all_keys:
             if stn_id not in keep_keys:
                 del monthly[stn_id]
