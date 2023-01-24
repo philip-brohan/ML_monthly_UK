@@ -62,26 +62,47 @@ for year in range(args.startyear, args.endyear + 1):
         for fi in ffiles:
             with open(fi, "r") as f:
                 reader = csv.reader(f)
+                a_diffs = None
+                u_diffs = None
                 for fl in reader:
                     if len(fl) == 0:
                         continue
                     sid = fl[0]
-                    if sid not in fitted["%04d" % year]["%02d" % month].keys():
-                        fitted["%04d" % year]["%02d" % month][sid] = {
-                            "assimilated": [],
-                            "obs": [],
-                            "generated": [],
-                        }
-                    fitted["%04d" % year]["%02d" % month][sid]["assimilated"].append(
-                        float(fl[1])
-                    )
-                    fitted["%04d" % year]["%02d" % month][sid]["obs"].append(
-                        float(fl[2])
-                    )
-                    fitted["%04d" % year]["%02d" % month][sid]["generated"].append(
-                        float(fl[3])
-                    )
-
+                    if sid == args.src_id:
+                        if sid not in fitted["%04d" % year]["%02d" % month].keys():
+                            fitted["%04d" % year]["%02d" % month][sid] = {
+                                "assimilated": [],
+                                "obs": [],
+                                "generated": [],
+                                "a_diffs": [],
+                                "u_diffs": [],
+                            }
+                        fitted["%04d" % year]["%02d" % month][sid][
+                            "assimilated"
+                        ].append(int(fl[1]))
+                        fitted["%04d" % year]["%02d" % month][sid]["obs"].append(
+                            float(fl[2])
+                        )
+                        fitted["%04d" % year]["%02d" % month][sid]["generated"].append(
+                            float(fl[3])
+                        )
+                    else:
+                        if a_diffs is None:
+                            a_diffs = []
+                            u_diffs = []
+                        if int(fl[1]) == 1:
+                            a_diffs.append((float(fl[3]) - float(fl[2])) ** 2)
+                        else:
+                            u_diffs.append((float(fl[3]) - float(fl[2])) ** 2)
+                try:
+                    fitted["%04d" % year]["%02d" % month][args.src_id][
+                        "a_diffs"
+                    ].append(np.sqrt(np.nanmean(a_diffs)))
+                    fitted["%04d" % year]["%02d" % month][args.src_id][
+                        "u_diffs"
+                    ].append(np.sqrt(np.nanmean(u_diffs)))
+                except Exception:
+                    pass
 
 # Convert the fitted data into an apropriate format for plotting
 def fitted_to_obs_series(ftd, sid):
@@ -97,11 +118,15 @@ def fitted_to_obs_series(ftd, sid):
     return (dt, obs)
 
 
-def fitted_to_assimilated_series(ftd, sid):
+def fitted_to_assimilated_series(ftd, sid, flag=1):
     dt = []
     assim = []
+    a_diffs = []
+    u_diffs = []
     dt_mean = []
     assim_mean = []
+    ad_mean = []
+    ud_mean = []
     for year in range(args.startyear, args.endyear + 1):
         for month in range(1, 13):
             dt_mean.append(datetime.date(year, month, 15))
@@ -109,25 +134,43 @@ def fitted_to_assimilated_series(ftd, sid):
                 n_cases = len(ftd["%04d" % year]["%02d" % month][sid]["generated"])
             except KeyError:
                 assim_mean.append(np.nan)
+                ad_mean.append(np.nan)
+                ud_mean.append(np.nan)
                 continue
             assimilated = [
                 ftd["%04d" % year]["%02d" % month][sid]["generated"][i]
                 for i in range(n_cases)
-                if ftd["%04d" % year]["%02d" % month][sid]["assimilated"][i] == 1
+                if ftd["%04d" % year]["%02d" % month][sid]["assimilated"][i] == flag
+            ]
+            ad = [
+                ftd["%04d" % year]["%02d" % month][sid]["a_diffs"][i]
+                for i in range(n_cases)
+                if ftd["%04d" % year]["%02d" % month][sid]["assimilated"][i] == flag
+            ]
+            ud = [
+                ftd["%04d" % year]["%02d" % month][sid]["u_diffs"][i]
+                for i in range(n_cases)
+                if ftd["%04d" % year]["%02d" % month][sid]["assimilated"][i] == flag
             ]
             if len(assimilated) == 0:
                 assim_mean.append(np.nan)
+                ad_mean.append(np.nan)
+                ud_mean.append(np.nan)
                 continue
             assim_mean.append(np.mean(assimilated))
+            ad_mean.append(np.mean(ad))
+            ud_mean.append(np.mean(ud))
             for case in range(len(assimilated)):
                 assim.append(assimilated[case])
+                a_diffs.append(ad[case])
+                u_diffs.append(ud[case])
                 dt.append(datetime.date(year, month, randint(10, 20)))
-    return (dt, assim, dt_mean, assim_mean)
+    return (dt, assim, dt_mean, assim_mean, a_diffs, u_diffs, ad_mean, ud_mean)
 
 
 def fitted_to_unassimilated_series(ftd, sid):
     dt = []
-    assim = []
+    unassim = []
     dt_mean = []
     unassim_mean = []
     for year in range(args.startyear, args.endyear + 1):
@@ -148,16 +191,44 @@ def fitted_to_unassimilated_series(ftd, sid):
                 continue
             unassim_mean.append(np.nanmean(unassimilated))
             for case in range(len(unassimilated)):
-                assim.append(unassimilated[case])
+                unassim.append(unassimilated[case])
                 dt.append(datetime.date(year, month, randint(10, 20)))
-    return (dt, assim, dt_mean, unassim_mean)
+    return (dt, unassim, dt_mean, unassim_mean)
+
+
+def difference_to_series(ftd):
+    dt = []
+    d_assim = []
+    d_unassim = []
+    for year in range(args.startyear, args.endyear + 1):
+        for month in range(1, 13):
+            dt.append(datetime.date(year, month, 15))
+            try:
+                d_assim.append(
+                    np.sqrt(
+                        ftd["%04d" % year]["%02d" % month]["diffs"]["a_diff"]
+                        / ftd["%04d" % year]["%02d" % month]["diffs"]["a_count"]
+                    )
+                )
+            except KeyError:
+                d_assim.append(np.nan)
+            try:
+                d_unassim.append(
+                    np.sqrt(
+                        ftd["%04d" % year]["%02d" % month]["diffs"]["u_diff"]
+                        / ftd["%04d" % year]["%02d" % month]["diffs"]["u_count"]
+                    )
+                )
+            except KeyError:
+                d_unassim.append(np.nan)
+    return (dt, d_assim, d_unassim)
 
 
 # Make the plot
 aspect = 3
 fsize = 5
 fig = Figure(
-    figsize=(fsize * aspect, fsize * 1.5),
+    figsize=(fsize * aspect, fsize * 2.5),
     dpi=100,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -189,8 +260,8 @@ axb.add_patch(
 
 # Main axes with observed assimilated and unassimilated time-series
 op = fitted_to_obs_series(fitted, args.src_id)
-ap = fitted_to_assimilated_series(fitted, args.src_id)
-up = fitted_to_unassimilated_series(fitted, args.src_id)
+ap = fitted_to_assimilated_series(fitted, args.src_id, flag=1)
+up = fitted_to_assimilated_series(fitted, args.src_id, flag=0)
 ymin = np.nanmin([np.nanmin(op[1]), np.nanmin(ap[1]), np.nanmin(up[1])])
 ymax = np.nanmax([np.nanmax(op[1]), np.nanmax(ap[1]), np.nanmax(up[1])])
 yr = ymax - ymin
@@ -200,7 +271,7 @@ ymin -= yr / 20
 # ymin = min(ymin, ymax * -1)
 
 ax_ts = fig.add_axes(
-    [0.045, 0.08 / 1.5 + 0.33, 0.95, 0.9 / 1.5],
+    [0.045, 0.08 / 2.5 + 3 / 5, 0.95, 0.9 / 2.5],
     xlim=(
         datetime.date(args.startyear, 1, 15) - datetime.timedelta(days=15),
         datetime.date(args.endyear, 12, 15) + datetime.timedelta(days=15),
@@ -219,13 +290,13 @@ ax_ts.add_line(
     Line2D(up[2], up[3], linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=60)
 )
 ax_ts.scatter(up[0], up[1], s=3, color=(1, 0, 0, 1), alpha=1.0, zorder=40)
-ax_ts.set_xticklabels([])  # Share labels with the secondary axes
+ax_ts.set_xticklabels([])  # Share labels with the bottom axes
 
 # Difference a pair of time-series with possibly different time axes
 def diff_ts(t1, v1, t2, v2):
     for idx in range(len(v2)):
         try:
-            i2 = t1.index(t2[idx])
+            i2 = t1.index(datetime.date(t2[idx].year, t2[idx].month, 15))
         except ValueError:
             v2[idx] = np.nan
             continue
@@ -240,40 +311,105 @@ df_um = diff_ts(op[0], op[1], up[2], up[3])
 df_u = diff_ts(op[0], op[1], up[0], up[1])
 yr = ymax - ymin
 dymin = np.nanmin((np.nanmin(df_a), np.nanmin(df_u), -1 * yr / 10))
-dymax = np.nanmax((np.nanmax(df_a), np.nanmax(df_u), -1 * yr / 10))
+dymax = np.nanmax((np.nanmax(df_a), np.nanmax(df_u), 1 * yr / 10))
 dyr = dymax - dymin
 dymax += dyr / 20
 dymin -= dyr / 20
 dymax = max(dymax, dymin * -1)
 dymin = min(dymin, dymax * -1)
 ax_ss = fig.add_axes(
-    [0.045, 0.08 / 1.5, 0.95, 0.45 / 1.5],
+    [0.045, 0.08 / 2.5 + 2 / 5, 0.95, 0.45 / 2.5],
     xlim=(
         datetime.date(args.startyear, 1, 15) - datetime.timedelta(days=15),
         datetime.date(args.endyear, 12, 15) + datetime.timedelta(days=15),
     ),
     ylim=(dymin, dymax),
 )
+ax_ss.set_xticklabels([])  # Share labels with the bottom axes
 ax_ss.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 
 ax_ss.add_line(
     Line2D(up[2], df_um, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=50)
 )
-ax_ss.scatter(ap[0], df_a, s=3, color=(0, 0, 1, 1), alpha=1.0, zorder=40)
+ax_ss.scatter(ap[0], df_a, s=4, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
 ax_ss.add_line(
     Line2D(ap[2], df_am, linewidth=1, color=(0, 0, 1, 1), alpha=1.0, zorder=50)
 )
-ax_ss.scatter(up[0], df_u, s=3, color=(1, 0, 1, 0), alpha=1.0, zorder=40)
+ax_ss.scatter(up[0], df_u, s=4, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
+
+
+# Third axis with other station errors - doesn't matter whether selected station assimilated or not - so average that
+all_assim_error = [(ap[6][i] + up[6][i]) / 2 for i in range(len(ap[6]))]
+all_unassim_error = [(ap[7][i] + up[7][i]) / 2 for i in range(len(up[6]))]
+dymax = np.nanmax((np.nanmax(all_assim_error), np.nanmax(all_unassim_error)))
+dymax *= 1.2
+dymin = 0
+ax_se = fig.add_axes(
+    [0.045, 0.08 / 2.5 + 1 / 5, 0.95, 0.45 / 2.5],
+    xlim=(
+        datetime.date(args.startyear, 1, 15) - datetime.timedelta(days=15),
+        datetime.date(args.endyear, 12, 15) + datetime.timedelta(days=15),
+    ),
+    ylim=(dymin, dymax),
+)
+ax_se.set_xticklabels([])  # Share labels with the bottom axes
+ax_se.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
+
+ax_se.add_line(
+    Line2D(
+        ap[2], all_assim_error, linewidth=1, color=(0, 0, 1, 1), alpha=1.0, zorder=50
+    )
+)
+ax_se.scatter(ap[0], ap[4], s=3, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
+ax_se.scatter(up[0], up[4], s=3, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
+ax_se.add_line(
+    Line2D(
+        ap[2], all_unassim_error, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=50
+    )
+)
+ax_se.scatter(ap[0], ap[5], s=3, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
+ax_se.scatter(up[0], up[5], s=3, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
+
+# Final axis with difference of errors
+diff_assim_error = [ap[7][i] - ap[6][i] for i in range(len(ap[6]))]
+diff_unassim_error = [up[7][i] - up[6][i] for i in range(len(up[6]))]
+dymax = np.nanmax((np.nanmax(diff_assim_error), np.nanmax(diff_unassim_error)))
+dymin = np.nanmin((np.nanmin(diff_assim_error), np.nanmin(diff_unassim_error)))
+dyr = dymax - dymin
+dymax += dyr / 20
+dymin -= dyr / 20
+dymax = max(dymax, dymin * -1)
+dymin = min(dymin, dymax * -1)
+ax_sd = fig.add_axes(
+    [0.045, 0.08 / 2.5 + 0 / 5, 0.95, 0.45 / 2.5],
+    xlim=(
+        datetime.date(args.startyear, 1, 15) - datetime.timedelta(days=15),
+        datetime.date(args.endyear, 12, 15) + datetime.timedelta(days=15),
+    ),
+    ylim=(dymin, dymax),
+)
+ax_sd.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
+
+ax_sd.add_line(
+    Line2D(
+        ap[2], diff_assim_error, linewidth=1, color=(0, 0, 1, 1), alpha=1.0, zorder=50
+    )
+)
+ax_sd.add_line(
+    Line2D(
+        ap[2], diff_unassim_error, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=50
+    )
+)
 
 # Add thumbnail showing station location
-axt = fig.add_axes([0.046, 0.75 * 0.67 + 0.33, 0.15 / aspect, 0.10 * 1450 / 900])
+axt = fig.add_axes([0.006, 0.75 * 0.67 + 0.365, 0.15 / aspect, 0.10 * 1450 / 900])
 plotStationLocationsAxes(
     axt,
     {args.src_id: meta},
-    ssize=25000,
+    ssize=35000,
     scolour="Red",
-    sea_colour=(1.0, 1.0, 1.0, 1.0),
-    land_colour=(0.0, 0.0, 0.0, 0.5),
+    sea_colour=(0.8, 0.8, 0.8, 1.0),
+    land_colour=(0.4, 0.4, 0.4, 1.0),
     zorder=150,
 )
 
