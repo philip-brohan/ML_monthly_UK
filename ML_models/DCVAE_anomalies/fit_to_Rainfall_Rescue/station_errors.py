@@ -7,6 +7,7 @@ import os
 import sys
 from random import shuffle
 import numpy as np
+import csv
 import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow_addons.image import interpolate_bilinear
@@ -68,6 +69,13 @@ parser.add_argument(
     required=False,
     default=0.5,
 )
+parser.add_argument(
+    "--offsets",
+    help="Apply pre-calculated station offsets",
+    type=bool,
+    required=False,
+    default=False,
+)
 args = parser.parse_args()
 
 if args.match is not None and args.skip is not None:
@@ -109,7 +117,25 @@ from make_tensors.tensor_utils import sCube
 from make_tensors.tensor_utils import nPar
 
 if args.opdir is None:
-    args.opdir = "%s/RR_station_fits/%04d/%02d" % (LSCRATCH, args.year, args.month)
+    if args.offsets:
+        args.opdir = "%s/RR_station_fits_offsets/%04d/%02d" % (
+            LSCRATCH,
+            args.year,
+            args.month,
+        )
+    else:
+        args.opdir = "%s/RR_station_fits/%04d/%02d" % (LSCRATCH, args.year, args.month)
+
+# Load the station offsets
+offsets = {}
+if args.offsets:
+    ofile = "%s/RR_station_offsets/%04d/%02d.csv" % (LSCRATCH, args.year, args.month)
+    with open(ofile, "r") as f:
+        reader = csv.reader(f)
+        for fl in reader:
+            if len(fl) == 0:
+                continue
+            offsets[fl[0]] = float(fl[1])
 
 # convert a station location to a grid index
 def xy_to_idx(x, y, cube=sCube):
@@ -167,6 +193,8 @@ for stn_id in stn_ids:
         if clim.data.mask[meta[stn_id]["YI"], meta[stn_id]["XI"]]:
             raise Exception("Outside HadUKGrid")
         monthly[stn_id] -= clim.data[meta[stn_id]["YI"], meta[stn_id]["XI"]]
+        if args.offsets:
+            monthly[stn_id] -= offsets[stn_id]
         monthly[stn_id] = s_normalise(monthly[stn_id])
     except Exception:
         del monthly[stn_id]  # no location or bad obs

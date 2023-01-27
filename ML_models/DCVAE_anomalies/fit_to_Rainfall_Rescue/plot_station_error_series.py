@@ -41,13 +41,26 @@ parser.add_argument(
     required=False,
     default=None,
 )
+parser.add_argument(
+    "--psize", help="Scatter point size", type=float, required=False, default=3.0
+)
+parser.add_argument(
+    "--offsets",
+    help="Show version with station offsets",
+    type=bool,
+    required=False,
+    default=False,
+)
 args = parser.parse_args()
 
 sys.path.append("%s/.." % os.path.dirname(__file__))
 from localise import LSCRATCH
 
 if args.ipdir is None:
-    args.ipdir = "%s/RR_station_fits" % LSCRATCH
+    if args.offsets:
+        args.ipdir = "%s/RR_station_fits_offsets" % LSCRATCH
+    else:
+        args.ipdir = "%s/RR_station_fits" % LSCRATCH
 
 # Load the station metadata
 meta = load_station_metadata(args.src_id)
@@ -285,11 +298,11 @@ ax_ts.add_line(
 ax_ts.add_line(
     Line2D(ap[2], ap[3], linewidth=1, color=(0, 0, 1, 1), alpha=1.0, zorder=60)
 )
-ax_ts.scatter(ap[0], ap[1], s=3, color=(0, 0, 1, 1), alpha=1.0, zorder=40)
+ax_ts.scatter(ap[0], ap[1], s=args.psize, color=(0, 0, 1, 1), alpha=1.0, zorder=40)
 ax_ts.add_line(
     Line2D(up[2], up[3], linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=60)
 )
-ax_ts.scatter(up[0], up[1], s=3, color=(1, 0, 0, 1), alpha=1.0, zorder=40)
+ax_ts.scatter(up[0], up[1], s=args.psize, color=(1, 0, 0, 1), alpha=1.0, zorder=40)
 ax_ts.set_xticklabels([])  # Share labels with the bottom axes
 
 # Difference a pair of time-series with possibly different time axes
@@ -331,11 +344,11 @@ ax_ss.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
 ax_ss.add_line(
     Line2D(up[2], df_um, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=50)
 )
-ax_ss.scatter(ap[0], df_a, s=4, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
+ax_ss.scatter(ap[0], df_a, s=args.psize, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
 ax_ss.add_line(
     Line2D(ap[2], df_am, linewidth=1, color=(0, 0, 1, 1), alpha=1.0, zorder=50)
 )
-ax_ss.scatter(up[0], df_u, s=4, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
+ax_ss.scatter(up[0], df_u, s=args.psize, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
 
 
 # Third axis with other station errors - doesn't matter whether selected station assimilated or not - so average that
@@ -360,19 +373,19 @@ ax_se.add_line(
         ap[2], all_assim_error, linewidth=1, color=(0, 0, 1, 1), alpha=1.0, zorder=50
     )
 )
-ax_se.scatter(ap[0], ap[4], s=3, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
-ax_se.scatter(up[0], up[4], s=3, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
+ax_se.scatter(ap[0], ap[4], s=args.psize, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
+ax_se.scatter(up[0], up[4], s=args.psize, color=(0, 0, 1, 1), alpha=0.5, zorder=40)
 ax_se.add_line(
     Line2D(
         ap[2], all_unassim_error, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=50
     )
 )
-ax_se.scatter(ap[0], ap[5], s=3, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
-ax_se.scatter(up[0], up[5], s=3, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
+ax_se.scatter(ap[0], ap[5], s=args.psize, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
+ax_se.scatter(up[0], up[5], s=args.psize, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
 
 # Final axis with difference of errors
-diff_assim_error = [ap[7][i] - ap[6][i] for i in range(len(ap[6]))]
-diff_unassim_error = [up[7][i] - up[6][i] for i in range(len(up[6]))]
+diff_assim_error = [ap[7][i] - up[7][i] for i in range(len(ap[6]))]
+diff_unassim_error = [ap[6][i] - up[6][i] for i in range(len(up[6]))]
 dymax = np.nanmax((np.nanmax(diff_assim_error), np.nanmax(diff_unassim_error)))
 dymin = np.nanmin((np.nanmin(diff_assim_error), np.nanmin(diff_unassim_error)))
 dyr = dymax - dymin
@@ -413,5 +426,7 @@ plotStationLocationsAxes(
     zorder=150,
 )
 
-
-fig.savefig("station_error_series.png")
+if args.offsets:
+    fig.savefig("station_error_series_offsets.png")
+else:
+    fig.savefig("station_error_series.png")
