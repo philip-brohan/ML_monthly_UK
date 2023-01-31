@@ -238,7 +238,7 @@ def difference_to_series(ftd):
 
 
 # Make the plot
-aspect = 3
+aspect = 4
 fsize = 5
 fig = Figure(
     figsize=(fsize * aspect, fsize * 2.5),
@@ -284,7 +284,7 @@ ymin -= yr / 20
 # ymin = min(ymin, ymax * -1)
 
 ax_ts = fig.add_axes(
-    [0.045, 0.08 / 2.5 + 3 / 5, 0.95, 0.9 / 2.5],
+    [0.045, 0.08 / 2.5 + 3 / 5, 0.95 * 0.75, 0.9 / 2.5],
     xlim=(
         datetime.date(args.startyear, 1, 15) - datetime.timedelta(days=15),
         datetime.date(args.endyear, 12, 15) + datetime.timedelta(days=15),
@@ -304,6 +304,26 @@ ax_ts.add_line(
 )
 ax_ts.scatter(up[0], up[1], s=args.psize, color=(1, 0, 0, 1), alpha=1.0, zorder=40)
 ax_ts.set_xticklabels([])  # Share labels with the bottom axes
+
+# Add a histogram to the right
+ax_tsh = fig.add_axes(
+    [0.045 + 0.95 * 0.75 + 0.01, 0.08 / 2.5 + 3 / 5, 0.95 * 0.25 - 0.01, 0.9 / 2.5],
+    ylim=(ymin, ymax),
+)
+ax_tsh.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
+ax_tsh.set_xticklabels([])
+ax_tsh.set_yticklabels([])
+ax_tsh.hist(
+    (op[1], ap[1], up[1]),
+    bins=np.arange(ymin, ymax, (ymax - ymin) / 20),
+    color=((0, 0, 0), (0, 0, 1), (1, 0, 0)),
+    histtype="bar",
+    density=True,
+    orientation="horizontal",
+    alpha=1.0,
+    zorder=50,
+)
+
 
 # Difference a pair of time-series with possibly different time axes
 def diff_ts(t1, v1, t2, v2):
@@ -331,7 +351,7 @@ dymin -= dyr / 20
 dymax = max(dymax, dymin * -1)
 dymin = min(dymin, dymax * -1)
 ax_ss = fig.add_axes(
-    [0.045, 0.08 / 2.5 + 2 / 5, 0.95, 0.45 / 2.5],
+    [0.045, 0.08 / 2.5 + 2 / 5, 0.95 * 0.75, 0.45 / 2.5],
     xlim=(
         datetime.date(args.startyear, 1, 15) - datetime.timedelta(days=15),
         datetime.date(args.endyear, 12, 15) + datetime.timedelta(days=15),
@@ -350,15 +370,33 @@ ax_ss.add_line(
 )
 ax_ss.scatter(up[0], df_u, s=args.psize, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
 
+# Add a histogram to the right
+ax_ssh = fig.add_axes(
+    [0.045 + 0.95 * 0.75 + 0.01, 0.08 / 2.5 + 2 / 5, 0.95 * 0.25 - 0.01, 0.45 / 2.5],
+    ylim=(dymin, dymax),
+)
+ax_ssh.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
+ax_ssh.set_xticklabels([])
+ax_ssh.set_yticklabels([])
+ax_ssh.hist(
+    (df_a, df_u),
+    bins=np.arange(dymin, dymax, (dymax - dymin) / 20),
+    color=((0, 0, 1), (1, 0, 0)),
+    histtype="bar",
+    density=True,
+    orientation="horizontal",
+    alpha=1.0,
+    zorder=50,
+)
 
 # Third axis with other station errors - doesn't matter whether selected station assimilated or not - so average that
 all_assim_error = [(ap[6][i] + up[6][i]) / 2 for i in range(len(ap[6]))]
 all_unassim_error = [(ap[7][i] + up[7][i]) / 2 for i in range(len(up[6]))]
-dymax = np.nanmax((np.nanmax(all_assim_error), np.nanmax(all_unassim_error)))
-dymax *= 1.2
+dymax = np.nanmax((np.nanmax(ap[4] + up[4]), np.nanmax(ap[5] + up[5])))
+dymax *= 1.1
 dymin = 0
 ax_se = fig.add_axes(
-    [0.045, 0.08 / 2.5 + 1 / 5, 0.95, 0.45 / 2.5],
+    [0.045, 0.08 / 2.5 + 1 / 5, 0.95 * 0.75, 0.45 / 2.5],
     xlim=(
         datetime.date(args.startyear, 1, 15) - datetime.timedelta(days=15),
         datetime.date(args.endyear, 12, 15) + datetime.timedelta(days=15),
@@ -382,6 +420,23 @@ ax_se.add_line(
 )
 ax_se.scatter(ap[0], ap[5], s=args.psize, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
 ax_se.scatter(up[0], up[5], s=args.psize, color=(1, 0, 0, 1), alpha=0.5, zorder=40)
+ax_seh = fig.add_axes(
+    [0.045 + 0.95 * 0.75 + 0.01, 0.08 / 2.5 + 1 / 5, 0.95 * 0.25 - 0.01, 0.45 / 2.5],
+    ylim=(dymin, dymax),
+)
+ax_seh.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
+ax_seh.set_xticklabels([])
+ax_seh.set_yticklabels([])
+ax_seh.hist(
+    (ap[4] + up[4], ap[5] + up[5]),
+    bins=np.arange(dymin, dymax, (dymax - dymin) / 20),
+    color=((0, 0, 1), (1, 0, 0)),
+    histtype="bar",
+    density=True,
+    orientation="horizontal",
+    alpha=1.0,
+    zorder=50,
+)
 
 # Final axis with difference of errors
 diff_assim_error = [ap[7][i] - up[7][i] for i in range(len(ap[6]))]
@@ -394,7 +449,7 @@ dymin -= dyr / 20
 dymax = max(dymax, dymin * -1)
 dymin = min(dymin, dymax * -1)
 ax_sd = fig.add_axes(
-    [0.045, 0.08 / 2.5 + 0 / 5, 0.95, 0.45 / 2.5],
+    [0.045, 0.08 / 2.5 + 0 / 5, 0.95 * 0.75, 0.45 / 2.5],
     xlim=(
         datetime.date(args.startyear, 1, 15) - datetime.timedelta(days=15),
         datetime.date(args.endyear, 12, 15) + datetime.timedelta(days=15),
@@ -413,9 +468,28 @@ ax_sd.add_line(
         ap[2], diff_unassim_error, linewidth=1, color=(1, 0, 0, 1), alpha=1.0, zorder=50
     )
 )
+ax_sdh = fig.add_axes(
+    [0.045 + 0.95 * 0.75 + 0.01, 0.08 / 2.5 + 0 / 5, 0.95 * 0.25 - 0.01, 0.45 / 2.5],
+    ylim=(dymin, dymax),
+)
+ax_sdh.grid(color=(0, 0, 0, 1), linestyle="-", linewidth=0.1)
+ax_sdh.set_xticklabels([])
+ax_sdh.set_yticklabels([])
+ax_sdh.hist(
+    (diff_assim_error, diff_unassim_error),
+    bins=np.arange(dymin, dymax, (dymax - dymin) / 20),
+    color=((0, 0, 1), (1, 0, 0)),
+    histtype="bar",
+    density=True,
+    orientation="horizontal",
+    alpha=1.0,
+    zorder=50,
+)
 
 # Add thumbnail showing station location
-axt = fig.add_axes([0.006, 0.75 * 0.67 + 0.365, 0.15 / aspect, 0.10 * 1450 / 900])
+axt = fig.add_axes(
+    [1 - 0.15 / aspect - 0.006, 0.75 * 0.67 + 0.36, 0.15 / aspect, 0.10 * 1450 / 900]
+)
 plotStationLocationsAxes(
     axt,
     {args.src_id: meta},

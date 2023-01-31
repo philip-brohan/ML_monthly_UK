@@ -18,7 +18,7 @@ def count_done(year, month):
     return len(files)
 
 
-for year in range(1836, 1891):
+for year in range(1836, 1960):
     for month in range(1, 13):
         nrun = 25 - count_done(year, month)
         for i in range(nrun):
