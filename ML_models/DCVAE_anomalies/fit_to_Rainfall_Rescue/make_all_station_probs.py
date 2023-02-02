@@ -19,7 +19,7 @@ def is_done(year, month):
         return False
 
 
-for year in range(1860, 1910):
+for year in range(1836, 1960):
     for month in range(1, 13):
         if is_done(year, month):
             continue

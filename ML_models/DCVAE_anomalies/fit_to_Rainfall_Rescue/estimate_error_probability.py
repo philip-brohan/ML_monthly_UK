@@ -72,6 +72,8 @@ for station in stations:
             continue
         if station in fitted[mnth].keys():
             others.append(np.nanmean(fitted[mnth][station]))
+    if len(others) < 10:  # Too little data to make comparison
+        continue
     try:
         o_mean = np.nanmean(others)
         o_std = np.nanstd(others)
