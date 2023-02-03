@@ -27,10 +27,16 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=990)
 parser.add_argument(
-    "--year", help="Year to fit to", type=int, required=True,
+    "--year",
+    help="Year to fit to",
+    type=int,
+    required=True,
 )
 parser.add_argument(
-    "--month", help="Month to fit to", type=int, required=True,
+    "--month",
+    help="Month to fit to",
+    type=int,
+    required=True,
 )
 parser.add_argument(
     "--member", help="Member to fit to", type=int, required=False, default=1
@@ -48,7 +54,11 @@ parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
 parser.add_argument(
-    "--iter", help="No. of iterations", type=int, required=False, default=1000,
+    "--iter",
+    help="No. of iterations",
+    type=int,
+    required=False,
+    default=1000,
 )
 args = parser.parse_args()
 
@@ -79,7 +89,10 @@ from makeDataset import normalise_co2
 from makeDataset import normalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()

@@ -23,7 +23,10 @@ for month in range(1, 13):
         if not os.path.isfile(opfile):
             print(
                 ("./make_climatology_for_month.py --month=%d --variable=%s")
-                % (month, var,)
+                % (
+                    month,
+                    var,
+                )
             )
         opfile = "%s/20CR/version_3/monthly/sd_climatology/%s_%02d.nc" % (
             os.getenv("SCRATCH"),
@@ -33,5 +36,8 @@ for month in range(1, 13):
         if not os.path.isfile(opfile):
             print(
                 ("./make_sd_climatology_for_month.py --month=%d --variable=%s")
-                % (month, var,)
+                % (
+                    month,
+                    var,
+                )
             )

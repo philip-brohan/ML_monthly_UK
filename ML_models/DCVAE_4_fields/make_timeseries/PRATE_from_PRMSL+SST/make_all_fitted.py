@@ -28,5 +28,10 @@ for year in range(1850, 2015):
             cmd = (
                 "../../fit_to_fields/fit_and_save.py --year=%04d "
                 + "--month=%d --member=%d --PRMSL --SST --epoch=%d"
-            ) % (year, month, member, epoch,)
+            ) % (
+                year,
+                month,
+                member,
+                epoch,
+            )
             print(cmd)

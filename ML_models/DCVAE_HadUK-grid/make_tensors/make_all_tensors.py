@@ -14,7 +14,13 @@ def is_done(year, month, member, purpose, extrapolate):
         purpose += "_source"
     else:
         purpose += "_target"
-    fn = "%s/datasets/%s/%04d-%02d_%02d.tfd" % (TSOURCE, purpose, year, month, member,)
+    fn = "%s/datasets/%s/%04d-%02d_%02d.tfd" % (
+        TSOURCE,
+        purpose,
+        year,
+        month,
+        member,
+    )
     if os.path.exists(fn):
         return True
     return False
@@ -37,7 +43,11 @@ for year in range(1884, 2015):
                     continue
                 cmd = (
                     "./make_training_tensor.py --year=%04d --month=%02d --member=%d"
-                    % (year, month, member,)
+                    % (
+                        year,
+                        month,
+                        member,
+                    )
                 )
                 if purpose == "test":
                     cmd += " --test"

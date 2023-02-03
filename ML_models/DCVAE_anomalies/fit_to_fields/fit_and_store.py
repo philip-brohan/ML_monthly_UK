@@ -73,18 +73,14 @@ def decodeFit():
     result = 0.0
     generated = model.generate(latent, training=False)
     result = result + tf.reduce_mean(
-        tf.keras.metrics.mean_squared_error(
-            generated[:, :, :, 0], target[:, :, :, 0]
-        )
+        tf.keras.metrics.mean_squared_error(generated[:, :, :, 0], target[:, :, :, 0])
     )
     result = result + tf.reduce_mean(
         tf.keras.metrics.mean_squared_error(
             tf.boolean_mask(
                 generated[:, :, :, 1], np.invert(lm_TWCR.data.mask), axis=1
             ),
-            tf.boolean_mask(
-                target[:, :, :, 1], np.invert(lm_TWCR.data.mask), axis=1
-            ),
+            tf.boolean_mask(target[:, :, :, 1], np.invert(lm_TWCR.data.mask), axis=1),
         )
     )
     result = result + tf.reduce_mean(
@@ -132,7 +128,7 @@ def find_latent(x):
         num_steps=args.iter,
         optimizer=tf.optimizers.Adam(learning_rate=0.1),
     )
-    return (year,month)
+    return (year, month)
 
 
 # Calculate and store the latent for each input case
@@ -141,8 +137,7 @@ if not os.path.isdir(opdir):
     os.makedirs(opdir)
 
 for case in testData:
-    (year,month) = find_latent(case)
-    opfile = "%s/%04d-%02d.tfd" % (opdir,year,month)
+    (year, month) = find_latent(case)
+    opfile = "%s/%04d-%02d.tfd" % (opdir, year, month)
     sict = tf.io.serialize_tensor(latent)
     tf.io.write_file(opfile, sict)
-

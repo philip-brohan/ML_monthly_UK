@@ -21,7 +21,8 @@ from matplotlib.lines import Line2D
 
 # I don't need all the messages about a missing font
 import logging
-logging.getLogger('matplotlib.font_manager').disabled = True
+
+logging.getLogger("matplotlib.font_manager").disabled = True
 
 
 import argparse
@@ -68,6 +69,7 @@ from autoencoderModel import DCVAE
 from makeDataset import getDataset
 from make_tensors.tensor_utils import nPar
 
+
 def unnormalise(dta, variable):
     if not variable in nPar:
         raise Exception("Unsupported variable " + variable)
@@ -75,10 +77,11 @@ def unnormalise(dta, variable):
     dta += nPar[variable][0]
     return dta
 
+
 # Set up the test data
-purpose = 'test'
+purpose = "test"
 if args.training:
-    purpose='training'
+    purpose = "training"
 testData = getDataset(
     purpose=purpose, startyear=args.startyear, endyear=args.endyear, shuffle=False
 )
@@ -113,7 +116,7 @@ def compute_stats(model, x):
     month = int(fn[5:7])
     dtp = datetime.date(year, month, 15)
     # Pass the test field through the autoencoder
-    generated = model.call(x[0],training=False)
+    generated = model.call(x[0], training=False)
 
     stats = {}
     stats["dtp"] = dtp
@@ -131,31 +134,24 @@ def compute_stats(model, x):
     )
     vt = x[0][0, :, :, 1].numpy()
     mask = x[1][0, :, :, 1].numpy()
-    stats["SST_target"] = field_to_scalar(
-        vt, "SST", month, mask
-    )
+    stats["SST_target"] = field_to_scalar(vt, "SST", month, mask)
     vm = generated[0, :, :, 1].numpy()
-    stats["SST_model"] = field_to_scalar(
-        vm, "SST", month, mask
-    )
+    stats["SST_model"] = field_to_scalar(vm, "SST", month, mask)
     vt = x[0][0, :, :, 2].numpy()
     mask = x[1][0, :, :, 2].numpy()
     stats["T2M_target"] = field_to_scalar(
-        vt, "monthly_meantemp", month, mask,
+        vt,
+        "monthly_meantemp",
+        month,
+        mask,
     )
     vm = generated[0, :, :, 2].numpy()
-    stats["T2M_model"] = field_to_scalar(
-        vm, "monthly_meantemp", month, mask
-    )
+    stats["T2M_model"] = field_to_scalar(vm, "monthly_meantemp", month, mask)
     vt = x[0][0, :, :, 3].numpy()
     mask = x[1][0, :, :, 3].numpy()
-    stats["PRATE_target"] = field_to_scalar(
-        vt, "monthly_rainfall", month, mask
-    )
+    stats["PRATE_target"] = field_to_scalar(vt, "monthly_rainfall", month, mask)
     vm = generated[0, :, :, 3].numpy()
-    stats["PRATE_model"] = field_to_scalar(
-        vm, "monthly_rainfall", month, None, mask
-    )
+    stats["PRATE_model"] = field_to_scalar(vm, "monthly_rainfall", month, None, mask)
     return stats
 
 
@@ -167,7 +163,6 @@ for case in testData:
             all_stats[key].append(stats[key])
         else:
             all_stats[key] = [stats[key]]
-
 
 
 # Plot sizes

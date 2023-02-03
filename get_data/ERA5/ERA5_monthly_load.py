@@ -29,9 +29,10 @@ lm_ERA5.coord("longitude").coord_system = cs_ERA5
 lm_ERA5.data.data[np.where(lm_ERA5.data.mask == True)] = 0
 lm_ERA5.data.data[np.where(lm_ERA5.data.mask == False)] = 1
 
+
 def load_variable(variable, year, month):
-    if variable=='cbrt_precipitation':
-        varC = load_variable('total_precipitation',year,month)
+    if variable == "cbrt_precipitation":
+        varC = load_variable("total_precipitation", year, month)
         varC.data = np.cbrt(varC.data)
         return varC
     fname = "%s/ERA5/monthly/reanalysis/%04d/%s.nc" % (
@@ -48,6 +49,7 @@ def load_variable(variable, year, month):
     varC.coord("latitude").coord_system = cs_ERA5
     varC.coord("longitude").coord_system = cs_ERA5
     return varC
+
 
 def load_climatology(variable, month):
     fname = "%s/ERA5/monthly/climatology/%s_%02d.nc" % (
@@ -77,7 +79,6 @@ def load_sd_climatology(variable, month):
     c.coord("latitude").coord_system = cs_ERA5
     c.coord("longitude").coord_system = cs_ERA5
     return c
-
 
 
 def load_cList(year, month):
@@ -145,6 +146,6 @@ def load_cList(year, month):
         prate = prate.extract(iris.Constraint(expver=1))
     prate.coord("latitude").coord_system = cs_ERA5
     prate.coord("longitude").coord_system = cs_ERA5
-    
+
     res.append(prate)
     return res

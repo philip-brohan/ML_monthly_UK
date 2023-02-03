@@ -88,12 +88,15 @@ def plotStationLocationsAxes(
 
     return
 
+
 # Plot observations
 def plotObsAxes(
     ax_map,
-    slons,slats,observations,
+    slons,
+    slats,
+    observations,
     lMask=None,
-    cMap='RdBu',
+    cMap="RdBu",
     ssize=100,
     vmax=None,
     vmin=None,
@@ -141,7 +144,7 @@ def plotObsAxes(
 
     # Add the stations
     for s_idx in range(len(observations)):
-        colour = max(0.01,min(0.999,(observations[s_idx]-vmin)/(vmax-vmin)))
+        colour = max(0.01, min(0.999, (observations[s_idx] - vmin) / (vmax - vmin)))
         ax_map.add_patch(
             Circle(
                 (slons[s_idx], slats[s_idx]),
@@ -153,8 +156,16 @@ def plotObsAxes(
 
     return
 
+
 def plotObsScatterAxes(
-    ax, var_in, var_out, vMax=None, vMin=None, xlabel="", ylabel="",psize=1.0,
+    ax,
+    var_in,
+    var_out,
+    vMax=None,
+    vMin=None,
+    xlabel="",
+    ylabel="",
+    psize=1.0,
 ):
     if vMax is None:
         vMax = max(np.max(var_in.data), np.max(var_out.data))
@@ -166,8 +177,8 @@ def plotObsScatterAxes(
         x=var_in,
         y=var_out,
         s=psize,
-        c='blue',
-        marker='.',
+        c="blue",
+        marker=".",
     )
     ax.add_line(
         Line2D(

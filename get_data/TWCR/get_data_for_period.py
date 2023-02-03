@@ -24,4 +24,10 @@ for year in range(args.startyear, args.endyear + 1):
             year,
         )
         if not os.path.isfile(opfile):
-            print(("./get_year_of_monthlies.py --year=%d --variable=%s") % (year, var,))
+            print(
+                ("./get_year_of_monthlies.py --year=%d --variable=%s")
+                % (
+                    year,
+                    var,
+                )
+            )

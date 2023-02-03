@@ -107,7 +107,14 @@ def plotFieldAxes(
     )
     # Plot the field
     T_img = ax_map.pcolorfast(
-        lons, lats, field.data, cmap=cMap, vmin=vMin, vmax=vMax, alpha=1.0, zorder=10,
+        lons,
+        lats,
+        field.data,
+        cmap=cMap,
+        vmin=vMin,
+        vmax=vMax,
+        alpha=1.0,
+        zorder=10,
     )
 
     # Overlay the land mask
@@ -157,13 +164,26 @@ def plotField(
     matplotlib.rc("font", **font)
     axb = fig.add_axes([0, 0, 1, 1])
     axb.add_patch(
-        Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+        Rectangle(
+            (0, 1),
+            1,
+            1,
+            facecolor=(0.6, 0.6, 0.6, 1),
+            fill=True,
+            zorder=1,
+        )
     )
 
     # Axes for the map
     ax_map = fig.add_axes([0.025, 0.125, 0.95, 0.85])
     T_img = plotFieldAxes(
-        ax_map, field, vMax=vMax, vMin=vMin, lMask=lMask, cMap=cMap, plotCube=plotCube,
+        ax_map,
+        field,
+        vMax=vMax,
+        vMin=vMin,
+        lMask=lMask,
+        cMap=cMap,
+        plotCube=plotCube,
     )
 
     # ColourBar

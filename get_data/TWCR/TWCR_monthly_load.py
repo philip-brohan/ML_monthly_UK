@@ -26,6 +26,7 @@ lm_TWCR.data = np.ma.masked_where(lm_TWCR.data > 0.0, lm_TWCR.data, copy=False)
 lm_TWCR.data.data[np.where(lm_TWCR.data.mask == True)] = 0
 lm_TWCR.data.data[np.where(lm_TWCR.data.mask == False)] = 1
 
+
 def load_quad(year, month, member):
     res = []
     for var in ("PRMSL", "TMPS", "TMP2m", "PRATE"):
@@ -82,8 +83,8 @@ def load_monthly_ensemble(variable, year, month):
 
 
 def load_climatology(variable, month):
-    if variable=='SST':
-        ts = load_climatology('TMPS',month)
+    if variable == "SST":
+        ts = load_climatology("TMPS", month)
         return ts
     fname = "%s/20CR/version_3/monthly/climatology/%s_%02d.nc" % (
         os.getenv("SCRATCH"),
@@ -96,8 +97,8 @@ def load_climatology(variable, month):
 
 
 def load_sd_climatology(variable, month):
-    if variable=='SST':
-        ts = load_sd_climatology('TMPS',month)
+    if variable == "SST":
+        ts = load_sd_climatology("TMPS", month)
         return ts
     fname = "%s/20CR/version_3/monthly/sd_climatology/%s_%02d.nc" % (
         os.getenv("SCRATCH"),

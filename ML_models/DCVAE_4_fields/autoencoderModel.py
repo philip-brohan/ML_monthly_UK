@@ -172,7 +172,9 @@ def train_step(model, x, optimizer):
     update the model's parameters.
     """
     with tf.GradientTape() as tape:
-        (rmse_PRMSL, rmse_SST, rmse_T2M,  rmse_PRATE,logpz, logqz_x) = compute_loss(model, x)
+        (rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE, logpz, logqz_x) = compute_loss(
+            model, x
+        )
         metric = tf.reduce_mean(
             rmse_PRMSL + rmse_SST + rmse_T2M + rmse_PRATE - logpz + logqz_x
         )

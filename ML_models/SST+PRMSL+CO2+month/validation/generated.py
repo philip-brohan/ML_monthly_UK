@@ -46,7 +46,11 @@ parser.add_argument(
     default=1969,
 )
 parser.add_argument(
-    "--month", help="Month (for insolation)", type=int, required=False, default=3,
+    "--month",
+    help="Month (for insolation)",
+    type=int,
+    required=False,
+    default=3,
 )
 args = parser.parse_args()
 
@@ -58,7 +62,10 @@ from makeDataset import normalise_co2
 from makeDataset import normalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -89,7 +96,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 # Top left - PRMSL
@@ -176,7 +190,12 @@ dmax -= 273.15 - 2
 ax_tmp2m = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2, 0.95 / 2, 0.85 / 2])
 ax_tmp2m.set_axis_off()
 TMP2m_img = plotFieldAxes(
-    ax_tmp2m, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_tmp2m,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_tmp2m_cb = fig.add_axes([0.125 / 2 + 0.5, 0.05 / 2, 0.75 / 2, 0.05 / 2])
 ax_tmp2m_cb.set_axis_off()

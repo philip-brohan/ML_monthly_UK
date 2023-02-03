@@ -49,7 +49,10 @@ from makeDataset import unnormalise_co2
 from makeDataset import unnormalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -78,13 +81,24 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 # Top row - CO2 and month diagnostics
 
 axb.text(
-    0.1, 0.96, "CO2", fontsize=30, zorder=10,
+    0.1,
+    0.96,
+    "CO2",
+    fontsize=30,
+    zorder=10,
 )
 ax_co2 = fig.add_axes([0.15, 0.955, 0.29, 0.028], xlim=(0, 15), ylim=(0, 1))
 ax_co2.bar(
@@ -97,7 +111,11 @@ ax_co2.bar(
 ax_co2.set_yticks(())
 
 axb.text(
-    0.5, 0.96, "Month", fontsize=30, zorder=10,
+    0.5,
+    0.96,
+    "Month",
+    fontsize=30,
+    zorder=10,
 )
 ax_mnth = fig.add_axes([0.57, 0.955, 0.29, 0.028], xlim=(0, 13), ylim=(0, 1))
 ax_mnth.bar(
@@ -194,7 +212,12 @@ dmax -= 273.15 - 2
 ax_tmp2m = fig.add_axes([0.025 / 2 + 0.5, 0.11 / 2, 0.95 / 2, 0.78 / 2])
 ax_tmp2m.set_axis_off()
 TMP2m_img = plotFieldAxes(
-    ax_tmp2m, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_tmp2m,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_tmp2m_cb = fig.add_axes([0.125 / 2 + 0.5, 0.04 / 2, 0.75 / 2, 0.04 / 2])
 ax_tmp2m_cb.set_axis_off()

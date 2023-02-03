@@ -27,10 +27,16 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=99)
 parser.add_argument(
-    "--year", help="Year to fit to", type=int, required=True,
+    "--year",
+    help="Year to fit to",
+    type=int,
+    required=True,
 )
 parser.add_argument(
-    "--month", help="Month to fit to", type=int, required=True,
+    "--month",
+    help="Month to fit to",
+    type=int,
+    required=True,
 )
 parser.add_argument(
     "--member", help="Member to fit to", type=int, required=False, default=1
@@ -48,7 +54,11 @@ parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
 parser.add_argument(
-    "--iter", help="No. of iterations", type=int, required=False, default=100,
+    "--iter",
+    help="No. of iterations",
+    type=int,
+    required=False,
+    default=100,
 )
 args = parser.parse_args()
 
@@ -82,7 +92,10 @@ for constraint in ["PRMSL", "PRATE", "TMP2m", "SST"]:
 opfile += "/%04d/%04d/%02d/%02d.nc" % (args.epoch, args.year, args.month, args.member)
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -100,7 +113,9 @@ def generateFit():
     generated = autoencoder.generate(latent)
     if args.PRMSL:
         result = result + tf.reduce_mean(
-            tf.keras.metrics.mean_squared_error(generated[:, :, :, 0], target[:, :, :, 0])
+            tf.keras.metrics.mean_squared_error(
+                generated[:, :, :, 0], target[:, :, :, 0]
+            )
         )
     if args.SST:
         result = result + tf.reduce_mean(

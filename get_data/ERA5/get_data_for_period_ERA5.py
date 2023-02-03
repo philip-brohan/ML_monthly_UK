@@ -25,5 +25,8 @@ for year in range(args.startyear, args.endyear + 1):
         if not os.path.isfile(opfile):
             print(
                 ("./get_year_of_monthlies_from_ERA5.py --year=%d --variable=%s")
-                % (year, var,)
+                % (
+                    year,
+                    var,
+                )
             )

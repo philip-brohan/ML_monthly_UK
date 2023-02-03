@@ -91,7 +91,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 lMask = get_land_mask(plot_cube(resolution=0.1))
@@ -107,7 +114,13 @@ dmax /= 100
 ax_prmsl = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
-    ax_prmsl, var, vMax=dmax, vMin=dmin, lMask=lMask, cMap=cmocean.cm.diff, plotCube=pc,
+    ax_prmsl,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lMask,
+    cMap=cmocean.cm.diff,
+    plotCube=pc,
 )
 ax_prmsl_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.75, 0.75 / 3, 0.05 / 4])
 ax_prmsl_cb.set_axis_off()
@@ -162,7 +175,13 @@ dmax *= 1000
 ax_prate = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
-    ax_prate, var, vMax=dmax, vMin=dmin, lMask=lMask, cMap=cmocean.cm.rain, plotCube=pc,
+    ax_prate,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lMask,
+    cMap=cmocean.cm.rain,
+    plotCube=pc,
 )
 ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
 ax_prate_cb.set_axis_off()

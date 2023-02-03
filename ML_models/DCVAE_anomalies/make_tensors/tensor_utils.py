@@ -62,37 +62,62 @@ lm_plot = lm_plot.regrid(sCube, iris.analysis.Linear())
 
 # Load the data for 1 month, convert to 20CR equivalent units, and
 #  regrid to the standard cube.
-def load_cList(year, month, member=1):
+def load_cList(year, month, member=1, omit=[]):
     res = []
     # PRMSL
-    prmsl = TWCR_monthly_load.load_monthly_member("PRMSL", year, month, member)
-    clim = TWCR_monthly_load.load_climatology("PRMSL", month)
-    prmsl.data -= clim.data
-    prmsl = prmsl.regrid(sCube, iris.analysis.Linear())
+    try:
+        prmsl = TWCR_monthly_load.load_monthly_member("PRMSL", year, month, member)
+        clim = TWCR_monthly_load.load_climatology("PRMSL", month)
+        prmsl.data -= clim.data
+        prmsl = prmsl.regrid(sCube, iris.analysis.Linear())
+    except Exception:
+        if "PRMSL" in omit:
+            prmsl = sCube.copy()
+        else:
+            raise
     res.append(prmsl)
 
     # SST
-    sst = TWCR_monthly_load.load_monthly_member("SST", year, month, member)
-    clim = TWCR_monthly_load.load_climatology("SST", month)
-    sst.data -= clim.data
-    sst = sst.regrid(sCube, iris.analysis.Linear())
+    try:
+        sst = TWCR_monthly_load.load_monthly_member("SST", year, month, member)
+        clim = TWCR_monthly_load.load_climatology("SST", month)
+        sst.data -= clim.data
+        sst = sst.regrid(sCube, iris.analysis.Linear())
+    except Exception:
+        if "SST" in omit:
+            sst = sCube.copy()
+        else:
+            raise
     res.append(sst)
 
     # T2m
-    t2m = HUKG_monthly_load.load_variable("monthly_meantemp", year, month)
-    clim = HUKG_monthly_load.load_climatology("monthly_meantemp", month)
-    t2m.data -= clim.data
-    t2m = t2m.regrid(sCube, iris.analysis.Nearest())
+    try:
+        t2m = HUKG_monthly_load.load_variable("monthly_meantemp", year, month)
+        clim = HUKG_monthly_load.load_climatology("monthly_meantemp", month)
+        t2m.data -= clim.data
+        t2m = t2m.regrid(sCube, iris.analysis.Nearest())
+    except IOError:
+        if "monthly_meantemp" in omit:
+            t2m = sCube.copy()
+        else:
+            raise
     res.append(t2m)
 
     # PRATE
-    prate = HUKG_monthly_load.load_variable("monthly_rainfall", year, month)
-    clim = HUKG_monthly_load.load_climatology(
-        "monthly_rainfall",
-        month,
-    )
-    prate.data -= clim.data
-    prate = prate.regrid(sCube, iris.analysis.Nearest())
+    try:
+        prate = HUKG_monthly_load.load_variable("monthly_rainfall", year, month)
+        clim = HUKG_monthly_load.load_climatology(
+            "monthly_rainfall",
+            month,
+        )
+        prate.data -= clim.data
+        prate = prate.regrid(sCube, iris.analysis.Nearest())
+    except IOError:
+        if "monthly_rainfall" in omit:
+            prate = sCube.copy()
+            prate.data[np.where(dm_HUKG.data.mask == False)] += 0.01
+        else:
+            raise
     res.append(prate)
 
     return res
@@ -170,7 +195,7 @@ def cList_to_tensor(cL, extrapolate=False):
     if extrapolate:
         d4 = extrapolate_missing(d4, nsteps=100, scale=1.0)
     ic = np.stack((d1.data, d2.data, d3.data, d4.data), axis=2)
-    ict = tf.convert_to_tensor(ic.data, np.float32)
+    ict = tf.convert_to_tensor(ic, np.float32)
     return ict
 
 

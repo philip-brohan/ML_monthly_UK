@@ -143,7 +143,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 lMask = get_land_mask(plot_cube(resolution=0.1))
@@ -153,7 +160,14 @@ if args.PRMSL:
     ax_back = fig.add_axes([0.00, 0.75, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = pc
 var.data = np.squeeze(ict[:, :, 0].numpy())
@@ -164,7 +178,13 @@ dmax /= 100
 ax_prmsl = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
-    ax_prmsl, var, vMax=dmax, vMin=dmin, lMask=lMask, cMap=cmocean.cm.diff, plotCube=pc,
+    ax_prmsl,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lMask,
+    cMap=cmocean.cm.diff,
+    plotCube=pc,
 )
 ax_prmsl_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.75, 0.75 / 3, 0.05 / 4])
 ax_prmsl_cb.set_axis_off()
@@ -214,7 +234,14 @@ if args.PRATE:
     ax_back = fig.add_axes([0.00, 0.5, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = pc
 var.data = np.squeeze(ict[:, :, 3].numpy())
@@ -225,7 +252,13 @@ dmax *= 1000
 ax_prate = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
-    ax_prate, var, vMax=dmax, vMin=dmin, lMask=lMask, cMap=cmocean.cm.rain, plotCube=pc,
+    ax_prate,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lMask,
+    cMap=cmocean.cm.rain,
+    plotCube=pc,
 )
 ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
 ax_prate_cb.set_axis_off()
@@ -275,7 +308,14 @@ if args.TMP2m:
     ax_back = fig.add_axes([0.00, 0.25, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = pc
 var.data = np.squeeze(ict[:, :, 2].numpy())
@@ -338,7 +378,14 @@ if args.SST:
     ax_back = fig.add_axes([0.00, 0.00, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = pc
 var.data = np.squeeze(ict[:, :, 1].numpy())

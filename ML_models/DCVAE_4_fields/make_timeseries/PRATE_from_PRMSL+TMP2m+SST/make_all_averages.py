@@ -25,5 +25,9 @@ for year in range(1850, 2015):
             continue
         cmd = (
             "./make_averages_for_month.py --year=%04d " + "--month=%d --epoch=%d"
-        ) % (year, month, epoch,)
+        ) % (
+            year,
+            month,
+            epoch,
+        )
         print(cmd)

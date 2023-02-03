@@ -135,7 +135,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 lMask = get_land_mask(plot_cube(resolution=0.1))
@@ -158,7 +165,13 @@ dmax = (max(np.max(Ph.data), np.max(Pe.data))) * 1.05
 ax_prate = fig.add_axes([0.025 / 3, 0.125 / 2 + 0.5, 0.95 / 3, 0.85 / 2])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
-    ax_prate, Ph, vMax=dmax, vMin=dmin, lMask=lMask, cMap=cmocean.cm.rain, plotCube=pc,
+    ax_prate,
+    Ph,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lMask,
+    cMap=cmocean.cm.rain,
+    plotCube=pc,
 )
 ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 2 + 0.5, 0.75 / 3, 0.05 / 2])
 ax_prate_cb.set_axis_off()
@@ -212,7 +225,13 @@ dmax = max(np.max(Th.data), np.max(Te.data)) + 1
 ax_t2m = fig.add_axes([0.025 / 3, 0.125 / 2, 0.95 / 3, 0.85 / 2])
 ax_t2m.set_axis_off()
 T2m_img = plotFieldAxes(
-    ax_t2m, Th, vMax=dmax, vMin=dmin, lMask=lMask, cMap=cmocean.cm.balance, plotCube=pc,
+    ax_t2m,
+    Th,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lMask,
+    cMap=cmocean.cm.balance,
+    plotCube=pc,
 )
 ax_t2m_cb = fig.add_axes([0.125 / 3, 0.05 / 2, 0.75 / 3, 0.05 / 2])
 ax_t2m_cb.set_axis_off()

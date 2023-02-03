@@ -82,7 +82,10 @@ nco2 = normalise_co2("%04d" % args.year)
 nmth = normalise_month("0000-%02d" % args.month)
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.E_epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.E_epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -91,7 +94,10 @@ load_status.assert_existing_objects_matched()
 t_input = (
     tf.reshape(ict, [1, 1440, 896, 4]),
     tf.reshape(tf.convert_to_tensor(nco2, np.float32), [1, 14]),
-    tf.reshape(tf.convert_to_tensor(nmth, np.float32), [1, 12],),
+    tf.reshape(
+        tf.convert_to_tensor(nmth, np.float32),
+        [1, 12],
+    ),
 )
 x = autoencoder.encode(t_input)
 
@@ -101,7 +107,10 @@ sys.path.append("%s/.." % os.path.dirname(__file__))
 from generatorModel import DCG
 
 generator = DCG()
-weights_dir = ("%s/models_ERA5_generator/Epoch_%04d") % (LSCRATCH, args.G_epoch,)
+weights_dir = ("%s/models_ERA5_generator/Epoch_%04d") % (
+    LSCRATCH,
+    args.G_epoch,
+)
 load_status = generator.load_weights("%s/ckpt" % weights_dir)
 load_status.assert_existing_objects_matched()
 
@@ -130,7 +139,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 # Top row - mostly blank, don't need scalar diagnostics here

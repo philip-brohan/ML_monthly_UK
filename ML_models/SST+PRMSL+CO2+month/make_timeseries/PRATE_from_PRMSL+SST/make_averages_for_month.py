@@ -46,7 +46,13 @@ def load_fitted(year, month, member, epoch):
     fn = (
         "%s/ML_monthly_UK/DCVAE+scalars/fitted/constraints_PRMSL_SST/"
         + "%04d/%04d/%02d/%02d.nc"
-    ) % (os.getenv("SCRATCH"), epoch, year, month, member,)
+    ) % (
+        os.getenv("SCRATCH"),
+        epoch,
+        year,
+        month,
+        member,
+    )
     if not os.path.exists(fn):
         raise Exception("Missing data file %s" % fn)
     fitted = iris.load(fn)
@@ -61,8 +67,14 @@ for member in [1, 12, 24, 36, 48, 60, 72]:
 
 # Package-up the averages
 res = {
-    "T2m": {"Orig": [], "Fit": [],},
-    "PRATE": {"Orig": [], "Fit": [],},
+    "T2m": {
+        "Orig": [],
+        "Fit": [],
+    },
+    "PRATE": {
+        "Orig": [],
+        "Fit": [],
+    },
 }
 
 seconds_in_month = 86400 * monthrange(args.year, args.month)[1]
@@ -74,7 +86,12 @@ for mi in range(len(ft)):
 
 opfile = (
     "%s/ML_monthly_UK/DCVAE+scalars/UK_averages/PRMSL_SST/" + "%04d/%04d/%02d.pkl"
-) % (os.getenv("SCRATCH"), args.epoch, args.year, args.month,)
+) % (
+    os.getenv("SCRATCH"),
+    args.epoch,
+    args.year,
+    args.month,
+)
 
 if not os.path.isdir(os.path.dirname(opfile)):
     os.makedirs(os.path.dirname(opfile))

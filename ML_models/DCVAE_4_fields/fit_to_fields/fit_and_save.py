@@ -22,10 +22,16 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=100)
 parser.add_argument(
-    "--year", help="Year to fit to", type=int, required=True,
+    "--year",
+    help="Year to fit to",
+    type=int,
+    required=True,
 )
 parser.add_argument(
-    "--month", help="Month to fit to", type=int, required=True,
+    "--month",
+    help="Month to fit to",
+    type=int,
+    required=True,
 )
 parser.add_argument(
     "--member", help="Member to fit to", type=int, required=False, default=1

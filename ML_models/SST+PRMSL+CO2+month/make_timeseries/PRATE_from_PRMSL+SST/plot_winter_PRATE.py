@@ -29,7 +29,12 @@ for year in range(args.startyear, args.endyear + 1):
         mfn = (
             "%s/ML_monthly_UK/DCVAE+scalars/UK_averages/PRMSL_SST/"
             + "%04d/%04d/%02d.pkl"
-        ) % (os.getenv("SCRATCH"), args.epoch, year, month,)
+        ) % (
+            os.getenv("SCRATCH"),
+            args.epoch,
+            year,
+            month,
+        )
         if not os.path.exists(mfn):
             raise Exception("Missing data file %s" % mfn)
         with open(mfn, "rb") as infile:
@@ -69,7 +74,14 @@ font = {"family": "sans-serif", "sans-serif": "Arial", "weight": "normal", "size
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(1.0, 1.0, 1.0, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(1.0, 1.0, 1.0, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 ax = fig.add_axes(

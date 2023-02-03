@@ -164,7 +164,8 @@ class DCVAE(tf.keras.Model):
 def log_normal_pdf(sample, mean, logvar, raxis=1):
     log2pi = tf.math.log(2.0 * np.pi)
     return tf.reduce_sum(
-        -0.5 * ((sample - mean) ** 2.0 * tf.exp(-logvar) + logvar + log2pi), axis=raxis,
+        -0.5 * ((sample - mean) ** 2.0 * tf.exp(-logvar) + logvar + log2pi),
+        axis=raxis,
     )
 
 

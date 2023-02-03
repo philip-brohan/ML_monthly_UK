@@ -85,8 +85,14 @@ for member in [1, 12, 24, 36, 48, 60, 72]:
 
 # Package-up the averages
 res = {
-    "T2m": {"Orig": [], "Fit": [],},
-    "PRATE": {"Orig": [], "Fit": [],},
+    "T2m": {
+        "Orig": [],
+        "Fit": [],
+    },
+    "PRATE": {
+        "Orig": [],
+        "Fit": [],
+    },
 }
 
 seconds_in_month = 86400 * monthrange(args.year, args.month)[1]

@@ -68,7 +68,10 @@ sys.path.append("%s/.." % os.path.dirname(__file__))
 from autoencoderModel import DCVAE
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -98,7 +101,14 @@ matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.set_axis_off()
 axb.add_patch(
-    Rectangle((0, 0), 1, 1, facecolor=(1.0, 1.0, 1.0, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 0),
+        1,
+        1,
+        facecolor=(1.0, 1.0, 1.0, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 
@@ -190,7 +200,7 @@ cb = fig.colorbar(
 
 # 2nd centre - PRATE encoded
 var.data = np.squeeze(encoded[0, :, :, 3].numpy())
-var.data = np.ma.masked_where(ic_target[:,:,3].numpy()== 0, var.data, copy=False)
+var.data = np.ma.masked_where(ic_target[:, :, 3].numpy() == 0, var.data, copy=False)
 var = unnormalise(var, "PRATE") * 1000
 ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate_e.set_axis_off()
@@ -256,7 +266,7 @@ cb = fig.colorbar(
 # 3rd centre - T2m encoded
 var = sCube.copy()
 var.data = np.squeeze(encoded[0, :, :, 2].numpy())
-var.data = np.ma.masked_where(ic_target[:,:,2].numpy() == 0, var.data, copy=False)
+var.data = np.ma.masked_where(ic_target[:, :, 2].numpy() == 0, var.data, copy=False)
 var = unnormalise(var, "TMP2m") - 273.15
 ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
 ax_t2m_e.set_axis_off()
@@ -292,7 +302,7 @@ plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 # Bottom left - SST original
 var.data = np.squeeze(ic_target[:, :, 1].numpy())
-var.data = np.ma.masked_where(var.data==0, var.data, copy=False)
+var.data = np.ma.masked_where(var.data == 0, var.data, copy=False)
 var = unnormalise(var, "TMPS") - 273.15
 (dmin, dmax) = get_range("TMPS", args.month, var)
 dmin -= 273.15 + 2
@@ -316,7 +326,7 @@ cb = fig.colorbar(
 
 # 2nd centre - SST encoded
 var.data = encoded.numpy()[0, :, :, 1]
-var.data = np.ma.masked_where(ic_target[:,:,1].numpy() == 0, var.data, copy=False)
+var.data = np.ma.masked_where(ic_target[:, :, 1].numpy() == 0, var.data, copy=False)
 var = unnormalise(var, "TMPS") - 273.15
 ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
 ax_sst_e.set_axis_off()
@@ -337,10 +347,10 @@ cb = fig.colorbar(
 
 # 2nd right - SST scatter
 varx.data = np.squeeze(ic_target[:, :, 1].numpy())
-varx.data = np.ma.masked_where(varx.data==0, varx.data, copy=False)
+varx.data = np.ma.masked_where(varx.data == 0, varx.data, copy=False)
 varx = unnormalise(varx, "TMPS") - 273.15
 vary.data = np.squeeze(encoded[0, :, :, 1].numpy())
-vary.data = np.ma.masked_where(varx.data==0, vary.data, copy=False)
+vary.data = np.ma.masked_where(varx.data == 0, vary.data, copy=False)
 vary = unnormalise(vary, "TMPS") - 273.15
 ax_sst_s = fig.add_axes(
     [0.025 / 3 + 2 / 3 + 0.06, 0.125 / 4, 0.95 / 3 - 0.06, 0.85 / 4]

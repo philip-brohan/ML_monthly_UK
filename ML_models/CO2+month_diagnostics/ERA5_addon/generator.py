@@ -77,7 +77,10 @@ def save_state(
     PRATE_train,
     PRATE_test,
 ):
-    save_dir = ("%s/models_ERA5_generator/Epoch_%04d") % (LSCRATCH, epoch,)
+    save_dir = ("%s/models_ERA5_generator/Epoch_%04d") % (
+        LSCRATCH,
+        epoch,
+    )
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     model.save_weights("%s/ckpt" % save_dir)
@@ -138,7 +141,10 @@ with strategy.scope():
     optimizer = tf.keras.optimizers.Adam(1e-4)
     # If we are doing a restart, load the weights
     if args.epoch > 0:
-        weights_dir = ("%s/models_ERA5_generator/Epoch_%04d") % (LSCRATCH, args.epoch,)
+        weights_dir = ("%s/models_ERA5_generator/Epoch_%04d") % (
+            LSCRATCH,
+            args.epoch,
+        )
         load_status = generator.load_weights("%s/ckpt" % weights_dir)
         # Check the load worked
         load_status.assert_existing_objects_matched()
@@ -162,9 +168,12 @@ with strategy.scope():
         ) = test_stats(generator, validationData)
 
         # Measure performance on test data
-        (test_rmse_PRMSL, test_rmse_SST, test_rmse_T2M, test_rmse_PRATE,) = test_stats(
-            generator, testData
-        )
+        (
+            test_rmse_PRMSL,
+            test_rmse_SST,
+            test_rmse_T2M,
+            test_rmse_PRATE,
+        ) = test_stats(generator, testData)
 
         # Save model state and validation statistics
         save_state(

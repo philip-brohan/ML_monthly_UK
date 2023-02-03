@@ -71,7 +71,10 @@ nco2 = normalise_co2("%04d" % args.year)
 nmth = normalise_month("0000-%02d" % args.month)
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -80,7 +83,10 @@ load_status.assert_existing_objects_matched()
 t_input = (
     tf.reshape(ict, [1, 1440, 896, 4]),
     tf.reshape(tf.convert_to_tensor(nco2, np.float32), [1, 14]),
-    tf.reshape(tf.convert_to_tensor(nmth, np.float32), [1, 12],),
+    tf.reshape(
+        tf.convert_to_tensor(nmth, np.float32),
+        [1, 12],
+    ),
 )
 
 encoded = autoencoder.call(t_input)
@@ -106,14 +112,25 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 # Top row - date, CO2 and month diagnostics
 
 axb.text(0.03, 0.97, "%04d/%02d" % (args.year, args.month), fontsize=30, zorder=10)
 axb.text(
-    0.16, 0.97, "CO2", fontsize=30, zorder=10,
+    0.16,
+    0.97,
+    "CO2",
+    fontsize=30,
+    zorder=10,
 )
 ax_co2 = fig.add_axes([0.24, 0.965, 0.335, 0.028], xlim=(0, 15), ylim=(0, 1))
 ax_co2.bar(
@@ -134,7 +151,11 @@ ax_co2.set_yticks(())
 ax_co2.set_xticks(range(1, 15))
 
 axb.text(
-    0.61, 0.97, "Month", fontsize=30, zorder=10,
+    0.61,
+    0.97,
+    "Month",
+    fontsize=30,
+    zorder=10,
 )
 ax_mnth = fig.add_axes([0.7, 0.965, 0.29, 0.028], xlim=(0, 13), ylim=(0, 1))
 ax_mnth.bar(

@@ -73,7 +73,7 @@ def loadHistory(LSC):
     hts = {}
     n_epochs = len(history["Train_loss"])
     if args.max_epoch is not None:
-        n_epochs = min(args.max_epoch,n_epochs)
+        n_epochs = min(args.max_epoch, n_epochs)
     hts["epoch"] = list(range(n_epochs))[1:]
     for key in history:
         hts[key] = [math.log(abs(t)) for t in history[key][1:n_epochs]]
@@ -119,7 +119,14 @@ matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.set_axis_off()
 axb.add_patch(
-    Rectangle((0, 0), 1, 1, facecolor=(0.95, 0.95, 0.95, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 0),
+        1,
+        1,
+        facecolor=(0.95, 0.95, 0.95, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 

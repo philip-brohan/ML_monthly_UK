@@ -86,7 +86,13 @@ for member in range(1, 81):
 def load_fitted(year, month, member, epoch):
     fn = (
         "%s/ML_monthly_UK/fitted/constraints_PRMSL_TMP2m_SST/%04d/%04d/%02d/%02d.nc"
-        % (os.getenv("SCRATCH"), epoch, year, month, member,)
+        % (
+            os.getenv("SCRATCH"),
+            epoch,
+            year,
+            month,
+            member,
+        )
     )
     if not os.path.exists(fn):
         raise Exception("Missing data file %s" % fn)
@@ -105,8 +111,16 @@ for member in range(1, 81):
 
 # Package-up the averages
 res = {
-    "T2m": {"HUKG": -999, "20CR": [], "Fit": [],},
-    "PRATE": {"HUKG": -999, "20CR": [], "Fit": [],},
+    "T2m": {
+        "HUKG": -999,
+        "20CR": [],
+        "Fit": [],
+    },
+    "PRATE": {
+        "HUKG": -999,
+        "20CR": [],
+        "Fit": [],
+    },
 }
 if t2m_huk is not None:
     res["T2m"]["HUKG"] = np.mean(t2m_huk.data)

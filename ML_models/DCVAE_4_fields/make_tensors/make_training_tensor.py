@@ -60,8 +60,8 @@ if not os.path.isdir(os.path.dirname(args.opfile)):
 
 # Load and standardise data
 pc = plot_cube()
-qd = load_quad(args.year,args.month,args.member)
-ict = quad_to_tensor(qd,pc)
+qd = load_quad(args.year, args.month, args.member)
+ict = quad_to_tensor(qd, pc)
 
 # Write to file
 sict = tf.io.serialize_tensor(ict)

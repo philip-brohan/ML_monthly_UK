@@ -73,7 +73,10 @@ with strategy.scope():
     optimizer = tf.keras.optimizers.Adam(1e-3)
     # If we are doing a restart, load the weights
     if args.epoch > 1:
-        weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+        weights_dir = ("%s/models/Epoch_%04d") % (
+            LSCRATCH,
+            args.epoch,
+        )
         load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
         load_status.assert_existing_objects_matched()
 
@@ -158,7 +161,10 @@ with strategy.scope():
             test_batch_count += 1
 
         # Save model state and current metrics
-        save_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, epoch,)
+        save_dir = ("%s/models/Epoch_%04d") % (
+            LSCRATCH,
+            epoch,
+        )
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
         autoencoder.save_weights("%s/ckpt" % save_dir)

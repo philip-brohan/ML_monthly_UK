@@ -31,7 +31,11 @@ parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
 parser.add_argument(
-    "--iter", help="No. of iterations", type=int, required=False, default=100,
+    "--iter",
+    help="No. of iterations",
+    type=int,
+    required=False,
+    default=100,
 )
 args = parser.parse_args()
 

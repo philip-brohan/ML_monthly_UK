@@ -94,7 +94,10 @@ for fn in getPairedFileNames(
     dts.append(dtp)
 
 generator = DCG()
-weights_dir = ("%s/models_ERA5_generator/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models_ERA5_generator/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = generator.load_weights("%s/ckpt" % weights_dir)
 load_status.assert_existing_objects_matched()
 
@@ -196,7 +199,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 0), 1, 1, facecolor=(0.95, 0.95, 0.95, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 0),
+        1,
+        1,
+        facecolor=(0.95, 0.95, 0.95, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 

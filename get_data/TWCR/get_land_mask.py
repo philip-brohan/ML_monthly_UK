@@ -29,7 +29,10 @@ def local_name():
 
 
 if not os.path.isfile(local_name()):
-    cmd = "curl -o %s %s" % (local_name(), remote_name(),)
+    cmd = "curl -o %s %s" % (
+        local_name(),
+        remote_name(),
+    )
     wg_retvalue = subprocess.call(cmd, shell=True)
     if wg_retvalue != 0:
         raise Exception("Failed to retrieve land mask")

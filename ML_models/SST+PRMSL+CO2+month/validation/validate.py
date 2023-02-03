@@ -67,7 +67,10 @@ from makeDataset import normalise_co2
 from makeDataset import normalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -77,11 +80,16 @@ encoded = autoencoder.call(
     (
         tf.reshape(ict, [1, 1440, 896, 4]),
         tf.reshape(
-            tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32), [1,]
+            tf.convert_to_tensor(normalise_co2("%04d" % args.year), np.float32),
+            [
+                1,
+            ],
         ),
         tf.reshape(
             tf.convert_to_tensor(normalise_month("0000-%02d" % args.month), np.float32),
-            [1,],
+            [
+                1,
+            ],
         ),
     )
 )
@@ -107,7 +115,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 

@@ -47,7 +47,11 @@ parser.add_argument(
     "--PRATE", help="Fit to PRATE?", dest="PRATE", default=False, action="store_true"
 )
 parser.add_argument(
-    "--iter", help="No. of iterations", type=int, required=False, default=1000,
+    "--iter",
+    help="No. of iterations",
+    type=int,
+    required=False,
+    default=1000,
 )
 args = parser.parse_args()
 
@@ -80,7 +84,10 @@ from makeDataset import normalise_co2
 from makeDataset import normalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -175,7 +182,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 1), 1, 1, facecolor=(0.6, 0.6, 0.6, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 1),
+        1,
+        1,
+        facecolor=(0.6, 0.6, 0.6, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 
@@ -184,7 +198,14 @@ if args.PRMSL:
     ax_back = fig.add_axes([0.00, 0.75, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 0].numpy())
@@ -195,7 +216,12 @@ dmax /= 100
 ax_prmsl = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
-    ax_prmsl, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.diff,
+    ax_prmsl,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.diff,
 )
 ax_prmsl_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.75, 0.75 / 3, 0.05 / 4])
 ax_prmsl_cb.set_axis_off()
@@ -209,7 +235,12 @@ var = unnormalise(var, "PRMSL") / 100
 ax_prmsl_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.75, 0.95 / 3, 0.85 / 4])
 ax_prmsl_e.set_axis_off()
 PRMSL_e_img = plotFieldAxes(
-    ax_prmsl_e, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.diff,
+    ax_prmsl_e,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.diff,
 )
 ax_prmsl_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.75, 0.75 / 3, 0.05 / 4])
 ax_prmsl_e_cb.set_axis_off()
@@ -239,7 +270,14 @@ if args.PRATE:
     ax_back = fig.add_axes([0.00, 0.5, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 3].numpy())
@@ -251,7 +289,12 @@ dmax *= 1000
 ax_prate = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
-    ax_prate, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.rain,
+    ax_prate,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.rain,
 )
 ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
 ax_prate_cb.set_axis_off()
@@ -266,7 +309,12 @@ var = unnormalise(var, "PRATE") * 1000
 ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_prate_e.set_axis_off()
 PRATE_e_img = plotFieldAxes(
-    ax_prate_e, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.rain,
+    ax_prate_e,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.rain,
 )
 ax_prate_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
 ax_prate_e_cb.set_axis_off()
@@ -298,7 +346,14 @@ if args.TMP2m:
     ax_back = fig.add_axes([0.00, 0.25, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 2].numpy())
@@ -310,7 +365,12 @@ dmax -= 273.15 - 2
 ax_t2m = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
 ax_t2m.set_axis_off()
 T2m_img = plotFieldAxes(
-    ax_t2m, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_t2m,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_t2m_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.25, 0.75 / 3, 0.05 / 4])
 ax_t2m_cb.set_axis_off()
@@ -325,7 +385,12 @@ var = unnormalise(var, "TMP2m") - 273.15
 ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.25, 0.95 / 3, 0.85 / 4])
 ax_t2m_e.set_axis_off()
 T2m_e_img = plotFieldAxes(
-    ax_t2m_e, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_t2m_e,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_t2m_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.25, 0.75 / 3, 0.05 / 4])
 ax_t2m_e_cb.set_axis_off()
@@ -353,7 +418,14 @@ if args.SST:
     ax_back = fig.add_axes([0.00, 0.00, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 1].numpy())
@@ -365,7 +437,12 @@ dmax -= 273.15 - 2
 ax_sst = fig.add_axes([0.025 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
 ax_sst.set_axis_off()
 SST_img = plotFieldAxes(
-    ax_sst, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_sst,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_sst_cb = fig.add_axes([0.125 / 3, 0.05 / 4, 0.75 / 3, 0.05 / 4])
 ax_sst_cb.set_axis_off()
@@ -380,7 +457,12 @@ var = unnormalise(var, "TMPS") - 273.15
 ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
 ax_sst_e.set_axis_off()
 SST_e_img = plotFieldAxes(
-    ax_sst_e, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_sst_e,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_sst_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4, 0.75 / 3, 0.05 / 4])
 ax_sst_e_cb.set_axis_off()

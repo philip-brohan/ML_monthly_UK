@@ -74,11 +74,16 @@ from makeDataset import getDataset
 
 
 # Set up the test data
-testData = getDataset(purpose="test", startyear=args.startyear, endyear=args.endyear, shuffle=False)
+testData = getDataset(
+    purpose="test", startyear=args.startyear, endyear=args.endyear, shuffle=False
+)
 testData = testData.batch(1)
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -106,7 +111,7 @@ def compute_stats(model, x):
     generated = model.generate(latent)
 
     stats = {}
-    stats['dtp'] = dtp
+    stats["dtp"] = dtp
     stats["PRMSL_target"] = field_to_scalar(x[1][0, :, :, 0].numpy(), None)
     stats["PRMSL_model"] = field_to_scalar(generated[0, :, :, 0].numpy(), None)
     vt = x[1][0, :, :, 1].numpy()
@@ -135,7 +140,6 @@ for case in testData:
             all_stats[key].append(stats[key])
         else:
             all_stats[key] = [stats[key]]
-
 
 
 def to_monthly_anomalies(ts, monthly):
@@ -182,7 +186,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 0), 1, 1, facecolor=(0.95, 0.95, 0.95, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 0),
+        1,
+        1,
+        facecolor=(0.95, 0.95, 0.95, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 
@@ -253,7 +264,7 @@ def plot_var(ts, t, m, xp, yp, label):
 
 
 # Top left - PRMSL
-tsx = all_stats['dtp']
+tsx = all_stats["dtp"]
 ty = [unnormalise(x, "PRMSL") / 100 for x in all_stats["PRMSL_target"]]
 my = [unnormalise(x, "PRMSL") / 100 for x in all_stats["PRMSL_model"]]
 plot_var(tsx, ty, my, 1, 2, "PRMSL")

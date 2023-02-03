@@ -53,7 +53,11 @@ parser.add_argument(
     "--MNTH", help="Fit to Month?", dest="MNTH", default=False, action="store_true"
 )
 parser.add_argument(
-    "--iter", help="No. of iterations", type=int, required=False, default=1000,
+    "--iter",
+    help="No. of iterations",
+    type=int,
+    required=False,
+    default=1000,
 )
 args = parser.parse_args()
 
@@ -92,7 +96,10 @@ from makeDataset import normalise_co2
 from makeDataset import normalise_month
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -221,7 +228,14 @@ font = {
 matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.add_patch(
-    Rectangle((0, 0), 1, 1, facecolor=(0.95, 0.95, 0.95, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 0),
+        1,
+        1,
+        facecolor=(0.95, 0.95, 0.95, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 # Top row - date, CO2 and month diagnostics
@@ -232,10 +246,21 @@ if args.CO2:
     ax_back = fig.add_axes([0.15, 0.96, 0.45, 0.04])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 axb.text(
-    0.16, 0.97, "CO2", fontsize=30, zorder=10,
+    0.16,
+    0.97,
+    "CO2",
+    fontsize=30,
+    zorder=10,
 )
 ax_co2 = fig.add_axes([0.24, 0.965, 0.335, 0.028], xlim=(0, 15), ylim=(0, 1))
 ax_co2.bar(
@@ -259,10 +284,21 @@ if args.MNTH:
     ax_back = fig.add_axes([0.60, 0.96, 0.4, 0.04])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 axb.text(
-    0.61, 0.97, "Month", fontsize=30, zorder=10,
+    0.61,
+    0.97,
+    "Month",
+    fontsize=30,
+    zorder=10,
 )
 ax_mnth = fig.add_axes([0.7, 0.965, 0.29, 0.028], xlim=(0, 13), ylim=(0, 1))
 ax_mnth.bar(
@@ -288,7 +324,14 @@ if args.PRMSL:
     ax_back = fig.add_axes([0.00, 0.72, 1.0, 0.24])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 0].numpy())
@@ -299,7 +342,12 @@ dmax /= 100
 ax_prmsl = fig.add_axes([0.025 / 3, 0.12 / 4 + 0.72, 0.95 / 3, 0.81 / 4])
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
-    ax_prmsl, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.diff,
+    ax_prmsl,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.diff,
 )
 ax_prmsl_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.72, 0.75 / 3, 0.05 / 4])
 ax_prmsl_cb.set_axis_off()
@@ -313,7 +361,12 @@ var = unnormalise(var, "PRMSL") / 100
 ax_prmsl_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.12 / 4 + 0.72, 0.95 / 3, 0.81 / 4])
 ax_prmsl_e.set_axis_off()
 PRMSL_e_img = plotFieldAxes(
-    ax_prmsl_e, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.diff,
+    ax_prmsl_e,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.diff,
 )
 ax_prmsl_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.72, 0.75 / 3, 0.05 / 4])
 ax_prmsl_e_cb.set_axis_off()
@@ -343,7 +396,14 @@ if args.PRATE:
     ax_back = fig.add_axes([0.00, 0.48, 1.0, 0.24])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 3].numpy())
@@ -355,7 +415,12 @@ dmax *= 1000
 ax_prate = fig.add_axes([0.025 / 3, 0.12 / 4 + 0.48, 0.95 / 3, 0.81 / 4])
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
-    ax_prate, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.rain,
+    ax_prate,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.rain,
 )
 ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.48, 0.75 / 3, 0.05 / 4])
 ax_prate_cb.set_axis_off()
@@ -370,7 +435,12 @@ var = unnormalise(var, "PRATE") * 1000
 ax_prate_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.48, 0.95 / 3, 0.81 / 4])
 ax_prate_e.set_axis_off()
 PRATE_e_img = plotFieldAxes(
-    ax_prate_e, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.rain,
+    ax_prate_e,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.rain,
 )
 ax_prate_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.48, 0.75 / 3, 0.05 / 4])
 ax_prate_e_cb.set_axis_off()
@@ -402,7 +472,14 @@ if args.TMP2m:
     ax_back = fig.add_axes([0.00, 0.24, 1.0, 0.24])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 2].numpy())
@@ -414,7 +491,12 @@ dmax -= 273.15 - 2
 ax_t2m = fig.add_axes([0.025 / 3, 0.12 / 4 + 0.24, 0.95 / 3, 0.81 / 4])
 ax_t2m.set_axis_off()
 T2m_img = plotFieldAxes(
-    ax_t2m, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_t2m,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_t2m_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.24, 0.75 / 3, 0.05 / 4])
 ax_t2m_cb.set_axis_off()
@@ -429,7 +511,12 @@ var = unnormalise(var, "TMP2m") - 273.15
 ax_t2m_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.12 / 4 + 0.24, 0.95 / 3, 0.81 / 4])
 ax_t2m_e.set_axis_off()
 T2m_e_img = plotFieldAxes(
-    ax_t2m_e, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_t2m_e,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_t2m_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.24, 0.75 / 3, 0.05 / 4])
 ax_t2m_e_cb.set_axis_off()
@@ -457,7 +544,14 @@ if args.SST:
     ax_back = fig.add_axes([0.00, 0.00, 1.0, 0.24])
     ax_back.set_axis_off()
     ax_back.add_patch(
-        Rectangle((0, 0), 1, 1, facecolor=(0.0, 0.0, 0.0, 0.3), fill=True, zorder=1,)
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            facecolor=(0.0, 0.0, 0.0, 0.3),
+            fill=True,
+            zorder=1,
+        )
     )
 var = sCube.copy()
 var.data = np.squeeze(ict[:, :, 1].numpy())
@@ -469,7 +563,12 @@ dmax -= 273.15 - 2
 ax_sst = fig.add_axes([0.025 / 3, 0.12 / 4, 0.95 / 3, 0.81 / 4])
 ax_sst.set_axis_off()
 SST_img = plotFieldAxes(
-    ax_sst, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_sst,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_sst_cb = fig.add_axes([0.125 / 3, 0.05 / 4, 0.75 / 3, 0.05 / 4])
 ax_sst_cb.set_axis_off()
@@ -484,7 +583,12 @@ var = unnormalise(var, "TMPS") - 273.15
 ax_sst_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.12 / 4, 0.95 / 3, 0.81 / 4])
 ax_sst_e.set_axis_off()
 SST_e_img = plotFieldAxes(
-    ax_sst_e, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_sst_e,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_sst_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4, 0.75 / 3, 0.05 / 4])
 ax_sst_e_cb.set_axis_off()

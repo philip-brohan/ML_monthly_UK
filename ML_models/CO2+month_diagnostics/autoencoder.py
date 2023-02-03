@@ -91,7 +91,10 @@ def save_state(
     MONTH_train,
     MONTH_test,
 ):
-    save_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, epoch,)
+    save_dir = ("%s/models/Epoch_%04d") % (
+        LSCRATCH,
+        epoch,
+    )
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     model.save_weights("%s/ckpt" % save_dir)
@@ -171,7 +174,10 @@ with strategy.scope():
     optimizer = tf.keras.optimizers.Adam(1e-4)
     # If we are doing a restart, load the weights
     if args.epoch > 0:
-        weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+        weights_dir = ("%s/models/Epoch_%04d") % (
+            LSCRATCH,
+            args.epoch,
+        )
         load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
         # Check the load worked
         load_status.assert_existing_objects_matched()

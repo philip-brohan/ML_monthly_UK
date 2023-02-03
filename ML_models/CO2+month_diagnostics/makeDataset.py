@@ -19,7 +19,7 @@ def load_tensor(file_name):
     imt = tf.io.parse_tensor(sict, np.float32)
     imt = tf.reshape(imt, [1440, 896, 4])
     print(file_name)
-    print(tf.math.reduce_mean(imt[:,:,1]))
+    print(tf.math.reduce_mean(imt[:, :, 1]))
     return imt
 
 
@@ -207,14 +207,14 @@ CO2_since_1850 = (
 def normalise_co2(file_name):
     year = int(file_name[:4])
     c2 = CO2_since_1850[year - 1850]
-    c2 = int((c2-280)/10)
+    c2 = int((c2 - 280) / 10)
     c2c = np.repeat(np.float32(0), 14)
-    c2c[c2]=1
+    c2c[c2] = 1
     return c2c
 
 
 def unnormalise_co2(c2):
-    return np.argmax(c2)*10+280
+    return np.argmax(c2) * 10 + 280
 
 
 def normalise_month(file_name):
@@ -232,9 +232,9 @@ def unnormalise_month(mnth):
 def getFileNames(purpose, nImages=None, startyear=None, endyear=None):
     inFiles = sorted(os.listdir("%s/datasets/%s" % (TSOURCE, purpose)))
     if startyear is not None:
-        inFiles = [fn for fn in inFiles if int(fn[:4])>=startyear]
+        inFiles = [fn for fn in inFiles if int(fn[:4]) >= startyear]
     if endyear is not None:
-        inFiles = [fn for fn in inFiles if int(fn[:4])<=endyear]
+        inFiles = [fn for fn in inFiles if int(fn[:4]) <= endyear]
     if nImages is not None:
         if len(inFiles) >= nImages:
             inFiles = inFiles[0:nImages]
@@ -244,11 +244,14 @@ def getFileNames(purpose, nImages=None, startyear=None, endyear=None):
             )
     return inFiles
 
+
 # Get a dataset
 def getDataset(purpose, nImages=None, startyear=None, endyear=None):
 
     # Get a list of filenames containing tensors
-    inFiles = getFileNames(purpose, nImages=nImages, startyear=startyear, endyear=endyear)
+    inFiles = getFileNames(
+        purpose, nImages=nImages, startyear=startyear, endyear=endyear
+    )
 
     tc_data = tf.data.Dataset.from_tensor_slices([normalise_co2(x) for x in inFiles])
     tm_data = tf.data.Dataset.from_tensor_slices([normalise_month(x) for x in inFiles])

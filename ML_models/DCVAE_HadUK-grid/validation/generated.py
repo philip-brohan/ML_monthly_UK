@@ -47,7 +47,10 @@ sys.path.append("%s/.." % os.path.dirname(__file__))
 from autoencoderModel import DCVAE
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
@@ -75,7 +78,14 @@ matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.set_axis_off()
 axb.add_patch(
-    Rectangle((0, 0), 1, 1, facecolor=(1.0, 1.0, 1.0, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 0),
+        1,
+        1,
+        facecolor=(1.0, 1.0, 1.0, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 # Top left - PRMSL
@@ -158,7 +168,12 @@ dmax = np.max(var.data)
 ax_tmp2m = fig.add_axes([0.025 / 2 + 0.5, 0.125 / 2, 0.95 / 2, 0.85 / 2])
 ax_tmp2m.set_axis_off()
 TMP2m_img = plotFieldAxes(
-    ax_tmp2m, var, vMax=dmax, vMin=dmin, lMask=lm_plot, cMap=cmocean.cm.balance,
+    ax_tmp2m,
+    var,
+    vMax=dmax,
+    vMin=dmin,
+    lMask=lm_plot,
+    cMap=cmocean.cm.balance,
 )
 ax_tmp2m_cb = fig.add_axes([0.125 / 2 + 0.5, 0.05 / 2, 0.75 / 2, 0.05 / 2])
 ax_tmp2m_cb.set_axis_off()

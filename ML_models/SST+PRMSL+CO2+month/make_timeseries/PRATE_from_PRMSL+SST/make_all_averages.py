@@ -9,9 +9,13 @@ epoch = 770
 
 def is_done(year, month):
     fn = (
-        "%s/ML_monthly_UK/DCVAE+scalars/UK_averages/PRMSL_SST/"
-        + "%04d/%04d/%02d.pkl"
-    ) % (os.getenv("SCRATCH"), epoch, year, month,)
+        "%s/ML_monthly_UK/DCVAE+scalars/UK_averages/PRMSL_SST/" + "%04d/%04d/%02d.pkl"
+    ) % (
+        os.getenv("SCRATCH"),
+        epoch,
+        year,
+        month,
+    )
     if os.path.exists(fn):
         return True
     return False
@@ -23,5 +27,9 @@ for year in range(1884, 2015):
             continue
         cmd = (
             "./make_averages_for_month.py --year=%04d " + "--month=%d --epoch=%d"
-        ) % (year, month, epoch,)
+        ) % (
+            year,
+            month,
+            epoch,
+        )
         print(cmd)

@@ -110,7 +110,14 @@ def compute_loss(model, x):
         * RMSE_scale
         * PRATE_scale
     )
-    return tf.stack([rmse_PRMSL, rmse_SST, rmse_T2M, rmse_PRATE,])
+    return tf.stack(
+        [
+            rmse_PRMSL,
+            rmse_SST,
+            rmse_T2M,
+            rmse_PRATE,
+        ]
+    )
 
 
 @tf.function

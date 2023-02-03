@@ -28,7 +28,7 @@ from localise import LSCRATCH
 import warnings
 
 warnings.filterwarnings("ignore", message=".*partition.*")
-#warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
+# warnings.filterwarnings("ignore", message=".*TransverseMercator.*")
 
 import argparse
 
@@ -60,13 +60,16 @@ ic_source = cList_to_tensor(qd, extrapolate=True)
 ic_target = cList_to_tensor(qd, extrapolate=False)
 
 autoencoder = DCVAE()
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
 
 # Get autoencoded tensors
-encoded = autoencoder.call(tf.reshape(ic_source, [1, 1440, 896, 4]),training=False)
+encoded = autoencoder.call(tf.reshape(ic_source, [1, 1440, 896, 4]), training=False)
 
 # Make the plot
 fig = Figure(
@@ -90,7 +93,14 @@ matplotlib.rc("font", **font)
 axb = fig.add_axes([0, 0, 1, 1])
 axb.set_axis_off()
 axb.add_patch(
-    Rectangle((0, 0), 1, 1, facecolor=(1.0, 1.0, 1.0, 1), fill=True, zorder=1,)
+    Rectangle(
+        (0, 0),
+        1,
+        1,
+        facecolor=(1.0, 1.0, 1.0, 1),
+        fill=True,
+        zorder=1,
+    )
 )
 
 
@@ -153,8 +163,8 @@ varx.data = np.squeeze(ic_target[:, :, 3].numpy())
 varx.data = np.ma.masked_where(varx.data == 0.5, varx.data, copy=False)
 varx = unnormalise(varx, "monthly_rainfall")
 (dmin, dmax) = get_range("PRATE", args.month, anomaly=True)
-dmin *= 86400*30 # Scale change from 20CR units to HadUKGrid
-dmax *= 86400*30
+dmin *= 86400 * 30  # Scale change from 20CR units to HadUKGrid
+dmax *= 86400 * 30
 ax_monthly_rainfall = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
 ax_monthly_rainfall.set_axis_off()
 monthly_rainfall_img = plotFieldAxes(
@@ -168,14 +178,20 @@ monthly_rainfall_img = plotFieldAxes(
 ax_monthly_rainfall_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
 ax_monthly_rainfall_cb.set_axis_off()
 cb = fig.colorbar(
-    monthly_rainfall_img, ax=ax_monthly_rainfall_cb, location="bottom", orientation="horizontal", fraction=1.0
+    monthly_rainfall_img,
+    ax=ax_monthly_rainfall_cb,
+    location="bottom",
+    orientation="horizontal",
+    fraction=1.0,
 )
 
 # 2nd centre - monthly_rainfall encoded
 vary.data = np.squeeze(encoded[0, :, :, 3].numpy())
-vary.data = np.ma.masked_where(varx.data== 0.5, vary.data, copy=False)
+vary.data = np.ma.masked_where(varx.data == 0.5, vary.data, copy=False)
 vary = unnormalise(vary, "monthly_rainfall")
-ax_monthly_rainfall_e = fig.add_axes([0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
+ax_monthly_rainfall_e = fig.add_axes(
+    [0.025 / 3 + 1 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4]
+)
 ax_monthly_rainfall_e.set_axis_off()
 monthly_rainfall_e_img = plotFieldAxes(
     ax_monthly_rainfall_e,
@@ -185,7 +201,9 @@ monthly_rainfall_e_img = plotFieldAxes(
     lMask=lm_plot,
     cMap=cmocean.cm.tarn,
 )
-ax_monthly_rainfall_e_cb = fig.add_axes([0.125 / 3 + 1 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
+ax_monthly_rainfall_e_cb = fig.add_axes(
+    [0.125 / 3 + 1 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4]
+)
 ax_monthly_rainfall_e_cb.set_axis_off()
 cb = fig.colorbar(
     monthly_rainfall_e_img,
@@ -254,7 +272,7 @@ plotScatterAxes(ax_t2m_s, varx, vary, vMin=dmin, vMax=dmax, bins=None)
 
 # Bottom left - SST original
 varx.data = np.squeeze(ic_target[:, :, 1].numpy())
-varx.data = np.ma.masked_where(varx.data==0.5, varx.data, copy=False)
+varx.data = np.ma.masked_where(varx.data == 0.5, varx.data, copy=False)
 varx = unnormalise(varx, "SST")
 (dmin, dmax) = get_range("SST", args.month, anomaly=True)
 dmin += 2

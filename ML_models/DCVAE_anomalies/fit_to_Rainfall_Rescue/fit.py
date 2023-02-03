@@ -226,7 +226,9 @@ t_coords = tf.expand_dims(tf.stack((t_y_coord, t_x_coord), axis=1), axis=0)
 t_obs = tf.convert_to_tensor(s_n_anom, tf.float32)
 
 # Load the gridded data (if we have it)
-qd = load_cList(args.year, args.month)
+qd = load_cList(
+    args.year, args.month, omit=["PRMSL", "SST", "monthly_meantemp", "monthly_rainfall"]
+)
 ict = cList_to_tensor(qd, extrapolate=False)
 
 

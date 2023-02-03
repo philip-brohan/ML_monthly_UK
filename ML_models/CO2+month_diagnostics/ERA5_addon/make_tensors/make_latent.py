@@ -47,7 +47,10 @@ testFN = getFileNames(purpose="test", startyear=args.startyear, endyear=args.end
 # Instantiate the model
 autoencoder = DCVAE()
 # load the weights
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()

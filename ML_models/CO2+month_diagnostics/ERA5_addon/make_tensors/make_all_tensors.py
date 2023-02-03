@@ -26,7 +26,10 @@ for year in range(1959, 2023):
             purpose = "test"
         if is_done(year, month, purpose):
             continue
-        cmd = "./make_training_tensor.py --year=%04d --month=%02d" % (year, month,)
+        cmd = "./make_training_tensor.py --year=%04d --month=%02d" % (
+            year,
+            month,
+        )
         if purpose == "test":
             cmd += " --test"
         print(cmd)

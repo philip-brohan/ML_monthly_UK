@@ -52,7 +52,7 @@ cL = load_cList(args.year, args.month)
 tL = cList_to_tensor(cL, extrapolate=False)
 
 fig = Figure(
-    figsize=(30, 30*0.35),
+    figsize=(30, 30 * 0.35),
     dpi=100,
     facecolor=(0.5, 0.5, 0.5, 1),
     edgecolor=None,
@@ -82,16 +82,14 @@ axb.add_patch(
     )
 )
 
-xmargin=0.02
-ymargin=0.02
-width = (1-(xmargin*5))/4
-height = (1-ymargin*2)
+xmargin = 0.02
+ymargin = 0.02
+width = (1 - (xmargin * 5)) / 4
+height = 1 - ymargin * 2
 # Top left - PRMSL
 var = sCube.copy()
 var.data = tL.numpy()[:, :, 0]
-ax_prmsl = fig.add_axes(
-    [xmargin, ymargin, width, height]
-)
+ax_prmsl = fig.add_axes([xmargin, ymargin, width, height])
 ax_prmsl.set_xlabel("PRMSL")
 ax_prmsl.set_axis_off()
 PRMSL_img = plotFieldAxes(
@@ -105,8 +103,8 @@ PRMSL_img = plotFieldAxes(
 
 # Bottom left - SST
 var.data = tL.numpy()[:, :, 1]
-var.data = np.ma.masked_where(var.data==0.5, var.data, copy=False)
-ax_sst = fig.add_axes([xmargin*2+width,ymargin,width,height])
+var.data = np.ma.masked_where(var.data == 0.5, var.data, copy=False)
+ax_sst = fig.add_axes([xmargin * 2 + width, ymargin, width, height])
 ax_sst.set_xlabel("SST")
 ax_sst.set_axis_off()
 SST_img = plotFieldAxes(
@@ -120,10 +118,8 @@ SST_img = plotFieldAxes(
 
 # Top right - PRATE
 var.data = tL.numpy()[:, :, 3]
-var.data = np.ma.masked_where(var.data==0.5, var.data, copy=False)
-ax_prate = fig.add_axes(
-    [xmargin*4+width*3,ymargin,width,height]
-)
+var.data = np.ma.masked_where(var.data == 0.5, var.data, copy=False)
+ax_prate = fig.add_axes([xmargin * 4 + width * 3, ymargin, width, height])
 ax_prate.set_xlabel("PRATE")
 ax_prate.set_axis_off()
 PRATE_img = plotFieldAxes(
@@ -137,10 +133,8 @@ PRATE_img = plotFieldAxes(
 
 # Bottom left - T2m
 var.data = tL.numpy()[:, :, 2]
-var.data = np.ma.masked_where(var.data==0.5, var.data, copy=False)
-ax_tmp2m = fig.add_axes(
-    [xmargin*3+width*2,ymargin,width,height]
-)
+var.data = np.ma.masked_where(var.data == 0.5, var.data, copy=False)
+ax_tmp2m = fig.add_axes([xmargin * 3 + width * 2, ymargin, width, height])
 ax_tmp2m.set_xlabel("T2M")
 ax_tmp2m.set_axis_off()
 T2M_img = plotFieldAxes(

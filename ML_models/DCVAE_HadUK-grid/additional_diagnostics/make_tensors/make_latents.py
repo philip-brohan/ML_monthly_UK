@@ -29,18 +29,27 @@ from autoencoderModel import DCVAE
 
 # Set up the training data
 trainingData = getDataset(
-    purpose="training", startyear=args.startyear, endyear=args.endyear, shuffle=False,
+    purpose="training",
+    startyear=args.startyear,
+    endyear=args.endyear,
+    shuffle=False,
 ).batch(1)
 
 # Set up the test data
 testData = getDataset(
-    purpose="test", startyear=args.startyear, endyear=args.endyear, shuffle=False,
+    purpose="test",
+    startyear=args.startyear,
+    endyear=args.endyear,
+    shuffle=False,
 ).batch(1)
 
 # Instantiate the model
 autoencoder = DCVAE()
 # load the weights
-weights_dir = ("%s/models/Epoch_%04d") % (LSCRATCH, args.epoch,)
+weights_dir = ("%s/models/Epoch_%04d") % (
+    LSCRATCH,
+    args.epoch,
+)
 load_status = autoencoder.load_weights("%s/ckpt" % weights_dir)
 # Check the load worked
 load_status.assert_existing_objects_matched()
