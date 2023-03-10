@@ -57,12 +57,9 @@
 
 %% These dates will be inserted by Copernicus Publications during the typesetting process.
 
-
 \firstpage{1}
 
 \maketitle
-
-
 
 \begin{abstract}
 Machine Learning (ML) is a very powerful tool for making generative models: models that can make detailed, complex output (often pictures) from a simple input specification. We can use this in science by making generative models of weather and climate --- by training ML models to output gridded fields of weather variables such as temperature and precipitation. Here we show that you can use a Variational AutoEncoder (VAE) to build a fast deep generative model linking physically-plausible weather fields to a complete, continuous, low-dimensional latent space. Such an ML model can be used in place of a General Circulation Model (GCM) for some purposes: We can do reanalysis by constraining the field output to match observations, or perturbation/attribution studies by using the ML model to estimate the effect of changing one variable on another (e.g. change in sea temperature on precipitation). The primary advantage of such an ML model over a traditional GCM is that it can be several orders of magnitude faster.
@@ -85,30 +82,112 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 \citep{gree00,phil99}
 \citep[p.~32]{jame76}
 
-\section{Section}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\section{An ML Model Architecture for Climate Modeling}
 
-
-\subsection{Subsection}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/generator_from_vae.pdf}
-\caption{Making a generative climate model with a variational autoencoder.}
+\includegraphics[width=8.3cm]{figures/ML_model_structure.pdf}
+\caption{Conceptual model of an ML-based climate model.}
+\label{ML_model_structure}
 \end{figure}
+    
+\subsection{A reduced space representation from a Variational Autoencoder}
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/VAE_structure.pdf}
+\caption{Model training architecture based on a Variational AutoEncoder.}
+\label{VAE_structure}
+\end{figure}
+     
+\subsection{Data Assimilation by constraining the reduced space}
+
+\subsection{Extension by linking additional generative models}
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/Extension_structure.pdf}
+\caption{Process for extending the model to addional variables.}
+\label{Extension_structure}
+\end{figure}
+     
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+
+\section{An example model - monthly weather for the UK}
+
+\subsection{Training data}
+
+\subsection{ML model specification}
+
+\subsection{Model Training and Validation}
+
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/training_progress.pdf}
+\caption{Training progress: fraction of unexplained variance for each variable.}
+\label{training_progress}
+\end{figure}
+    
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/model_validation.pdf}
 \caption{Left column: VAE input, middle column: VAE output, right column: scatter}
+\label{model_validation}
 \end{figure}
 
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/model_validation_multi.pdf}
 \caption{Black lines: VAE input, red lines: VAE output, and I::O scatter. Regional means for all verification months.}
+\label{model_validation_multi}
 \end{figure}
 
 
-\subsubsection{Subsubsection}
+\section{Applying the model}
+
+
+\subsection{An AMIP run}
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/fit_to_SST.pdf}
+\caption{Black lines: VAE input, red lines: VAE output, and I::O scatter. Regional means for all verification months.}
+\label{fit_to_SST}
+\end{figure}
+    
+    
+\subsection{A reanalysis run}
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/fit_to_SST+PRMSL.pdf}
+\caption{Black lines: VAE input, red lines: VAE output, and I::O scatter. Regional means for all verification months.}
+\label{fit_to_SST+PRMSL}
+\end{figure}
+
+\subsection{Attribution}
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/perturbation_method.pdf}
+\caption{Process for estimating perturbation effects for an attribution study.}
+\label{perturbation_method}
+\end{figure}
+    
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/perturbation_validation.pdf}
+\caption{Results of increasing SST by 1C.}
+\label{perturbation_validation}
+\end{figure}
+        
+
+\subsection{Extending to climate services}
+
+\begin{figure}[h]
+\includegraphics[width=8.3cm]{figures/services_river_flow.pdf}
+\caption{Extending the model to river flow prediction.}
+\label{services_river_flow}
+\end{figure}
+         
+    
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 
@@ -146,129 +225,6 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 %% DOI = {10.5194/xyz}
 
 
-%% FIGURES
-
-%% When figures and tables are placed at the end of the MS (article in one-column style), please add \clearpage
-%% between bibliography and first table and/or figure as well as between each table and/or figure.
-
-% The figure files should be labelled correctly with Arabic numerals (e.g. fig01.jpg, fig02.png).
-
-
-%% ONE-COLUMN FIGURES
-
-%%f
-%\begin{figure}[t]
-%\includegraphics[width=8.3cm]{FILE NAME}
-%\caption{TEXT}
-%\end{figure}
-%
-%%% TWO-COLUMN FIGURES
-%
-%%f
-%\begin{figure*}[t]
-%\includegraphics[width=12cm]{FILE NAME}
-%\caption{TEXT}
-%\end{figure*}
-%
-%
-%%% TABLES
-%%%
-%%% The different columns must be seperated with a & command and should
-%%% end with \\ to identify the column brake.
-%
-%%% ONE-COLUMN TABLE
-%
-%%t
-%\begin{table}[t]
-%\caption{TEXT}
-%\begin{tabular}{column = lcr}
-%\tophline
-%
-%\middlehline
-%
-%\bottomhline
-%\end{tabular}
-%\belowtable{} % Table Footnotes
-%\end{table}
-%
-%%% TWO-COLUMN TABLE
-%
-%%t
-%\begin{table*}[t]
-%\caption{TEXT}
-%\begin{tabular}{column = lcr}
-%\tophline
-%
-%\middlehline
-%
-%\bottomhline
-%\end{tabular}
-%\belowtable{} % Table Footnotes
-%\end{table*}
-%
-%%% LANDSCAPE TABLE
-%
-%%t
-%\begin{sidewaystable*}[t]
-%\caption{TEXT}
-%\begin{tabular}{column = lcr}
-%\tophline
-%
-%\middlehline
-%
-%\bottomhline
-%\end{tabular}
-%\belowtable{} % Table Footnotes
-%\end{sidewaystable*}
-%
-%
-%%% MATHEMATICAL EXPRESSIONS
-%
-%%% All papers typeset by Copernicus Publications follow the math typesetting regulations
-%%% given by the IUPAC Green Book (IUPAC: Quantities, Units and Symbols in Physical Chemistry,
-%%% 2nd Edn., Blackwell Science, available at: http://old.iupac.org/publications/books/gbook/green_book_2ed.pdf, 1993).
-%%%
-%%% Physical quantities/variables are typeset in italic font (t for time, T for Temperature)
-%%% Indices which are not defined are typeset in italic font (x, y, z, a, b, c)
-%%% Items/objects which are defined are typeset in roman font (Car A, Car B)
-%%% Descriptions/specifications which are defined by itself are typeset in roman font (abs, rel, ref, tot, net, ice)
-%%% Abbreviations from 2 letters are typeset in roman font (RH, LAI)
-%%% Vectors are identified in bold italic font using \vec{x}
-%%% Matrices are identified in bold roman font
-%%% Multiplication signs are typeset using the LaTeX commands \times (for vector products, grids, and exponential notations) or \cdot
-%%% The character * should not be applied as mutliplication sign
-%
-%
-%%% EQUATIONS
-%
-%%% Single-row equation
-%
-%\begin{equation}
-%
-%\end{equation}
-%
-%%% Multiline equation
-%
-%\begin{align}
-%& 3 + 5 = 8\\
-%& 3 + 5 = 8\\
-%& 3 + 5 = 8
-%\end{align}
-%
-%
-%%% MATRICES
-%
-%\begin{matrix}
-%x & y & z\\
-%x & y & z\\
-%x & y & z\\
-%\end{matrix}
-%
-%
-%
-%%% PHYSICAL UNITS
-%%%
-%%% Please use \unit{} and apply the exponential notation
 
 
 \end{document}
