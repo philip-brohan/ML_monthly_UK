@@ -3,7 +3,7 @@
 # Gather (most of) the figures, converting them into pdf format on the way
 
 # Training progress plot
-convert ../../../ML_models/DCVAE_anomalies/Training_progress.png figures/training_progress.pdf
+convert ../../../ML_models/DCVAE_anomalies/Training_progress.png -crop 680x750+0+0 +repage figures/training_progress.pdf
 
 # Validation of model training (spatial)
 convert ../../../ML_models/DCVAE_anomalies/validation/comparison.png figures/model_validation.pdf
