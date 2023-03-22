@@ -30,7 +30,7 @@
 
 \begin{document}
 
-\title{Machine Learning for Climate Datasets}
+\title{Machine Learning for Climate Modelling}
 
 
 % \Author[affil]{given_name}{surname}
@@ -71,36 +71,55 @@ Machine Learning (ML) is a very powerful tool for making generative models: mode
 
 \introduction  %% \introduction[modified heading if necessary]
 
-Traditional General Circulation Models (GCMs, \citet{phillips1956general}) are examples of {\em Generative Models}: a GCM will output a self-consistent and physically-plausible state of the weather. GCMs are extremely powerful and successful, but they do have important limitations: In particular they are {\em expensive} -- in both user effort and compute required --- so we have to limit the work we do with them.
+Traditional General Circulation Models (GCMs, \citet{phillips1956general}) are examples of {\em Generative Models}: a GCM will output a self-consistent and physically-plausible state of the weather. GCMs are extremely powerful and successful, but they do have important limitations: In particular they are {\em expensive} --- in both user effort and compute required --- so we have to limit the work we do with them.
 
-Modern Machine Learning (ML) 
+Modern Machine Learning (ML) has produced some spectacularly-successful generative models: human faces, visual art, text chat, ... And, in a short period, has produced several different powerful techniques for building such models: autoregressive models, convolutional neural nets, flow-based models, transformers, ... In addition, ML is very well supported in both hardware and software, with powerful software libraries making it easy to use modern computer hardware very efficiently. So there is a strong and obvious temptation to use ML methods to do the work of a GCM --- to use ML to generate a self-consistent and physically-plausible state of the weather.
 
+A key virtue of GCMs is that they are physically-explainable: They try to break down the climate system into sub-components, and have a transparent model of each sub-component based on established physical principles. (They don't quite succeed at this, some non-physical 'parameterisations' remain, but current GCMs are to a large extent physical and transparent.) An ML model gives up this advantage --- it will be a black box, with little or no physical basis. This is a substantial weakness in ML modelling: ML models will be more dependent on validation data, and we will have less confidence when using them outside the environemnt in which they have been trained, but it's not just a weakness, it does come with advantages.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-\citet{smit54}
-\citep{colu92}
-\citep{gree00,phil99}
-\citep[p.~32]{jame76}
+A physical model has to include an adequate set of physical variables (you can't just model surface precipitation, you need three-dimensional humidity, evaporation, advection, nucleation, ...) and has to operate on the space and time scales where the physics is well understood, so timesteps of minutes and grid sizes of tens of kilometers are commonly used. ML models have none of these restrictions --- if you are interested in country-scale monthly-average surface precipitation, you can build a model with only that.
+
+Because of this, simple statistical models have been used alongside GCMs for decades. The innovation offered by modern ML is that we can now build {\it complex} statistical models --- we can retain the speed, simplicity and flexibility of statistical modelling, while producing the precise and detailed output that used to require a GCM.
 
 \section{An ML Model Architecture for Climate Modeling}
+
+ML has already demonstrated major success in image generation. A typical architecture for this represents a high-resolution image as a point in a low-dimensional 'latent space', and uses a convolutional neural (CNN) net to map the latent space representation into the real space image. If we consider a climate field as an image --- with (say) pressure, temperature and precipitation corresponding to the red, green, and blue channels, we can use exactly the same model architecture to generate climate states \ref{ML_model_structure}.
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/ML_model_structure.pdf}
 \caption{Conceptual model of an ML-based climate model.}
 \label{ML_model_structure}
 \end{figure}
+
+This is an example of a representation model. We represent a particular climate state as a point in low dimensional latent space. To be useful, we want the latent space representation and CNN model, to have several properties:
+\begin{itemize}
+    \item The representation should be complete --- any point in latent space should map onto a self-consistent and physically-plausible state of the weather.
+    \item The representation should be continuous --- close points in latent space should map onto similar weather states.
+    \item The model should be fast --- otherwise, we could just use a GCM.
+    \item The model should be powerful --- the weather states it outputs should be detailed and realistic.
+\end{itemize}
+
     
 \subsection{A reduced space representation from a Variational Autoencoder}
+
+We can create a model and representation with exactly these properties, using a Variational AutoEncoder (VAE). An autoencoder is a pair of neural nets: one of them (the encoder) compresses an input field into a low-dimensional latent space, and the other (the generator) expands the small latent space representation back into the input field. They are trained as a pair --- optimising to make generator(encoder(input)) as close to the original input as possible. A variational autoencoder adds two complications to the basic autoencoder: The encoder outputs a distribution in latent space not a point (the distribution is parametrized by its mean and standard deviation ) and it is trained not just to produce the desired output, but also to produce the desired distribution in latent space () - a multi-variate unit normal distribution\ref{VAE_structure}.
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/VAE_structure.pdf}
 \caption{Model training architecture based on a Variational AutoEncoder.}
 \label{VAE_structure}
 \end{figure}
+
+When the VAE is trained, the generator function is exactly the model we require: Defining the generator as a deep CNN allows it to be poserful and fast, making the latent space representation a distribution makes it complete, and constraining the latent space representation to be a unit normal makes it continuous.A VAE, with deep neural nets, is a ridiculously powerful tool --- an automatic climate model factory.
      
 \subsection{Data Assimilation by constraining the reduced space}
 
+It's not enough to have a model which can generate self-consistent and physically-plausible states of the weather. We also need to be able to control the model --- to be able to find the latent-space vector that corresponds to the weather state of interest. Essentially, this is the problem of data assimilatyion: If we have some kind of metric from our weather state of interest, how do we use this information to make our model produce this state?
+The proposed ML architecture makes this problem easy to solve: We can search the latent space for the state with the desired property. Because the latent space is complete and continuous (by design), and the ML model is fast, it is an easy optimisation problem - we can use gradient descent to find the latent space vector producing the real-space weather state with the desired properties \citep{MLDA}.
+
 \subsection{Extension by linking additional generative models}
+
+We want the ML model to be as small as possible --- small models are easy to train and faster and simpler in operation. But we also want the model to be broadly useful, and so to include predictions of a wide range of weather and impacts variables. We resolve this dilemma by having a small core model, and an extension method: the model can be extended to another variable by training another ML model to map the core latent space state to the additional variable of interest\ref{Extension_structure}.
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/Extension_structure.pdf}
@@ -108,6 +127,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 \label{Extension_structure}
 \end{figure}
      
+So if the base model is of a few surface weather variables (for example), we could build an extension model to link in satellite radiances (and so calculate surface weather from satellite radiances, or vice versa).
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
