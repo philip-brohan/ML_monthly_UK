@@ -113,6 +113,7 @@ We can create a model and representation with exactly these properties, using a 
 When the VAE is trained, the generator function is exactly the model we require: Defining the generator as a deep CNN allows it to be poserful and fast, making the latent space representation a distribution makes it complete, and constraining the latent space representation to be a unit normal makes it continuous.A VAE, with deep neural nets, is a ridiculously powerful tool --- an automatic climate model factory.
      
 \subsection{Data Assimilation by constraining the reduced space}
+\label{section_DA}
 
 It's not enough to have a model which can generate self-consistent and physically-plausible states of the weather. We also need to be able to control the model --- to be able to find the latent-space vector that corresponds to the weather state of interest. Essentially, this is the problem of data assimilatyion: If we have some kind of metric from our weather state of interest, how do we use this information to make our model produce this state?
 The proposed ML architecture makes this problem easy to solve: We can search the latent space for the state with the desired property. Because the latent space is complete and continuous (by design), and the ML model is fast, it is an easy optimisation problem - we can use gradient descent to find the latent space vector producing the real-space weather state with the desired properties \citep{MLDA}.
@@ -134,7 +135,7 @@ This same method offers one easy way to add time dependence to this model: Build
 
 \section{An example model - monthly weather for the UK}
 
-The architecture described above is only any use if it actually works --- if it is possible to train such a model on the climate variables of interest. So the next step is to train and demonstrate such a model: We chose to model UK surface weather (SST, MSLP, air temperature, and precipitation) at a 1km spatial resolution, and on a monthly time-scale. 1km is the native resolution of the training data used, and working on monthly averages makes it reasonable to neglect time dependence, simplifying the model.
+The architecture described above is only any use if it actually works --- if it is possible to train such a model on the climate variables of interest. So the next step is to train and demonstrate such a model: We chose to model UK surface weather anomalies (SST, MSLP, air temperature, and precipitation) at a 1km spatial resolution, and on a monthly time-scale. 1km is the native resolution of the training data used, and working on monthly averages makes it reasonable to neglect time dependence, simplifying the model.
 
 It's not practical to describe every detail of a model in a paper, so as well as the description here, the full source code for the model (everything needed to reproduce these results), is available at the URL given below, under {\it code and data availability}.
 
@@ -143,7 +144,7 @@ It's not practical to describe every detail of a model in a paper, so as well as
 The aim is to train the model on observational data (rather than GCM output). We relaxed this slightly in the interest of getting data that's easy to use. So the SST and MSLP data were taken from the 20th Century Reanalysis version 3 \citep{slivinski_20crv3.1}, and the air temperature and precipitation
 were taken from HadUK-Grid \citep{HadUK-Grid}.
 
-A challenge for ML modelling for climate, is that training data is often going to be limited. One reason to choose the UK as the domain to model is that it has some of the world's best data availability. Even so the training data available covers only the period 1884 to 2015 (1584 months) and every 11th month was reserved for validation. So only x months of data were available for model training.
+A challenge for ML modelling for climate, is that training data is often going to be limited. One reason to choose the UK as the domain to model is that it has some of the world's best data availability. Even so the training data available covers only the period 1884 to 2015 (1584 months) and every 11th month was reserved for validation. So only 1430 months of data were available for model training.
 
 \subsection{ML model specification}
 
@@ -151,51 +152,66 @@ The ML model was implemented using the Tensorflow Machine Learning platform \cit
 
 \subsection{Model Training and Validation}
 
+A challenge to training is that we are predicting four fields (SST, MSLP, T2M, and precipitation) with quite different statistical properties (precipitation is much more difficult to model than MSLP), but we have to combine the model fit to all four fields into a single training metric. We used the percentage of unexplained variance for each variable, summed across the variables, as the training metric, which worked well \ref{training_progress}. (The automated weighting methods of the $\sigma$-VAE \citep{sigma-VAE} might be a better approach, but it was not used here.)
+
 
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/training_progress.pdf}
-\caption{Training progress: percentage of unexplained variance for each variable.}
+\caption{Training progress: percentage of unexplained variance for each variable. Thick line shows validation months, thin line training months.}
 \label{training_progress}
 \end{figure}
     
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Unsurprisingly, precipitation has the least skill of the four variables, but the model still explains 90\% of the variance. And there is almost no indication of overfitting. The model took about 6 hours to train on a single V100 GPU. Application of the trained model is much faster --- it takes almost no time or resources: a few seconds on laptop-type hardware.
+
+We can see the power of the model by comparing the VAE output with the training input for a test month (figure \ref{model_validation}), or averaged over the UK for all the test months (figure \ref{model_validation_multi}).
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/model_validation.pdf}
-\caption{Left column: VAE input, middle column: VAE output, right column: scatter}
+\caption{ML model validation for a sample month. Left column: Model input, middle column: Model output, right column: Input::Output scatter}
 \label{model_validation}
 \end{figure}
 
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/model_validation_multi.pdf}
-\caption{Black lines: VAE input, red lines: VAE output, and I::O scatter. Regional means for all verification months.}
+\caption{ML model validation for all sample months. UK regional average for each month in the validation dataset. Black lines: model input, red lines: model output, and Input::Output scatter.}
 \label{model_validation_multi}
 \end{figure}
 
 
 \section{Applying the model}
 
+The validation shows that this model, despite its simplicity, is capable of representing UK surface weather with accuracy and precision. But to be useful, a model needs to be able to do more than just reproduce its training data.
+
 
 \subsection{An AMIP run}
 
+The model includes four variables, and describes the covariance between those variables. So we can use it to reconstruct the full weather state vector from limited information. A typical example of such a requirement is an AMIP run, where the climate is reconstructed given just the SST. We can do such a run with this model by assimilating the observed SST for one month with the method described in section \ref{section_DA} to estimate the latent space state vector for the month, and then using the generative model to estimate the full weather state for that month.
+
+Figure \ref{fit_to_SST} shows the time-series from such a calculation. The results are as expected: SST is perfect (it was assimilated), T2M has substantial skill, PRMSL and precipitation have small skill.
+
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/fit_to_SST.pdf}
-\caption{Black lines: VAE input, red lines: VAE output, and I::O scatter. Regional means for all verification months.}
+\caption{Regional mean time series from an AMIP run: Black lines: observed values, red lines: model output, and Observation::Model scatter.}
 \label{fit_to_SST}
 \end{figure}
     
-    
 \subsection{A reanalysis run}
+
+The Twentieth Century Reanalysis has shown the power of assimilating just SST and pressure into a GCM \citep{slivinski_20crv3.1}. We can do such a reanalysis with the ML model too.
+
+Figure \ref{fit_to_SST+PRMSL} shows the time-series from a run assimilating SST and PRMSL. Again the results are as expected: SST and PRMSL are perfect (assimilated), T2M and now also precipitation have substantial skill. This is a good illustration of the power of generative ML models, the complex relationship between temperature, pressure and precipitation is well captured by the ML model.
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/fit_to_SST+PRMSL.pdf}
-\caption{Black lines: VAE input, red lines: VAE output, and I::O scatter. Regional means for all verification months.}
+\caption{Regional mean time series from a reanalysis-type run assimilating SST and PRMSL: Black lines: observed values, red lines: model output, and Observation::Model scatter.}
 \label{fit_to_SST+PRMSL}
 \end{figure}
 
 \subsection{Attribution}
+
+Many of the important questions in climate research are about hypotheticals and changes --- we want our models to tell us what would happen if some particular change occurred. 
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/perturbation_method.pdf}
