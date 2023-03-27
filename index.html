@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Machine Learning for Climate Modelling &#8212; Machine Learning for Climate Modeling</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinxdoc.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="#">ML for Climate</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Machine Learning for Climate Modelling</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="machine-learning-for-climate-modelling">
+<h1>Machine Learning for Climate Modelling<a class="headerlink" href="#machine-learning-for-climate-modelling" title="Permalink to this headline">¶</a></h1>
+<p>This web page is an accompaniment to the paper ‘Machine Learning for Climate Modelling’ (Brohan, 2023) - currently in final draft. It is an index to the <a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK">GitHub repository containing the source code of the scripts and the models used in that paper</a></p>
+<section id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Clone the <a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK">GitHub repository</a> or <a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/archive/refs/heads/main.zip">download as a Zip file</a></p></li>
+<li><p>Make a <a class="reference external" href="https://docs.conda.io/en/latest/">conda environment</a> using the specifications in the <a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/environments">environjment directory</a>. Use this environment for all subsequent steps.</p></li>
+</ul>
+</section>
+<section id="get-the-training-data">
+<h2>Get the Training data<a class="headerlink" href="#get-the-training-data" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><dl class="simple">
+<dt>You need two groups of training data:</dt><dd><ul>
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/get_data/TWCR">Twentieth Century Reanalysis (v3) SST and MSLP</a></p></li>
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/get_data/HadUKGrid">HadUK-Grid T2m and Precipitation</a>. Note that the download script in this directory will only work within the Met Office, but you can get the same data from <a class="reference external" href="https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/haduk-grid">The HadUK-Grid web-page</a>.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>The data download directories also contain scripts to make the climatologies needed, and library functions for easy access to the downloaded data.</p>
+</section>
+<section id="standardize-and-reformat-the-training-data">
+<h2>Standardize and reformat the training data<a class="headerlink" href="#standardize-and-reformat-the-training-data" title="Permalink to this headline">¶</a></h2>
+<p>The training data need to standardized to the range 0-1, converted into tensors, and split into training and test subsets.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/ML_models/DCVAE_anomalies/make_tensors">Scripts to make the tensors from the raw data</a></p></li>
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/blob/main/ML_models/DCVAE_anomalies/makeDataset.py">Functions to package the tensors into tf.data.Datasets</a></p></li>
+</ul>
+<p>HadUK-Grid includes valid data only over regions of the UK with a nearby observation - other regions of the rectangular domain contain missing data. SST has similar partial coverage. In the model output we deal with this by ignoring missing data points (setting values to 0 and not including those points in model error calculations). We can’t do the same in the input because the model is convolutional, so instead missing data are set to match the nearest valid point. This means that there are separate input and output tensors (but they are only different for missing data points.)</p>
+</section>
+<section id="specify-and-train-the-vae">
+<h2>Specify and train the VAE<a class="headerlink" href="#specify-and-train-the-vae" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/blob/main/ML_models/DCVAE_anomalies/autoencoderModel.py">Model specification</a></p></li>
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/blob/main/ML_models/DCVAE_anomalies/autoencoder.py">Model training script</a></p></li>
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/ML_models/DCVAE_anomalies/validation">Validation scripts</a></p></li>
+</ul>
+</section>
+<section id="applying-the-model">
+<h2>Applying the model<a class="headerlink" href="#applying-the-model" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/ML_models/DCVAE_anomalies/fit_to_fields">Data Assimilation</a></p></li>
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/ML_models/DCVAE_anomalies/perturb_SST">SST perturbation</a></p></li>
+<li><dl class="simple">
+<dt><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/ML_models/DCVAE_anomalies/addons/Thames_flow">Extend to predict river flow</a></dt><dd><ul>
+<li><p><a class="reference external" href="https://github.com/philip-brohan/ML_monthly_UK/tree/main/get_data/NRFA">Get the training data</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>This document is crown copyright (2023). It is published under the terms of the <a class="reference external" href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/2/">Open Government Licence</a>. Source code included is published under the terms of the <a class="reference external" href="https://opensource.org/licenses/BSD-2-Clause">BSD licence</a>.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/generative.png" alt="Logo"/>
+            </a></p>
+<h3><a href="#">Table of Contents</a></h3>
+<h3><a href="https://github.com/philip-brohan/ML_monthly_UK">Get a copy</a></h3>
+
+<ul>
+<li><a href="https://github.com/philip-brohan/ML_monthly_UK"
+           rel="nofollow">Github repository</a></li>
+</ul>
+
+<h3>Found a bug, or have a suggestion?</h3>
+
+Please <a href="https://github.com/philip-brohan/ML_monthly_UK/issues/new">raise an issue</a>.
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="#">ML for Climate</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Machine Learning for Climate Modelling</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>
