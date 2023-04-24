@@ -85,7 +85,7 @@ Because of this, simple statistical models have been used alongside GCMs for dec
 
 There is a rapidly-growing set of ML model architectures for weather prediction \citep{keisler2022forecasting,bi2022panguweather,nguyen2023climax}, but climate modelling is a different problem: We are much less interested in time-evolution, and much more interested in changing boundary conditions. So we need a different model architecture, with no time-prediction capability, but where we can manipulate the model state more generally. (Though we can add time-prediction to the model if desired, see section \ref{extension}.)
 
-ML has already demonstrated major success in image generation \citep{StyleGAN2,Stable_Diffusion}. A typical architecture for this represents a high-resolution image as a point in a low-dimensional 'latent space', and uses a convolutional neural (CNN) net to map the latent space representation into the real space image \citep{StyleGAN}. If we consider a climate field as an image --- with (say) pressure, temperature and precipitation corresponding to the red, green, and blue channels, we can use exactly the same model architecture to generate climate states (figure )\ref{ML_model_structure}).
+ML has already demonstrated major success in image generation \citep{StyleGAN2,Stable_Diffusion}. A typical architecture for this represents a high-resolution image as a point in a low-dimensional 'latent space', and uses a convolutional neural (CNN) net to map the latent space representation into the real space image \citep{StyleGAN}. If we consider a climate field as an image --- with (say) pressure, temperature and precipitation corresponding to the red, green, and blue channels, we can use exactly the same model architecture to generate climate states (figure \ref{ML_model_structure}).
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/ML_model_structure.pdf}
@@ -112,7 +112,7 @@ We can create a model and representation with exactly these properties, using a 
 \label{VAE_structure}
 \end{figure}
 
-When the VAE is trained, the generator function is exactly the model we require: Defining the generator as a deep CNN allows it to be powerful and fast, making the latent space representation a distribution makes it complete, and constraining the latent space representation to be a unit normal makes it continuous. A VAE, with deep neural nets, is a ridiculously powerful tool --- an automatic climate model factory.
+When the VAE is trained, the generator function is exactly the model we require: Defining the generator as a deep CNN allows it to be powerful and fast, making the latent space representation a distribution makes it continuous, and constraining the latent space representation to be a unit normal makes it complete. A VAE, with deep neural nets, is a ridiculously powerful tool --- an automatic climate model factory.
      
 \subsection{Data Assimilation by constraining the reduced space}
 \label{section_DA}
@@ -171,7 +171,7 @@ We can see the power of the model by comparing the VAE output with the training 
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/model_validation.pdf}
-\caption{ML model validation for a sample month. Left column: Model input, middle column: Model output, right column: Input::Output scatter}
+\caption{ML model validation for a test month (December 2004). Left column: Model input, middle column: Model output, right column: Input::Output scatter}
 \label{model_validation}
 \end{figure}
 
