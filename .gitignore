@@ -147,8 +147,9 @@ Thumbs.db
 *.sty 
 *.bst
 *.cls 
-*.cfg 
-
+*.cfg
+*.bbl
+*.blg
 
 
 # SCRATCH links
