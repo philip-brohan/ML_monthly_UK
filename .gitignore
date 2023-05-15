@@ -127,3 +127,31 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Apple junk
+Thumbs.db
+
+# Images
+*.pdf 
+*.PDF
+*.png 
+*.PNG
+*.jpg 
+*.JPG
+
+# Big office files
+*.pptx
+
+# TeX intermediates
+*.aux
+*.sty 
+*.bst
+*.cls 
+*.cfg 
+
+
+
+# SCRATCH links
+SCRATCH 
+SCRATCH_HadUKGrid 
+

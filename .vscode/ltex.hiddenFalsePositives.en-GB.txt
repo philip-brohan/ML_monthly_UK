@@ -1,0 +1,1 @@
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\QSo the SST and MSLP data were taken from the 20th Century Reanalysis version 3 \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q, and the air temperature and precipitation were taken from HadUK-Grid \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q.\\E$"}
