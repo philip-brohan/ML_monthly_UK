@@ -10,20 +10,20 @@
 
 %% Start with one of the following:
 % 1.5-SPACED VERSION FOR SUBMISSION TO THE AMS
-\documentclass{ametsocV6.1}
+% \documentclass{ametsocV6.1}
 
 % TWO-COLUMN JOURNAL PAGE LAYOUT---FOR AUTHOR USE ONLY
-% \documentclass[twocol]{ametsocV6.1}
+\documentclass[twocol]{ametsocV6.1}
 
 
 
 
-\title{Machine Learning for Climate Modelling}
+\title{Generative Machine Learning for Climate Modelling}
 
 
 % \Author[affil]{given_name}{surname}
 
-\authors{Philip Brohan,\aff{a}\correspondingauthor{Philip Brohan, philip.brohan@metoffice.gov.uk}}
+\authors{Philip Brohan, \aff{a} \correspondingauthor{Philip Brohan, philip.brohan@metoffice.gov.uk}}
 
 \affiliation{\aff{a}{Met Office Hadley Centre, Exeter, UK}}
 
@@ -36,11 +36,10 @@
 
 
 \statement
-	 Enter significance statement here, no more than 120 words. See \url{www.ametsoc.org/index.cfm/ams/publications/author-information/significance-statements/} for details.
-
-
+    Current climate models are powerful, but very slow and difficult to use, so we can't use them as much as we would like. This work shows how to use machine learning to make climate models that are very fast and easy to use.
 
 \section{Introduction}
+\label{Intro}
 
 Traditional General Circulation Models (GCMs, \citet{phillips1956general}) are examples of {\em Generative Models} \citep{Generative}: a GCM will output a self-consistent and physically-plausible state of the weather. GCMs are extremely powerful and successful, but they do have important limitations: In particular they are {\em expensive} --- in both user effort and compute required --- so we have to limit the work we do with them.
 
@@ -53,10 +52,11 @@ A physical model has to include an adequate set of physical variables (you can't
 Because of this, simple statistical models have been used alongside GCMs for decades \citep{MAGICC}. The innovation offered by modern ML is that we can now build {\it complex} statistical models --- we can retain the speed, simplicity and flexibility of statistical modelling, while producing the precise and detailed output that used to require a GCM.
 
 \section{An ML Model Architecture for Climate Modelling}
+\label{Architecture}
 
-There is a rapidly-growing set of ML model architectures for weather prediction \citep{keisler2022forecasting,bi2022panguweather,nguyen2023climax}, but climate modelling is a different problem: We are much less interested in time-evolution, and much more interested in changing boundary conditions. So we need a different model architecture, with no time-prediction capability, but where we can manipulate the model state more generally. (Though we can add time-prediction to the model if desired, see section \ref{extension}.)
+There is a rapidly-growing set of ML model architectures for weather prediction \citep{keisler2022forecasting,bi2022panguweather,nguyen2023climax}, but climate modelling is a different problem: We are much less interested in time-evolution, and much more interested in changing boundary conditions. So we need a different model architecture, with no time-prediction capability, but where we can manipulate the model state more generally. (Though we can add time-prediction to the model if desired, see section \ref{Architecture}\ref{extension}.)
 
-ML has already demonstrated major success in image generation \citep{StyleGAN2,Stable_Diffusion}. A typical architecture for this represents a high-resolution image as a point in a low-dimensional 'latent space', and uses a convolutional neural (CNN) net to map the latent space representation into the real space image \citep{StyleGAN}. If we consider a climate field as an image --- with (say) pressure, temperature and precipitation corresponding to the red, green, and blue channels, we can use exactly the same model architecture to generate climate states (figure \ref{ML_model_structure}).
+ML has already demonstrated major success in image generation \citep{StyleGAN2,Stable_Diffusion}. A typical architecture for this represents a high-resolution image as a point in a low-dimensional 'latent space', and uses a convolutional neural net (CNN) to map the latent space representation into the real space image \citep{StyleGAN}. If we consider a climate field as an image --- with (say) pressure, temperature and precipitation corresponding to the red, green, and blue channels, we can use exactly the same model architecture to generate climate states (figure \ref{ML_model_structure}).
 
 \begin{figure}[h]
 \includegraphics[width=8.3cm]{figures/ML_model_structure.pdf}
@@ -108,21 +108,22 @@ This same method offers one easy way to add time dependence to this model: Build
 
 
 \section{An example model - monthly weather for the UK}
+\label{Example}
 
 The architecture described above is only any use if it actually works --- if it is possible to train such a model on the climate variables of interest. So the next step is to train and demonstrate such a model: We chose to model UK surface weather anomalies (SST, MSLP, air temperature, and precipitation) at a 1 km spatial resolution, and on a monthly timescale. 1 km is the native resolution of the training data used, and working on monthly averages makes it reasonable to neglect time dependence, simplifying the model.
 
-It's not practical to describe every detail of a model in a paper, so as well as the description here, the full source code for the model (everything needed to reproduce these results), is available at the URL given below, under {\it code and data availability}.
+It's not practical to describe every detail of a model in a paper, so as well as the description here, the full source code for the model (everything needed to reproduce these results), is available at the URL given below, in the {\it Data availability statement}.
 
 \subsection{Training data}
 
 The aim is to train the model on observational data (rather than GCM output). We relaxed this slightly in the interest of getting data that's easy to use. So the SST and MSLP data were taken from the 20th Century Reanalysis version 3 \citep{slivinski_20crv3.1}, and the air temperature and precipitation
 were taken from HadUK-Grid \citep{HadUK-Grid}.
 
-A challenge for ML modelling for climate, is that training data is often going to be limited. One reason to choose the UK as the domain to model is that it has some of the world's best data availability. Even so the training data available covers only the period 1884 to 2015 (1584 months) and every 11th month was reserved for validation. So only 1430 months of data were available for model training.
+A challenge for ML modelling for climate, is that training data is often going to be limited. One reason to choose the UK as the domain to model is that it has some of the world's best observational data. Even so the training data available covers only the period 1884 to 2015 (1584 months) and every 11th month was reserved for validation. So only 1430 months of data were available for model training.
 
 \subsection{ML model specification}
 
-The ML model was implemented using the TensorFlow Machine Learning platform \citep{tensorflow2015-whitepaper}, and based on the Convolutional Variational Autoencoder in the TensorFlow documentation \citep{TF_CVAE}. The model is a simple deep convolutional variational autoencoder, with a 100-dimensional latent space, and five convolutional layers in both the encoder and the generator. For the details of the model, and the hyperparameters used, see the full source code, linked below.
+The ML model was implemented using the TensorFlow Machine Learning platform \citep{tensorflow2015-whitepaper}, and based on the Convolutional Variational Autoencoder in the TensorFlow documentation \citep{TF_CVAE}. The model is a deep convolutional variational autoencoder, with a 100-dimensional latent space, and five convolutional layers in both the encoder and the generator. For the details of the model, and the hyperparameters used, see the full source code, linked below.
 
 \subsection{Model Training and Validation}
 
@@ -161,7 +162,7 @@ The validation shows that this model, despite its simplicity, is capable of repr
 
 \subsection{An AMIP run}
 
-The model includes four variables, and describes the covariance between those variables. So we can use it to reconstruct the full weather state vector from limited information. A typical example of such a requirement is an AMIP run, where the climate is reconstructed given just the SST. We can do such a run with this model by assimilating the observed SST for one month with the method described in section \ref{section_DA} to estimate the latent space state vector for the month, and then using the generative model to estimate the full weather state for that month.
+The model includes four variables, and describes the covariance between those variables. So we can use it to reconstruct the full weather state vector from limited information. A typical example of such a requirement is an AMIP run, where the climate is reconstructed given just the SST. We can do such a run with this model by assimilating the observed SST for one month with the method described in section \ref{Architecture}\ref{section_DA}, to estimate the latent space state vector for the month, and then using the generative model to estimate the full weather state for that month.
 
 Figure \ref{fit_to_SST} shows the time-series from such a calculation. The results are as expected: SST is perfect (it was assimilated), T2M has substantial skill, PRMSL and precipitation have small skill.
 
