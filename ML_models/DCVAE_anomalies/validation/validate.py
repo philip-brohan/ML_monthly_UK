@@ -34,8 +34,8 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", help="Epoch", type=int, required=False, default=250)
-parser.add_argument("--year", help="Test year", type=int, required=False, default=1969)
-parser.add_argument("--month", help="Test month", type=int, required=False, default=3)
+parser.add_argument("--year", help="Test year", type=int, required=False, default=2004)
+parser.add_argument("--month", help="Test month", type=int, required=False, default=12)
 parser.add_argument(
     "--member", help="Test ensemble member", type=int, required=False, default=1
 )
