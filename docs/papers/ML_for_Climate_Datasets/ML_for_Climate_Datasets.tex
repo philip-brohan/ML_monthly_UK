@@ -1,75 +1,45 @@
-%% Copernicus Publications Manuscript Preparation Template for LaTeX Submissions
-%% ---------------------------------
-%% This template should be used for copernicus.cls
-%% The class file and some style files are bundled in the Copernicus Latex Package, which can be downloaded from the different journal webpages.
-%% For further assistance please contact Copernicus Publications at: production@copernicus.org
-%% https://publications.copernicus.org/for_authors/manuscript_preparation.html
+%% Version 6.1, 1 September 2021
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% amspaperV6.tex --  LaTeX-based instructional template paper for submissions to the 
+% American Meteorological Society
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PREAMBLE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% I got this file from the LaTeX templates bundle at  https://www.geoscientific-model-development.net/submission.html
+%% Start with one of the following:
+% 1.5-SPACED VERSION FOR SUBMISSION TO THE AMS
+\documentclass{ametsocV6.1}
 
-
-%% Please use the following documentclass and journal abbreviations for preprints and final revised papers.
-
-%% 2-column papers and preprints
-\documentclass[gmd]{copernicus}
-
-
-%% \usepackage commands included in the copernicus.cls:
-%\usepackage[german, english]{babel}
-%\usepackage{tabularx}
-%\usepackage{cancel}
-%\usepackage{multirow}
-%\usepackage{supertabular}
-%\usepackage{algorithmic}
-%\usepackage{algorithm}
-%\usepackage{amsthm}
-%\usepackage{float}
-%\usepackage{subfig}
-%\usepackage{rotating}
+% TWO-COLUMN JOURNAL PAGE LAYOUT---FOR AUTHOR USE ONLY
+% \documentclass[twocol]{ametsocV6.1}
 
 
-\begin{document}
 
-\title{Machine Learning for Climate Modelling}
+
+\title{Generative Machine Learning for Climate Modelling}
 
 
 % \Author[affil]{given_name}{surname}
 
-\Author[1]{Philip}{Brohan}
+\authors{Philip Brohan, \aff{a} \correspondingauthor{Philip Brohan, philip.brohan@metoffice.gov.uk}}
 
-\affil[1]{Met Office Hadley Centre, Exeter, UK}
-
-%% The [] brackets identify the author with the corresponding affiliation. 1, 2, 3, etc. should be inserted.
+\affiliation{\aff{a}{Met Office Hadley Centre, Exeter, UK}}
 
 
-\correspondence{Philip Brohan (philip.brohan@metoffice.gov.uk)}
 
-\runningtitle{ML for Climate}
+\abstract{Machine Learning (ML) is a very powerful tool for making generative models: models that can make detailed, complex output (often pictures) from a simple input specification. We can use this in science by making generative models of weather and climate --- by training ML models to output gridded fields of weather variables such as temperature and precipitation. Here we show that you can use a Variational AutoEncoder (VAE) to build a fast deep generative model linking physically-plausible weather fields to a complete, continuous, low-dimensional latent space. Such an ML model can be used in place of a General Circulation Model (GCM) for some purposes: We can do reanalysis by constraining the field output to match observations, or perturbation/attribution studies by using the ML model to estimate the effect of changing one variable on another (e.g. change in sea temperature on precipitation). The primary advantage of such an ML model over a traditional GCM is that it can be several orders of magnitude faster.}
 
-\runningauthor{Brohan}
-
-
-\received{}
-\pubdiscuss{} %% only important for two-stage journals
-\revised{}
-\accepted{}
-\published{}
-
-%% These dates will be inserted by Copernicus Publications during the typesetting process.
-
-\firstpage{1}
-
+\begin{document}
 \maketitle
 
-\begin{abstract}
-Machine Learning (ML) is a very powerful tool for making generative models: models that can make detailed, complex output (often pictures) from a simple input specification. We can use this in science by making generative models of weather and climate --- by training ML models to output gridded fields of weather variables such as temperature and precipitation. Here we show that you can use a Variational AutoEncoder (VAE) to build a fast deep generative model linking physically-plausible weather fields to a complete, continuous, low-dimensional latent space. Such an ML model can be used in place of a General Circulation Model (GCM) for some purposes: We can do reanalysis by constraining the field output to match observations, or perturbation/attribution studies by using the ML model to estimate the effect of changing one variable on another (e.g. change in sea temperature on precipitation). The primary advantage of such an ML model over a traditional GCM is that it can be several orders of magnitude faster.
-\end{abstract}
 
+\statement
+    Current climate models are powerful, but very slow and difficult to use, so we can't use them as much as we would like. This work shows how to use machine learning to make climate models that are very fast and easy to use.
 
-\copyrightstatement{Crown Copyright 2023} %% This section is optional and can be used for copyright transfers.
-
-
-\introduction  %% \introduction[modified heading if necessary]
+\section{Introduction}
+\label{Intro}
 
 Traditional General Circulation Models (GCMs, \citet{phillips1956general}) are examples of {\em Generative Models} \citep{Generative}: a GCM will output a self-consistent and physically-plausible state of the weather. GCMs are extremely powerful and successful, but they do have important limitations: In particular they are {\em expensive} --- in both user effort and compute required --- so we have to limit the work we do with them.
 
@@ -82,13 +52,14 @@ A physical model has to include an adequate set of physical variables (you can't
 Because of this, simple statistical models have been used alongside GCMs for decades \citep{MAGICC}. The innovation offered by modern ML is that we can now build {\it complex} statistical models --- we can retain the speed, simplicity and flexibility of statistical modelling, while producing the precise and detailed output that used to require a GCM.
 
 \section{An ML Model Architecture for Climate Modelling}
+\label{Architecture}
 
-There is a rapidly-growing set of ML model architectures for weather prediction \citep{keisler2022forecasting,bi2022panguweather,nguyen2023climax}, but climate modelling is a different problem: We are much less interested in time-evolution, and much more interested in changing boundary conditions. So we need a different model architecture, with no time-prediction capability, but where we can manipulate the model state more generally. (Though we can add time-prediction to the model if desired, see section \ref{extension}.)
+There is a rapidly-growing set of ML model architectures for weather prediction \citep{keisler2022forecasting,bi2022panguweather,nguyen2023climax}, but climate modelling is a different problem: We are much less interested in time-evolution, and much more interested in changing boundary conditions. So we need a different model architecture, with no time-prediction capability, but where we can manipulate the model state more generally. (Though we can add time-prediction to the model if desired, see section \ref{Architecture}\ref{extension}.)
 
-ML has already demonstrated major success in image generation \citep{StyleGAN2,Stable_Diffusion}. A typical architecture for this represents a high-resolution image as a point in a low-dimensional 'latent space', and uses a convolutional neural (CNN) net to map the latent space representation into the real space image \citep{StyleGAN}. If we consider a climate field as an image --- with (say) pressure, temperature and precipitation corresponding to the red, green, and blue channels, we can use exactly the same model architecture to generate climate states (figure )\ref{ML_model_structure}).
+ML has already demonstrated major success in image generation \citep{StyleGAN2,Stable_Diffusion}. A typical architecture for this represents a high-resolution image as a point in a low-dimensional 'latent space', and uses a convolutional neural net (CNN) to map the latent space representation into the real space image \citep{StyleGAN}. If we consider a climate field as an image --- with (say) pressure, temperature and precipitation corresponding to the red, green, and blue channels, we can use exactly the same model architecture to generate climate states (figure \ref{ML_model_structure}).
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/ML_model_structure.pdf}
+\includegraphics[width=8.3cm]{ML_model_structure.pdf}
 \caption{Conceptual model of an ML-based climate model.}
 \label{ML_model_structure}
 \end{figure}
@@ -104,15 +75,15 @@ This is an example of a representation model. We represent a particular climate 
     
 \subsection{A reduced space representation from a Variational Autoencoder}
 
-We can create a model and representation with exactly these properties, using a Variational AutoEncoder (VAE, \citet{VAE_Intro}). An autoencoder is a pair of neural nets: one of them (the encoder) compresses an input field into a low-dimensional latent space, and the other (the generator) expands the small latent space representation back into the input field \citep{Autoencoder}. They are trained as a pair --- optimizing to make generator(encoder(input)) as close to the original input as possible. A variational autoencoder adds two complications to the basic autoencoder: The encoder outputs a distribution in latent space not a point (the distribution is parametrized by its mean and standard deviation) and it is trained not just to produce the desired output, but also to produce the desired distribution in latent space  --- a multi-variate unit normal distribution (figure \ref{VAE_structure}).
+We can create a model and representation with exactly these properties, using a Variational AutoEncoder (VAE, \citet{VAE_Intro}). An autoencoder is made up of two neural nets: an {\it encoder}, which maps an input field into an {\it embedding} in a low-dimensional latent space; and a {\it generator}, which maps the latent space embedding back into the input field \citep{Autoencoder}. The encoder and generator are trained together to make $\textrm{generator}(\textrm{encoder}(\textrm{input}))$ as close to the original input as possible. A {\it variational} autoencoder does two additional things: The encoder outputs an embedding distribution not a single point embedding, and the encoder::generator pair are trained not just on output quality, but also on how well the embeddings match a multi-variate unit normal distribution (figure \ref{VAE_structure}).
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/VAE_structure.pdf}
+\includegraphics[width=8.3cm]{VAE_structure.pdf}
 \caption{Model training architecture based on a Variational AutoEncoder.}
 \label{VAE_structure}
 \end{figure}
 
-When the VAE is trained, the generator function is exactly the model we require: Defining the generator as a deep CNN allows it to be powerful and fast, making the latent space representation a distribution makes it complete, and constraining the latent space representation to be a unit normal makes it continuous. A VAE, with deep neural nets, is a ridiculously powerful tool --- an automatic climate model factory.
+When the VAE is trained, the generator function is exactly the model we require: Defining the generator as a deep CNN allows it to be powerful and fast, making the latent space representation a distribution makes it continuous, and constraining the latent space representation to be a unit normal makes it complete. A VAE, with deep neural nets, is a ridiculously powerful tool --- an automatic climate model factory.
      
 \subsection{Data Assimilation by constraining the reduced space}
 \label{section_DA}
@@ -126,7 +97,7 @@ The proposed ML architecture makes this problem easy to solve: We can search the
 We want the ML model to be as small as possible --- small models are easy to train and faster and simpler in operation. But we also want the model to be broadly useful, and so to include predictions of a wide range of weather and impacts variables. We resolve this dilemma by having a small core model, and an extension method: the model can be extended to another variable by training another ML model to map the core latent space state to the additional variable of interest (figure \ref{Extension_structure}).
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/Extension_structure.pdf}
+\includegraphics[width=8.3cm]{Extension_structure.pdf}
 \caption{Process for extending the model to additional variables.}
 \label{Extension_structure}
 \end{figure}
@@ -137,21 +108,22 @@ This same method offers one easy way to add time dependence to this model: Build
 
 
 \section{An example model - monthly weather for the UK}
+\label{Example}
 
 The architecture described above is only any use if it actually works --- if it is possible to train such a model on the climate variables of interest. So the next step is to train and demonstrate such a model: We chose to model UK surface weather anomalies (SST, MSLP, air temperature, and precipitation) at a 1 km spatial resolution, and on a monthly timescale. 1 km is the native resolution of the training data used, and working on monthly averages makes it reasonable to neglect time dependence, simplifying the model.
 
-It's not practical to describe every detail of a model in a paper, so as well as the description here, the full source code for the model (everything needed to reproduce these results), is available at the URL given below, under {\it code and data availability}.
+It's not practical to describe every detail of a model in a paper, so as well as the description here, the full source code for the model (everything needed to reproduce these results), is available at the URL given below, in the {\it Data availability statement}.
 
 \subsection{Training data}
 
 The aim is to train the model on observational data (rather than GCM output). We relaxed this slightly in the interest of getting data that's easy to use. So the SST and MSLP data were taken from the 20th Century Reanalysis version 3 \citep{slivinski_20crv3.1}, and the air temperature and precipitation
 were taken from HadUK-Grid \citep{HadUK-Grid}.
 
-A challenge for ML modelling for climate, is that training data is often going to be limited. One reason to choose the UK as the domain to model is that it has some of the world's best data availability. Even so the training data available covers only the period 1884 to 2015 (1584 months) and every 11th month was reserved for validation. So only 1430 months of data were available for model training.
+A challenge for ML modelling for climate, is that training data is often going to be limited. One reason to choose the UK as the domain to model is that it has some of the world's best observational data. Even so the training data available covers only the period 1884 to 2015 (1584 months) and every 11th month was reserved for validation. So only 1430 months of data were available for model training.
 
 \subsection{ML model specification}
 
-The ML model was implemented using the TensorFlow Machine Learning platform \citep{tensorflow2015-whitepaper}, and based on the Convolutional Variational Autoencoder in the TensorFlow documentation \citep{TF_CVAE}. The model is a simple deep convolutional variational autoencoder, with a 100-dimensional latent space, and five convolutional layers in both the encoder and the generator. For the details of the model, and the hyperparameters used, see the full source code, linked below.
+The ML model was implemented using the TensorFlow Machine Learning platform \citep{tensorflow2015-whitepaper}, and based on the Convolutional Variational Autoencoder in the TensorFlow documentation \citep{TF_CVAE}. The model is a deep convolutional variational autoencoder, with a 100-dimensional latent space, and five convolutional layers in both the encoder and the generator. For the details of the model, and the hyperparameters used, see the full source code, linked below.
 
 \subsection{Model Training and Validation}
 
@@ -160,7 +132,7 @@ A challenge to training is that we are predicting four fields (SST, MSLP, T2M, a
 
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/training_progress.pdf}
+\includegraphics[width=8.3cm]{training_progress.pdf}
 \caption{Training progress: percentage of unexplained variance for each variable. Thick line shows validation months, thin line training months.}
 \label{training_progress}
 \end{figure}
@@ -170,14 +142,14 @@ Unsurprisingly, precipitation has the least skill of the four variables, but the
 We can see the power of the model by comparing the VAE output with the training input for a test month (figure \ref{model_validation}), or averaged over the UK for all the test months (figure \ref{model_validation_multi}).
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/model_validation.pdf}
-\caption{ML model validation for a sample month. Left column: Model input, middle column: Model output, right column: Input::Output scatter}
+\includegraphics[width=8.3cm]{model_validation.pdf}
+\caption{ML model validation for a test month (December 2004). Left column: Model input, middle column: Model output, right column: Input::Output scatter}
 \label{model_validation}
 \end{figure}
 
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/model_validation_multi.pdf}
+\includegraphics[width=8.3cm]{model_validation_multi.pdf}
 \caption{ML model validation for all sample months. UK regional average for each month in the validation dataset. Black lines: model input, red lines: model output, and Input::Output scatter.}
 \label{model_validation_multi}
 \end{figure}
@@ -190,12 +162,12 @@ The validation shows that this model, despite its simplicity, is capable of repr
 
 \subsection{An AMIP run}
 
-The model includes four variables, and describes the covariance between those variables. So we can use it to reconstruct the full weather state vector from limited information. A typical example of such a requirement is an AMIP run, where the climate is reconstructed given just the SST. We can do such a run with this model by assimilating the observed SST for one month with the method described in section \ref{section_DA} to estimate the latent space state vector for the month, and then using the generative model to estimate the full weather state for that month.
+The model includes four variables, and describes the covariance between those variables. So we can use it to reconstruct the full weather state vector from limited information. A typical example of such a requirement is an AMIP run, where the climate is reconstructed given just the SST. We can do such a run with this model by assimilating the observed SST for one month with the method described in section \ref{Architecture}\ref{section_DA}, to estimate the latent space state vector for the month, and then using the generative model to estimate the full weather state for that month.
 
 Figure \ref{fit_to_SST} shows the time-series from such a calculation. The results are as expected: SST is perfect (it was assimilated), T2M has substantial skill, PRMSL and precipitation have small skill.
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/fit_to_SST.pdf}
+\includegraphics[width=8.3cm]{fit_to_SST.pdf}
 \caption{Regional mean time series from an AMIP run: Black lines: observed values, red lines: model output, and Observation::Model scatter.}
 \label{fit_to_SST}
 \end{figure}
@@ -207,7 +179,7 @@ The Twentieth Century Reanalysis has shown the power of assimilating just SST an
 Figure \ref{fit_to_SST+PRMSL} shows the time-series from a run assimilating SST and PRMSL. Again the results are as expected: SST and PRMSL are perfect (assimilated), T2M and now also precipitation have substantial skill. This is a good illustration of the power of generative ML models, the complex relationship between temperature, pressure and precipitation is well captured by the ML model.
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/fit_to_SST+PRMSL.pdf}
+\includegraphics[width=8.3cm]{fit_to_SST+PRMSL.pdf}
 \caption{Regional mean time series from a reanalysis-type run assimilating SST and PRMSL: Black lines: observed values, red lines: model output, and Observation::Model scatter.}
 \label{fit_to_SST+PRMSL}
 \end{figure}
@@ -219,7 +191,7 @@ Many of the important questions in climate research are about hypotheticals and 
 To investigate this, we assimilate the observations for October 1903, to get the model latent space state vector. Then perturb the observed SSTs by adding 1$^\circ$C and find the change in state vector needed to match the changed SSTs, then the model output with the perturbed state vector will give the perturbed climate (figure \ref{perturbation_method}.)
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/perturbation_method.pdf}
+\includegraphics[width=8.3cm]{perturbation_method.pdf}
 \caption{Process for estimating the effect of a climate perturbation (+1$^\circ$C) for an attribution study.}
 \label{perturbation_method}
 \end{figure}
@@ -227,7 +199,7 @@ To investigate this, we assimilate the observations for October 1903, to get the
 The results of this perturbation experiment are shown in figure \ref{perturbation_validation}. October 1903 had very low MSLP and very high precipitation, with unremarkable temperatures. Perturbing the SST by +1$^\circ$C in the ML model produces a uniform increase in the air temperature, a similar increase in MSLP, and has little effect on the precipitation. 
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/perturbation_validation.pdf}
+\includegraphics[width=8.3cm]{perturbation_validation.pdf}
 \caption{Results of increasing SST by 1C. Left column: observed weather state for the record wet month of October 1903. Middle column: ML model prediction after perturbing SST by +1$^\circ$C. Right column: Scatter Model::observations.}
 \label{perturbation_validation}
 \end{figure}
@@ -243,7 +215,7 @@ So to add an impact variable to the ML model (perhaps as the basis for a climate
 Specifically, we will add an extension model (section \ref{extension}) --- a 2-layer perceptron (details in attached source code) to predict the flow anomaly of the River Thames at Kingston \citep{NRFA-Kingston} from the climate model latent space vector. See figure \ref{services_river_flow}.
 
 \begin{figure}[h]
-\includegraphics[width=8.3cm]{figures/services_river_flow.pdf}
+\includegraphics[width=8.3cm]{services_river_flow.pdf}
 \caption{Extending the model to river flow prediction. Climate observations (top right) are assimilated to find the latent space state vector for each month, and then a separate extension model is used to predict the river flow anomaly (bottom right) from the state vector. Black line: flow anomaly observations, red line: model output.}
 \label{services_river_flow}
 \end{figure}
@@ -251,7 +223,7 @@ Specifically, we will add an extension model (section \ref{extension}) --- a 2-l
 This process works as expected. Note that a better river flow anomaly prediction could be produced with more modelling effort (for example with a deeper neural network or the use of weather data from previous months). But this version is sufficient to demonstrate the process.
 
 
-\conclusions  %% \conclusions[modified heading if necessary]
+\section{Conclusions}
 
 For the past few decades, General Circulation Models have dominated modelling in weather and climate. Machine Learning provides a new way to build complex models, and so a challenge to the hegemony of the GCM. In weather forecasting there are already several ML models approaching the state of the art. 
 
@@ -259,28 +231,18 @@ Climate modelling is more complicated than weather forecasting. We are not just 
 
 Such ML-based climate models are not a replacement for a GCM - the two modelling approaches have very different strengths and limitations, but the ML models have the major advantage that they are orders of magnitude cheaper and easier to produce and to use. Such models will open up the large class of modelling questions where a GCM is too difficult, or too expensive, to use.
 
-
-%% The following commands are for the statements about the availability of data sets and/or software code corresponding to the manuscript.
-%% It is strongly recommended to make use of these sections in case data sets and/or software code have been part of your research the article is based on.
-
-
-\codedataavailability{The code needed to reproduce or build on this work is online at https://brohan.org/ML\_monthly\_UK. The repository includes tools to download the data required.} %% use this section when having data sets and software code available
-
-
-\authorcontribution{This paper is the work of Philip Brohan} %% this section is mandatory
-
-\competinginterests{No competing interests are present.} %% this section is mandatory even if you declare that no competing interests are present
-
-
-\begin{acknowledgements}
+\acknowledgments
 This work was supported by the Met Office Hadley Centre Climate Programme funded by BEIS, and by the UK-China Research \& Innovation Partnership Fund through the Met Office Climate Science for Service Partnership (CSSP) China as part of the Newton Fund.
 This work used the Isambard UK National Tier-2 HPC Service operated by GW4 and the UK Met Office, and funded by EPSRC (EP/P020224/1).
-\end{acknowledgements}
+
+\datastatement
+The code needed to reproduce or build on this work is online at \url{https://brohan.org/ML_monthly_UK}. The repository includes tools to download the data required. 
+
 
 
 %% REFERENCES
 
-\bibliographystyle{copernicus}
+\bibliographystyle{ametsocV6}
 \bibliography{MLCD}
 
 
