@@ -34,7 +34,7 @@ parser.add_argument(
     "--year", help="Year to fit to", type=int, required=False, default=1969
 )
 parser.add_argument(
-    "--month", help="Month to fit to", type=int, required=False, default=3
+    "--month", help="Month to fit to", type=int, required=False, default=1
 )
 
 parser.add_argument(
@@ -51,10 +51,10 @@ parser.add_argument(
 )
 parser.add_argument(
     "--station_separation",
-    help="Typical distance between stations (degrees)",
+    help="Typical distance between stations (m)",
     type=int,
     required=False,
-    default=10,
+    default=100000,
 )
 parser.add_argument(
     "--iter",
@@ -86,15 +86,18 @@ from plot_functions.plot_variable import plotScatterAxes
 # Load and standardise data
 qd = load_cList(args.year, args.month)
 ict = cList_to_tensor(qd, extrapolate=False)
+# print(qd)
+# print(qd[0].data.shape)
+# sys.exit(0)
 
 # Use bridson to provide station locations
 lat_range = (
-    dm_HUKG.coords("latitude")[0].points.min(),
-    dm_HUKG.coords("latitude")[0].points.max(),
+    dm_HUKG.coords("projection_y_coordinate")[0].points.min(),
+    dm_HUKG.coords("projection_y_coordinate")[0].points.max(),
 )
 lon_range = (
-    dm_HUKG.coords("longitude")[0].points.min(),
-    dm_HUKG.coords("longitude")[0].points.max(),
+    dm_HUKG.coords("projection_x_coordinate")[0].points.min(),
+    dm_HUKG.coords("projection_x_coordinate")[0].points.max(),
 )
 scale = max((lat_range[1] - lat_range[0]), lon_range[1] - lon_range[0])
 smp_file = "sample_%02d.pkl" % args.station_separation
@@ -110,7 +113,7 @@ else:
     pickle.dump(sample, open(smp_file, "wb"))
 
 # Make a coverage mask with missing data everywhere except at station locations
-width, height = dm_HUKG.data.shape
+height, width = dm_HUKG.data.shape
 slx = np.minimum(
     width - 1,
     np.maximum(
@@ -131,10 +134,17 @@ sly = np.minimum(
 ).astype(int)
 lm_stations = dm_HUKG.copy()
 lm_stations.data.data.fill(0.0)
-lm_stations.data.mask.fill(False)
+lm_stations.data.mask.fill(True)
+s_masked = np.full((len(slx)), True)
 for idx in range(len(slx)):
-    lm_stations.data.data[slx[idx],sly[idx]]=dm_HUKG.data.data[slx[idx],sly[idx]]
-    lm_stations.data.mask[slx[idx],sly[idx]]=dm_HUKG.data.mask[slx[idx],sly[idx]]
+    lm_stations.data.data[sly[idx], slx[idx]] = dm_HUKG.data.data[sly[idx], slx[idx]]
+    lm_stations.data.mask[sly[idx], slx[idx]] = dm_HUKG.data.mask[sly[idx], slx[idx]]
+    s_masked[idx] = dm_HUKG.data.mask[sly[idx], slx[idx]]
+
+# Remove stations not covered by the dataset
+slx = slx[~s_masked]
+sly = sly[~s_masked]
+sample = sample[~s_masked, :]
 
 # Load the model specification
 sys.path.append("%s/.." % os.path.dirname(__file__))
@@ -163,10 +173,10 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 0], lm_stations.data.mask, axis=1
+                    generated[:, :, :, 0], np.invert(lm_stations.data.mask), axis=1
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 0], lm_stations.data.mask, axis=1
+                    target[:, :, :, 0], np.invert(lm_stations.data.mask), axis=1
                 ),
             )
         )
@@ -185,10 +195,10 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 2], lm_stations.data.mask, axis=1
+                    generated[:, :, :, 2], np.invert(lm_stations.data.mask), axis=1
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 2], lm_stations.data.mask, axis=1
+                    target[:, :, :, 2], np.invert(lm_stations.data.mask), axis=1
                 ),
             )
         )
@@ -196,10 +206,10 @@ def decodeFit():
         result = result + tf.reduce_mean(
             tf.keras.metrics.mean_squared_error(
                 tf.boolean_mask(
-                    generated[:, :, :, 3], lm_stations.data.mask, axis=1
+                    generated[:, :, :, 3], np.invert(lm_stations.data.mask), axis=1
                 ),
                 tf.boolean_mask(
-                    target[:, :, :, 3], lm_stations.data.mask, axis=1
+                    target[:, :, :, 3], np.invert(lm_stations.data.mask), axis=1
                 ),
             )
         )
@@ -253,7 +263,7 @@ axb.add_patch(
 # Top left - PRMSL original
 stnp = None
 if args.PRMSL:
-    stnp = (sample[:,0],sample[:,1])
+    stnp = (sample[:, 0], sample[:, 1])
     ax_back = fig.add_axes([0.00, 0.75, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
@@ -323,7 +333,7 @@ plotScatterAxes(ax_prmsl_s, varx, vary, vMin=dmin, vMax=dmax, bins="log")
 # 2nd left - PRATE original
 stnp = None
 if args.PRATE:
-    stnp = (sample[:,0],sample[:,1])
+    stnp = (sample[:, 0], sample[:, 1])
     ax_back = fig.add_axes([0.00, 0.5, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
@@ -339,7 +349,7 @@ if args.PRATE:
 varx.data = np.squeeze(ict[:, :, 3].numpy())
 varx.data = np.ma.masked_where(varx.data == 0.5, varx.data, copy=False)
 varx = unnormalise(varx, "monthly_rainfall")
-(dmin, dmax) = get_range("PRATE", args.month, anomalies=True)
+(dmin, dmax) = get_range("PRATE", args.month, anomaly=True)
 dmin *= 86400 * 30
 dmax *= 86400 * 30
 ax_prate = fig.add_axes([0.025 / 3, 0.125 / 4 + 0.5, 0.95 / 3, 0.85 / 4])
@@ -351,7 +361,7 @@ PRATE_img = plotFieldAxes(
     vMin=dmin,
     lMask=lm_plot,
     cMap=cmocean.cm.tarn,
-    stations=stnp,
+    stations=None,
 )
 ax_prate_cb = fig.add_axes([0.125 / 3, 0.05 / 4 + 0.5, 0.75 / 3, 0.05 / 4])
 ax_prate_cb.set_axis_off()
@@ -393,7 +403,7 @@ plotScatterAxes(ax_prate_s, varx, vary, vMin=dmin, vMax=dmax, bins="log")
 # 3rd left - T2m original
 stnp = None
 if args.TMP2m:
-    stnp = (sample[:,0],sample[:,1])
+    stnp = (sample[:, 0], sample[:, 1])
     ax_back = fig.add_axes([0.00, 0.25, 1.0, 0.25])
     ax_back.set_axis_off()
     ax_back.add_patch(
@@ -473,7 +483,7 @@ if args.SST:
 varx.data = np.squeeze(ict[:, :, 1].numpy())
 varx.data = np.ma.masked_where(lm_TWCR.data.mask, varx.data, copy=False)
 varx = unnormalise(varx, "SST")
-(dmin, dmax) = get_range("SST", args.month, anomalies=True)
+(dmin, dmax) = get_range("SST", args.month, anomaly=True)
 dmin -= 0 + 2
 dmax -= 0 - 2
 ax_sst = fig.add_axes([0.025 / 3, 0.125 / 4, 0.95 / 3, 0.85 / 4])
